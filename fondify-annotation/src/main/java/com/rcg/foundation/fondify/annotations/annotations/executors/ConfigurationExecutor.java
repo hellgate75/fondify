@@ -24,7 +24,7 @@ import com.rcg.foundation.fondify.core.typings.ExecutionAnswer;
 public class ConfigurationExecutor implements AnnotationExecutor<Configuration> {
 	String beanName = "Configuration";
 	
-	public static String configurationRegistryKey="Configuration";
+	public static String configurationLoadersRegistryKey="ConfigLoaders";
 	
 	public static BiProcessor<Class<?>, BeanDefinition> beanDefinitionProcessor = (cls, bean, args) -> {};
 	
@@ -78,7 +78,7 @@ public class ConfigurationExecutor implements AnnotationExecutor<Configuration> 
 	}
 	
 	private static final void loadAndApplyScriptFiles(String[] scripts) {
-		Arrays.asList(scripts).forEach(s->ScriptsHelper.loadScriptFileOrFolder(s, configurationRegistryKey));
+		Arrays.asList(scripts).forEach(s->ScriptsHelper.loadScriptFileOrFolder(s, configurationLoadersRegistryKey));
 	}
 
 }
