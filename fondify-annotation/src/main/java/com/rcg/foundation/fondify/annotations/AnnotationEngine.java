@@ -41,6 +41,10 @@ public final class AnnotationEngine {
 			return;
 		}
 		
+		ScannerHelper.collectModuleScanners();
+
+		ScannerHelper.executeScannerMainClasses();
+		
 		List<? extends Annotation> annotations = ScannerHelper.getApplicationClassAnnotations(mainClass);
 		
 		//Running extra annotation seek tasks

@@ -32,10 +32,12 @@ import com.rcg.foundation.fondify.annotations.annotations.Application;
 import com.rcg.foundation.fondify.annotations.annotations.ComponentsScan;
 import com.rcg.foundation.fondify.annotations.annotations.Configuration;
 import com.rcg.foundation.fondify.annotations.annotations.DependsOn;
+import com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig;
 import com.rcg.foundation.fondify.core.exceptions.ScannerException;
 import com.rcg.foundation.fondify.core.functions.Matcher;
 import com.rcg.foundation.fondify.core.functions.Processor;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
+import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
 import com.rcg.foundation.fondify.core.registry.typings.ComponentRegistryItem;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
@@ -58,6 +60,9 @@ public class ScannerHelper {
 	 * different modules implemented and added to the JVM class path.
 	 */
 	public static ComponentRegistryItem<ModuleScanner> moduleRegistry = new ComponentRegistryItem<>();
+	private static ExecutorService executorService = null;
+	
+	public static String annotationDescriptorsRegistryKey="AnnotationDescriptorsKey";
 
 	/**
 	 * Denied access constructor
@@ -189,8 +194,6 @@ public class ScannerHelper {
 			});
 		}
 	}
-
-	private static ExecutorService executorService = null;
 
 	/**
 	 * 
@@ -524,6 +527,257 @@ public class ScannerHelper {
 			tmp = tmp.substring(0, tmp.lastIndexOf("."));
 		}
 		return tmp;
+	
+	}
+
+	/**
+	 * Execute the Scanner Annota
+	 * 
+	 * @param classes
+	 */
+	protected static final void executeModuleMainClasses(Class<? extends ModuleMain>[] classes) {
+		if (classes != null && classes.length > 0) {
+			Arrays.asList(classes).forEach(cls -> {
+				try {
+					ModuleMain main = cls.newInstance();
+					Collection<AnnotationDeclaration> annotations = ComponentsRegistry.getInstance()
+							.getAll(annotationDescriptorsRegistryKey);
+					if (ArgumentsHelper.debug) {
+						LoggerHelper.logTrace("ScannerHelper::executeModuleMainClasses",
+								String.format("Executing main class : %s", main.getClass().getName()));
+					}
+					executorService.execute(new Runnable() {
+	
+						@Override
+						public void run() {
+							try {
+								LoggerHelper.logTrace("ScannerHelper::executeModuleMainClasses [thread]", 
+													String.format("Executing main class %s ...", main.getClass().getName()));
+								main.execute(annotations);
+	
+								LoggerHelper.logTrace("ScannerHelper::executeModuleMainClasses [thread]", 
+										String.format("Main class %s initialized : state %s!!", 
+												main.getClass().getName(),
+												main.isRunning() ? "RUNNING" : "COMPLETE"));
+								// In case the main class is a daemon we plan a shutdown hook to
+								// Shutdown/Abort the class execution.
+								if (main.isRunning()) {
+									Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+	
+										@Override
+										public void run() {
+											try {
+												if (main.isRunning()) {
+													main.abort();
+												}
+											} catch (Exception ex) {
+												String message = String.format(
+														"Error in Shutdown/Abort of Module Main Class : %s",
+														main.getClass().getName());
+												LoggerHelper.logError(
+														"ScannerHelper::executeModuleMainClasses::shutdownHook",
+														message, ex);
+											}
+										}
+									}));
+								}
+							} catch (Exception e) {
+								String message = String.format("Unable to execute ModuleScanner main classes : %s",
+										cls.getCanonicalName());
+								LoggerHelper.logError("ScannerHelper::executeModuleMainClasses", message, e);
+								throw new ScannerException(message, e);
+							}
+						}
+					});
+				} catch (Exception e) {
+					String message = String.format("Unable to execute ModuleScanner main classes : %s",
+							cls.getCanonicalName());
+					LoggerHelper.logError("ScannerHelper::executeModuleMainClasses [thread]", message, e);
+					throw new ScannerException(message, e);
+				}
+			});
+		}
+	}
+
+	/**
+	 * 
+	 */
+	public static final void executeScannerMainClasses() {
+		if ( executorService != null ) {
+			LoggerHelper.logWarn("ScannerHelper::executeScannerMainClasses", 
+					"Main Class Execution in progress...", null);
+		}
+		Set<ModuleScanner> scanners = moduleRegistry.getEntitiesMap().values().stream()
+				.filter(scanner -> {
+					if (scanner.getClass().getAnnotation(ModuleScannerConfig.class) == null)
+						return false;
+					com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig scannerAnn = scanner.getClass()
+							.getAnnotation(ModuleScannerConfig.class);
+					if (scannerAnn.mainClasses() == null || scannerAnn.mainClasses().length == 0)
+						return false;
+					return true;
+				}).collect(Collectors.toSet());
+		long mainClassesCount = scanners.stream().map(scanner -> {
+			return Arrays.asList(scanner.getClass().getAnnotation(ModuleScannerConfig.class).mainClasses());
+		}).flatMap(List::stream).count();
+		executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		scanners.stream().forEach(scc -> {
+			try {
+				com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig scannerAnn = scc.getClass()
+						.getAnnotation(com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig.class);
+				if (ArgumentsHelper.debug) {
+					LoggerHelper.logTrace("ScannerHelper::executeScannerMainClasses",
+							String.format("Executing main classes for Module Scanner : %s", scc.getClass().getName()));
+				}
+				executeModuleMainClasses(scannerAnn.mainClasses());
+			} catch (Exception e) {
+				String message = String.format("Unable to execute ModuleScanner main classes related to : %s",
+						scc.getClass().getName());
+				LoggerHelper.logError("ScannerHelper::executeScannerMainClasses", message, e);
+				throw new ScannerException(message, e);
+			}
+		});
+		executorService.shutdown();
+		executorService = null;
+		if ( mainClassesCount > 0 )
+			Runtime.getRuntime().runFinalization();
+	}
+
+	/**
+	 * Collect {@link ModuleScanner}s in some or all JVM packages, based on internal
+	 * list of parameters and on a full scan on all packages, in which the
+	 * ModuleMain, part of the parameters in the
+	 * {@link com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig}
+	 * annotations recovering the declared list of ModuleMain implementations,
+	 * declared for the module.
+	 */
+	public static final void collectModuleScanners() {
+		final List<ModuleScanner> list = new ArrayList<>(0);
+		List<ModuleScanner> excludeList = new ArrayList<>(0);
+		DEFAULT_SCANNERS.forEach(scc -> {
+			try {
+				list.add((ModuleScanner) Class.forName(scc).newInstance());
+			} catch (Exception e) {
+				String message = String.format("Unable to load class for DEFAULT ModuleScanner with class : %s", scc);
+				LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
+			}
+		});
+		ConfigurationBuilder config = new ConfigurationBuilder().addUrls(ClasspathHelper.forJavaClassPath())
+				.addScanners(new SubTypesScanner());
+		Reflections r = new Reflections(config);
+		List<Class<? extends ModuleScanner>> moduleScannerTypes = collectSubTypesOf(config,
+				ModuleScanner.class);
+		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners", "Collecting for Module Scanner classes ...");
+		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners",
+				String.format("Collecting %s modules ...", "" + moduleScannerTypes.size()));
+		List<Class<? extends ModuleScanner>> validModuleScannerTypes = moduleScannerTypes.stream().filter(cls -> {
+			if (cls.getAnnotation(com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig.class) != null) {
+				if (DEFAULT_SCANNERS.contains(cls.getName()))
+					return false;
+				return true;
+			}
+			LoggerHelper.logError("ScannerHelper::collectModuleScanners",
+					String.format(
+							"Uable to add class %s, bacause it's missing of ModuleScanner configuration annotation"),
+					null);
+			return false;
+		}).collect(Collectors.toList());
+		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners",
+				String.format("Collection: passed %s modules ...", "" + validModuleScannerTypes.size()));
+		validModuleScannerTypes.forEach(cls -> {
+			try {
+				if (list.stream().filter(mdl -> mdl.getClass() == cls).count() == 0) {
+					list.add((ModuleScanner) cls.newInstance());
+					LoggerHelper.logTrace("ScannerHelper::collectModuleScanners",
+							"Found scanner : " + cls.getCanonicalName());
+				} else {
+					LoggerHelper.logTrace("ScannerHelper::collectModuleScanners",
+							String.format("Scanner class instance already present in registry: %s", cls.getName()));
+				}
+			} catch (InstantiationException | IllegalAccessException e) {
+				String message = String.format(
+						"Class Instantiation Error :: Unable to instantiate ModuleScanner object for class : %s",
+						cls.getCanonicalName());
+				LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
+				throw new ScannerException(message);
+			} catch (Exception e) {
+				String message = String.format(
+						"Generic Error :: Unable to instantiate ModuleScanner object for class : %s",
+						cls.getCanonicalName());
+				LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
+				throw new ScannerException(message);
+			}
+		});
+		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners", "Scanning for Module Scanner classes complete!!");
+		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners", "Scanning for Module Scan classes ...");
+		Set<Class<?>> annScanTypes = r
+				.getTypesAnnotatedWith(com.rcg.foundation.fondify.annotations.annotations.ModulesScan.class);
+		annScanTypes.forEach(cls -> {
+			try {
+				com.rcg.foundation.fondify.annotations.annotations.ModulesScan ann = (com.rcg.foundation.fondify.annotations.annotations.ModulesScan) cls
+						.getAnnotation(com.rcg.foundation.fondify.annotations.annotations.ModulesScan.class);
+				if (ann.value()) {
+					Arrays.asList(ann.includes()).stream().filter(clsX -> {
+						String name = clsX.getCanonicalName();
+						return !DEFAULT_SCANNERS.contains(name);
+					}).forEach(mdlCls -> {
+						try {
+							if (!DEFAULT_SCANNERS.contains(mdlCls.getCanonicalName())
+									&& list.stream().filter(mdl -> mdl.getClass() == mdlCls).count() == 0)
+								list.add(mdlCls.newInstance());
+						} catch (InstantiationException | IllegalAccessException e) {
+							String message = String.format(
+									"Class Instantiation Error :: Unable to instantiate ModulesScan (inclusion) object for class : %s",
+									mdlCls.getCanonicalName());
+							LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
+							throw new ScannerException(message);
+						} catch (Exception e) {
+							String message = String.format(
+									"Generic Error :: Unable to instantiate (inclusion) ModulesScan object for class : %s",
+									mdlCls.getCanonicalName());
+							LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
+							throw new ScannerException(message, e);
+						}
+					});
+					Arrays.asList(ann.excludes()).stream().filter(clsX -> {
+						String name = clsX.getCanonicalName();
+						return !DEFAULT_SCANNERS.contains(name);
+					}).forEach(mdlCls -> {
+						try {
+							if (excludeList.stream().filter(mdl -> mdl.getClass() == mdlCls).count() == 0)
+								excludeList.add(mdlCls.newInstance());
+						} catch (InstantiationException | IllegalAccessException e) {
+							String message = String.format(
+									"Class Instantiation Error :: Unable to instantiate ModulesScan (exclusion) object for class : %s",
+									mdlCls.getCanonicalName());
+							LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
+							throw new ScannerException(message);
+						} catch (Exception e) {
+							String message = String.format(
+									"Generic Error :: Unable to instantiate ModulesScan (exclusion) object for class : %s",
+									mdlCls.getCanonicalName());
+							LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
+							throw new ScannerException(message, e);
+						}
+					});
+				}
+			} catch (Exception e) {
+				String message = String.format(
+						"Generic Error :: Unable to instantiate ModulesScan object for class : %s",
+						cls.getCanonicalName());
+				LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
+				throw new ScannerException(message, e);
+			}
+		});
+		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners", "Scanning for Module Scan classes complete!!");
+		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners",
+				"Collecting exclusion class list and filter allowed scanners...");
+		List<Class<?>> exclusionClasses = excludeList.stream().map(excl -> excl.getClass())
+				.collect(Collectors.toList());
+		list.stream().filter(incl -> !exclusionClasses.contains(incl.getClass()))
+				.forEach(ms -> moduleRegistry.registerEntity(ms.getClass().getName(), ms));
+		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners",
+				"Collection of exclusion class list and filtering of allowed scanners complete!!");
 	
 	}
 }
