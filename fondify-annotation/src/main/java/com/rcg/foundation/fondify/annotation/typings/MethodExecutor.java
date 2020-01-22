@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.rcg.foundation.fondify.core.typings;
+package com.rcg.foundation.fondify.annotation.typings;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import com.rcg.foundation.fondify.core.annotation.methods.Finalization;
-import com.rcg.foundation.fondify.core.annotation.methods.Initialization;
+import com.rcg.foundation.fondify.annotation.annotations.methods.Finalization;
+import com.rcg.foundation.fondify.annotation.annotations.methods.Initialization;
 import com.rcg.foundation.fondify.core.functions.Transformer;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.methods.ParameterRef;

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.rcg.foundation.fondify.core.annotation;
+package com.rcg.foundation.fondify.annotation.annotations;
 
 import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.TYPE;

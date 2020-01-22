@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.rcg.foundation.fondify.core.helpers;
+package com.rcg.foundation.fondify.annotation.helpers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.rcg.foundation.fondify.core.arguments.ArgumentDescriptor;
 import com.rcg.foundation.fondify.core.arguments.Feature;
+import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

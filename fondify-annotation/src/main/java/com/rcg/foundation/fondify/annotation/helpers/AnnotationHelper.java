@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.rcg.foundation.fondify.core.helpers;
+package com.rcg.foundation.fondify.annotation.helpers;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -13,14 +13,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.rcg.foundation.fondify.annotation.annotations.TransformCase;
+import com.rcg.foundation.fondify.annotation.typings.BeanDefinition;
+import com.rcg.foundation.fondify.core.domain.KeyCase;
 import com.rcg.foundation.fondify.core.functions.Matcher;
 import com.rcg.foundation.fondify.core.functions.Processor;
 import com.rcg.foundation.fondify.core.functions.SimpleEntryPredicate;
 import com.rcg.foundation.fondify.core.functions.SimplePredicate;
-import com.rcg.foundation.fondify.core.typings.BeanDefinition;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
@@ -133,5 +137,85 @@ public class AnnotationHelper {
 	public static final void processMethodAnnotations(Class<?> elementClass, BeanDefinition definition, Matcher<Class<? extends Annotation>> matcher, Processor<Map<Method, List<Annotation>>> processor) {
 		Map<Method, List<Annotation>> methodsAnns = selectMethodsAnnotations(elementClass, matcher);
 		processor.process(methodsAnns);
+	}
+
+	public final static String transformBeanName(String name, TransformCase caseTransformer) {
+		
+		if ( name != null && !name.isEmpty() && 
+				caseTransformer!= null && 
+				caseTransformer.value() != null ) {
+			KeyCase caseType = caseTransformer.value();
+			AtomicInteger counter = new AtomicInteger(0);
+			switch (caseType) {
+				case NO_CHANGE:
+					return name;
+				case CAPITAL:
+					return name.toUpperCase();
+				case LOWER:
+					return name.toLowerCase();
+				case INIT_CAP:
+					if ( name.length() == 1 )
+						return name.toUpperCase();
+					return (""+name.charAt(0)).substring(0, 1).toUpperCase() + name.toLowerCase().substring(1, name.length());
+				case SNAKE:
+					return Arrays.asList(name.split(""))
+						.stream()
+						.map( s -> {
+							if ( s.trim().length() > 0 ) {
+								boolean isOdd = counter.incrementAndGet() % 2 == 1;
+								if ( Character.isAlphabetic(s.charAt(0)) ) {
+									if ( isOdd ) {
+										if ( Character.isLowerCase(s.charAt(0)) ) {
+											return s.toUpperCase();
+										}
+									} else {
+										if ( Character.isUpperCase(s.charAt(0)) ) {
+											return s.toLowerCase();
+										}
+									}
+								}
+							} else {
+								return "";
+							}
+							return s;
+						} )
+						.reduce("", (p, n) -> p += n);
+				case CAMEL:
+					AtomicBoolean firstTaken = new AtomicBoolean(false);
+					AtomicBoolean newWord = new AtomicBoolean(false);
+					return Arrays.asList(name.split(""))
+							.stream()
+							.map( s -> {
+								if ( s.trim().length() > 0 ) {
+									if ( Character.isAlphabetic(s.charAt(0)) ) {
+										if ( ! firstTaken.get() ) {
+											if ( Character.isUpperCase(s.charAt(0)) ) {
+												return s.toLowerCase();
+											}
+											firstTaken.set(true);
+										} else {
+											
+										}
+										if ( newWord.get() ) {
+											if ( Character.isLowerCase(s.charAt(0)) ) {
+												return s.toUpperCase();
+											}
+											newWord.set(false);
+										} else {
+											if ( Character.isUpperCase(s.charAt(0)) ) {
+												return s.toLowerCase();
+											}
+										}
+									}
+								} else {
+									newWord.set(true);
+									return "";
+								}
+								return s;
+							} )
+							.reduce("", (p, n) -> p += n);
+			}
+		}
+		return name;
 	}
 }

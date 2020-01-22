@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.rcg.foundation.fondify.core.typings;
+package com.rcg.foundation.fondify.annotation.typings;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.rcg.foundation.fondify.core.domain.Scope;
+import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.fields.ComponentReference;
 import com.rcg.foundation.fondify.core.typings.methods.PropertyRef;
 

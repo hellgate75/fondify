@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.rcg.foundation.fondify.core.helpers;
+package com.rcg.foundation.fondify.annotation.helpers;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -28,12 +28,13 @@ import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
-import com.rcg.foundation.fondify.core.annotation.ComponentsScan;
-import com.rcg.foundation.fondify.core.annotation.Configuration;
-import com.rcg.foundation.fondify.core.annotation.DependsOn;
+import com.rcg.foundation.fondify.annotation.annotations.ComponentsScan;
+import com.rcg.foundation.fondify.annotation.annotations.Configuration;
+import com.rcg.foundation.fondify.annotation.annotations.DependsOn;
 import com.rcg.foundation.fondify.core.exceptions.ScannerException;
 import com.rcg.foundation.fondify.core.functions.Matcher;
 import com.rcg.foundation.fondify.core.functions.Processor;
+import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.registry.typings.ComponentRegistryItem;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
@@ -179,6 +180,7 @@ public class ScannerHelper {
 		if ( executorService != null ) {
 			LoggerHelper.logWarn("ScannerHelper::executeScannerMainClasses", 
 					"Main Class Execution in progress...", null);
+			return;
 		}
 		long mainClassesCount = scanners.stream()
 				.map(entry -> Arrays.asList(entry))
@@ -204,7 +206,7 @@ public class ScannerHelper {
 	 * Collect {@link ModuleScanner}s in some or all JVM packages, based on internal
 	 * list of parameters and on a full scan on all packages, in which the
 	 * ModuleMain, part of the parameters in the
-	 * {@link com.rcg.streams.streamio.core.annotations.ModuleScannerConfig}
+	 * {@link com.rcg.foundation.fondify.annotation.annotations.streams.streamio.core.annotations.ModuleScannerConfig}
 	 * annotations recovering the declared list of ModuleMain implementations,
 	 * declared for the module.
 	 */
