@@ -26,7 +26,7 @@ public final class Foundation {
 		System.out.println("-------------------------------------------------");
 		System.out.println("Disclaimer:");
 		System.out.print(ColorConstants.ANSI_RESET);
-		System.out.print(ColorConstants.ANSI_YELLOW + ColorConstants.ANSI_ITALIC);
+		System.out.print(ColorConstants.ANSI_YELLOW + ColorConstants.ANSI_UNDERLINE);
 		System.out.println("All rights reserved, any commercial or production");
 		System.out.println("use must be nogotiated with the author, it's mot");
 		System.out.println("provided any warranty for the free use of the ");

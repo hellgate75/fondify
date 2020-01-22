@@ -25,6 +25,12 @@
   	<tools.reflections.version>0.9.11</tools.reflections.version>
   	<guava.version>23.0</guava.version>
 
+	<!-- Data bind block -->
+  	<tools.jackson.databind.version>2.10.1</tools.jackson.databind.version>
+  	<parser.jackson-databind.version>2.10.1</parser.jackson-databind.version>
+  	<snakeyaml.version>1.25</snakeyaml.version>
+
+
   	<tests.junit.version>4.13-rc-1</tests.junit.version>
   	<tests.mockito.version>2.0.2-beta</tests.mockito.version>
   	<tests.powermock.version>2.0.4</tests.powermock.version>
@@ -64,6 +70,55 @@
 	    <groupId>com.google.guava</groupId>
 	    <artifactId>guava</artifactId>
 	    <version>${guava.version}</version>
+	</dependency>
+
+	
+	
+	<!-- data bind/formats -->
+	<dependency>
+	    <groupId>com.fasterxml.jackson.core</groupId>
+	    <artifactId>jackson-core</artifactId>
+	    <version>${tools.jackson.databind.version}</version>
+	</dependency>
+	<dependency>
+	    <groupId>com.fasterxml.jackson.core</groupId>
+	    <artifactId>jackson-databind</artifactId>
+	    <version>${tools.jackson.databind.version}</version>
+	</dependency>
+	<dependency>
+	    <groupId>com.fasterxml.jackson.dataformat</groupId>
+	    <artifactId>jackson-dataformat-yaml</artifactId>
+	    <version>${tools.jackson.databind.version}</version>
+	</dependency>
+	<dependency>
+	    <groupId>com.fasterxml.jackson.dataformat</groupId>
+	    <artifactId>jackson-dataformat-xml</artifactId>
+	    <version>${tools.jackson.databind.version}</version>
+	</dependency>
+   <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-xml</artifactId>
+        <version>${parser.jackson-databind.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-yaml</artifactId>
+        <version>${parser.jackson-databind.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${parser.jackson-databind.version}</version>
+    </dependency>
+    <dependency>
+	    <groupId>com.fasterxml.jackson.core</groupId>
+	    <artifactId>jackson-core</artifactId>
+	    <version>${parser.jackson-databind.version}</version>
+	</dependency>
+ 	<dependency>
+	    <groupId>org.yaml</groupId>
+	    <artifactId>snakeyaml</artifactId>
+	    <version>${snakeyaml.version}</version>
 	</dependency>
 	
 	<!-- Logging -->

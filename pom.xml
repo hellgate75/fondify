@@ -8,6 +8,7 @@
   <modules>
   	<module>fondify-parent</module>
   	<module>fondify-core</module>
-  	<module>fondify-annotation</module>
+  	<module>fondify-annotations</module>
+  	<module>fondify-properties</module>
   </modules>
 </project>
