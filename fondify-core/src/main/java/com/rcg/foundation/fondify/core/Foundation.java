@@ -15,16 +15,22 @@ public final class Foundation {
 	 * 
 	 */
 	private Foundation() {
-		// TODO Auto-generated constructor stub
+		throw new IllegalStateException("Foundation::constructor -> Unable to make instance of TRCG Annotation Engine Foundation class");
 	}
 	
 	public static final void credits() {
+		ColorConstants.initConsole();
 		System.out.print(ColorConstants.ANSI_YELLOW);
+		System.out.println();
+		System.out.println("-------------------------------------------------");
+		System.out.println();
 		System.out.println("Application Powered by TRCG Annotation Engine");
 		System.out.println("(R) 2020 Author: Fabrizio Torelli");
 		System.out.println();
 		System.out.println("-------------------------------------------------");
+		System.out.println();
 		System.out.println("Disclaimer:");
+		System.out.println();
 		System.out.print(ColorConstants.ANSI_RESET);
 		System.out.print(ColorConstants.ANSI_YELLOW + ColorConstants.ANSI_UNDERLINE);
 		System.out.println("All rights reserved, any commercial or production");
@@ -42,7 +48,8 @@ public final class Foundation {
 		System.out.print(ColorConstants.ANSI_YELLOW);
 		System.out.println("-------------------------------------------------");
 		System.out.print(ColorConstants.ANSI_RESET);
-
+		System.out.println();
+		System.out.println();
 	}
 
 }

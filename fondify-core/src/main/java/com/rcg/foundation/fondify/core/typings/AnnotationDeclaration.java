@@ -10,20 +10,20 @@ import java.util.stream.Collectors;
 
 public class AnnotationDeclaration {
 	private Annotation annotation = null;
-	private Class<?> annotationClass;
+	private Class<?> annotatedClass;
 	private Method annotationMethod;
 	private Parameter annotationParameter;
 	private Field annotationField;
 	/**
-	 * @param annotationClass
+	 * @param annotatedClass
 	 * @param annotationMethod
 	 * @param annotationParameter
 	 * @param annotationField
 	 */
-	public AnnotationDeclaration(Class<? extends Annotation> annotationDeclarationClass, Class<?> annotationClass, Field annotationField, Method annotationMethod,
+	public AnnotationDeclaration(Class<? extends Annotation> annotationDeclarationClass, Class<?> annotatedClass, Field annotationField, Method annotationMethod,
 			Parameter annotationParameter) {
 		super();
-		this.annotationClass = annotationClass;
+		this.annotatedClass = annotatedClass;
 		this.annotationMethod = annotationMethod;
 		this.annotationParameter = annotationParameter;
 		this.annotationField = annotationField;
@@ -48,8 +48,8 @@ public class AnnotationDeclaration {
 			if ( aList.size() > 0 ) {
 				this.annotation = aList.get(0);
 			}
-		} else if (annotationClass != null) {
-			List<Annotation> aList = Arrays.asList(annotationClass.getAnnotations()).stream()
+		} else if (annotatedClass != null) {
+			List<Annotation> aList = Arrays.asList(annotatedClass.getAnnotations()).stream()
 					.filter( an -> annotationDeclarationClass.isAssignableFrom(an.getClass()) )
 					.collect(Collectors.toList());
 			if ( aList.size() > 0 ) {
@@ -64,10 +64,10 @@ public class AnnotationDeclaration {
 		return annotation;
 	}
 	/**
-	 * @return the annotationClass
+	 * @return the annotatedClass
 	 */
-	public Class<?> getAnnotationClass() {
-		return annotationClass;
+	public Class<?> getAnnotatedClass() {
+		return annotatedClass;
 	}
 	/**
 	 * @return the annotationMethod
@@ -89,7 +89,7 @@ public class AnnotationDeclaration {
 	}
 	
 	public AnnotationDeclarationType getAnnotationDeclarationType() {
-		if (annotationClass == null) {
+		if (annotatedClass == null) {
 			return AnnotationDeclarationType.NONE;
 		}
 		if ( annotationField == null && annotationMethod == null &&

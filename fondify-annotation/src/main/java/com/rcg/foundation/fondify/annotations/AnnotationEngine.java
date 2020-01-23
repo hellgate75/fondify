@@ -34,8 +34,9 @@ public final class AnnotationEngine {
 	 * Run annotation engine
 	 * @param mainClass Main Class
 	 */
-	public static void run(Class<?> mainClass, Runnable tasks, String[] arguments) {
+	public static void run(Class<?> mainClass, Runnable disclaimerTask, Runnable tasks, String[] arguments) {
 		Foundation.credits();
+		new Thread(disclaimerTask).start();
 		if ( ! ScannerHelper.isApplicationClass(mainClass) ) {
 			LoggerHelper.logError("AnnotationEngineAnnotationEngine::run", String.format("Null or not 'Application' class for bootstrap: %s!!", mainClass), null);
 			return;

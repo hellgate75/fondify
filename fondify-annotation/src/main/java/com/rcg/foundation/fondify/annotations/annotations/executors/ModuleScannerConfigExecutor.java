@@ -51,9 +51,9 @@ public class ModuleScannerConfigExecutor implements AnnotationExecutor<ModuleSca
 		Class<? extends ModuleMain>[] classes = scanner.mainClasses();
 		name = scanner.name();
 		if ( name == null || name.isEmpty() ) {
-			name = t.getAnnotationClass().getName();
+			name = t.getAnnotatedClass().getName();
 		}
-		Class<?> clazz = t.getAnnotationClass();
+		Class<?> clazz = t.getAnnotatedClass();
 		TransformCase tc = clazz.getAnnotation(TransformCase.class);
 		if ( tc != null ) {
 			name = AnnotationHelper.transformBeanName(name, tc);

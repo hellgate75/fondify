@@ -29,6 +29,7 @@
   	<tools.jackson.databind.version>2.10.1</tools.jackson.databind.version>
   	<parser.jackson-databind.version>2.10.1</parser.jackson-databind.version>
   	<snakeyaml.version>1.25</snakeyaml.version>
+  	<tools.hezelcast.version>4.0-BETA-1</tools.hezelcast.version>
 
 
   	<tests.junit.version>4.13-rc-1</tests.junit.version>
@@ -119,6 +120,13 @@
 	    <groupId>org.yaml</groupId>
 	    <artifactId>snakeyaml</artifactId>
 	    <version>${snakeyaml.version}</version>
+	</dependency>
+	
+	<!-- Clustering -->
+	<dependency>
+	    <groupId>com.hazelcast</groupId>
+	    <artifactId>hazelcast-all</artifactId>
+	    <version>${tools.hezelcast.version}</version>
 	</dependency>
 	
 	<!-- Logging -->

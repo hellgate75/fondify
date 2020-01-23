@@ -59,7 +59,7 @@ public class ConfigurationExecutor implements AnnotationExecutor<Configuration> 
 		Configuration configuration = (Configuration)t.getAnnotation();
 		Scope scope = Scope.APPLICATION;
 		BeanDefinition definition = new BeanDefinition(t);
-		Class<?> elementClass = t.getAnnotationClass();
+		Class<?> elementClass = t.getAnnotatedClass();
 		beanName = elementClass.getSimpleName();
 		TransformCase caseTransformer = elementClass.getAnnotation(TransformCase.class);
 		if ( caseTransformer != null ) {

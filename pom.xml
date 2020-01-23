@@ -10,5 +10,6 @@
   	<module>fondify-core</module>
   	<module>fondify-annotations</module>
   	<module>fondify-properties</module>
+  	<module>fondify-components</module>
   </modules>
 </project>

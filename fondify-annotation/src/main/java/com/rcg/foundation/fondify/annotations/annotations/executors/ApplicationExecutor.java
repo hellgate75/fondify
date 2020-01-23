@@ -45,7 +45,7 @@ public class ApplicationExecutor implements AnnotationExecutor<Application> {
 		name = "Application";
 		Application application = (Application)t.getAnnotation();
 		ApplicationType type = application.scope();
-		name = t.getAnnotationClass().getName();
+		name = t.getAnnotatedClass().getName();
 		String message = "";
 		ExecutionAnswer<Application> answer = new ExecutionAnswer<>(Application.class, message, false, false);
 		answer.addResult(type);
