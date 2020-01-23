@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 public class AnnotationDeclaration {
 	private Annotation annotation = null;
 	private Class<?> annotatedClass;
+	private Class<? extends Annotation> annotationDeclarationClass = null;
 	private Method annotationMethod;
 	private Parameter annotationParameter;
 	private Field annotationField;
@@ -23,6 +24,7 @@ public class AnnotationDeclaration {
 	public AnnotationDeclaration(Class<? extends Annotation> annotationDeclarationClass, Class<?> annotatedClass, Field annotationField, Method annotationMethod,
 			Parameter annotationParameter) {
 		super();
+		this.annotationDeclarationClass = annotationDeclarationClass;
 		this.annotatedClass = annotatedClass;
 		this.annotationMethod = annotationMethod;
 		this.annotationParameter = annotationParameter;
@@ -62,6 +64,14 @@ public class AnnotationDeclaration {
 	 */
 	public Annotation getAnnotation() {
 		return annotation;
+	}
+	
+	
+	/**
+	 * @return the annotationDeclarationClass
+	 */
+	public Class<? extends Annotation> getAnnotationDeclarationClass() {
+		return annotationDeclarationClass;
 	}
 	/**
 	 * @return the annotatedClass
