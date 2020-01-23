@@ -3,6 +3,7 @@
  */
 package com.rcg.foundation.fondify.core.typings;
 
+import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 
@@ -25,4 +26,12 @@ public interface ModuleScanner {
 	 * @return <List<AnnotationDeclaration>> list of module related annotations declaration
 	 */
 	List<AnnotationDeclaration> annotations();
+	
+	
+	/**
+	 * Gets all declared annotations class
+	 * @return (Class<? extends Annotation>) list of module related annotations declared types
+	 */
+	List<Class<? extends Annotation>> annotationTypes();
+
 }

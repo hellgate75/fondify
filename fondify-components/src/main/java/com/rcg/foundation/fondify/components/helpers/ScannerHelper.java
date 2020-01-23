@@ -32,7 +32,7 @@ public class ScannerHelper extends com.rcg.foundation.fondify.annotations.helper
 		com.rcg.foundation.fondify.annotations.helpers.ScannerHelper.DEFAULT_SCANNERS.add("com.rcg.streams.streamio.web.WebModuleScanner");
 		com.rcg.foundation.fondify.annotations.helpers.ScannerHelper.annotationDescriptorsRegistryKey = AnnotationConstants.REGISTRY_ANNOTATION_DESCRIPTORS;
 	}
-
+	
 	/**
 	 * Denied access constructor
 	 */

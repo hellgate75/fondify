@@ -6,6 +6,7 @@ package com.rcg.foundation.fondify.annotations.annotations.executors;
 import com.rcg.foundation.fondify.annotations.annotations.Application;
 import com.rcg.foundation.fondify.core.domain.ApplicationType;
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
+import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
 import com.rcg.foundation.fondify.core.typings.ExecutionAnswer;
@@ -16,7 +17,7 @@ import com.rcg.foundation.fondify.core.typings.ExecutionAnswer;
  */
 public class ApplicationExecutor implements AnnotationExecutor<Application> {
 
-	String name = "StreamIOApplication";
+	String name = "Application";
 	
 	/**
 	 * 
@@ -42,6 +43,7 @@ public class ApplicationExecutor implements AnnotationExecutor<Application> {
 
 	@Override
 	public ExecutionAnswer<Application> executeAnnotation(AnnotationDeclaration t) throws ProcessException {
+		LoggerHelper.logTrace("ApplicationExecutor::executeAnnotation(Application)", "Executing annotation in TRCG Annotation Engine Annotations Module");
 		name = "Application";
 		Application application = (Application)t.getAnnotation();
 		ApplicationType type = application.scope();

@@ -22,38 +22,58 @@ public final class LoggerHelper {
 
 	public static synchronized void logTrace(String place, String message) {
 		if ( message != null && ! message.isEmpty() ) {
-			System.out.print(ColorConstants.ANSI_YELLOW);
+			if ( ! ArgumentsHelper.useLogger ) {
+				System.out.print(ColorConstants.ANSI_YELLOW);
+			}
 			LOGGER.trace(String.format("%s::trace >> %s", place, message));
-			System.out.print(ColorConstants.ANSI_RESET);
+			if ( ! ArgumentsHelper.useLogger ) {
+				System.out.print(ColorConstants.ANSI_RESET);
+			}
 		}
 	}
 
 	public static synchronized void logDebug(String place, String message) {
 		if ( message != null && ! message.isEmpty() ) {
-			System.out.print(ColorConstants.ANSI_YELLOW);
+			if ( ! ArgumentsHelper.useLogger ) {
+				System.out.print(ColorConstants.ANSI_YELLOW);
+			}
 			LOGGER.debug(String.format("%s::debug >> %s", place, message));
-			System.out.print(ColorConstants.ANSI_RESET);
+			if ( ! ArgumentsHelper.useLogger ) {
+				System.out.print(ColorConstants.ANSI_RESET);
+			}
 		}
 	}
 
 	public static synchronized void logInfo(String place, String message) {
 		if ( message != null && ! message.isEmpty() ) {
-			System.out.print(ColorConstants.ANSI_WHITE);
+			if ( ! ArgumentsHelper.useLogger ) {
+				System.out.print(ColorConstants.ANSI_WHITE);
+			}
 			LOGGER.info(String.format("%s::info >> %s", place, message));
-			System.out.print(ColorConstants.ANSI_RESET);
+			if ( ! ArgumentsHelper.useLogger ) {
+				System.out.print(ColorConstants.ANSI_RESET);
+			}
 		}
 	}
 
 	public static synchronized void logWarn(String place, String message, Exception ex) {
 		if ( message != null && ! message.isEmpty() ) {
-			System.out.print(ColorConstants.ANSI_YELLOW);
+			if ( ! ArgumentsHelper.useLogger ) {
+				System.out.print(ColorConstants.ANSI_YELLOW);
+			}
 			LOGGER.warn(String.format("%s::warn >> %s", place, message));
-			System.out.print(ColorConstants.ANSI_RESET);
+			if ( ! ArgumentsHelper.useLogger ) {
+				System.out.print(ColorConstants.ANSI_RESET);
+			}
 		}
 		if ( ex != null ) {
-			System.out.print(ColorConstants.ANSI_RESET);
+			if ( ! ArgumentsHelper.useLogger ) {
+				System.out.print(ColorConstants.ANSI_RED);
+			}
 			LOGGER.error(String.format("%s::warn >> %s -> %s", place, ex.getMessage(), GenericHelper.convertStackTrace(ex.getStackTrace())));
-			System.out.print(ColorConstants.ANSI_RESET);
+			if ( ! ArgumentsHelper.useLogger ) {
+				System.out.print(ColorConstants.ANSI_RESET);
+			}
 		}
 	}
 
@@ -61,18 +81,28 @@ public final class LoggerHelper {
 		if ( message != null && ! message.isEmpty() ) {
 			System.out.print(ColorConstants.ANSI_RED);
 			LOGGER.error(String.format("%s::error >> %s", place, message));
-			System.out.print(ColorConstants.ANSI_RESET);
+			if ( ! ArgumentsHelper.useLogger ) {
+				System.out.print(ColorConstants.ANSI_RESET);
+			}
 		}
 		if ( ex != null ) {
-			System.out.print(ColorConstants.ANSI_RED);
+			if ( ! ArgumentsHelper.useLogger ) {
+				System.out.print(ColorConstants.ANSI_RED);
+			}
 			LOGGER.error(String.format("%s::error >> %s -> %s", place, ex.getMessage(), GenericHelper.convertStackTrace(ex.getStackTrace())));
-			System.out.print(ColorConstants.ANSI_RESET);
+			if ( ! ArgumentsHelper.useLogger ) {
+				System.out.print(ColorConstants.ANSI_RESET);
+			}
 		}
 	}
 	
 	protected static synchronized void logText(String text) {
-		System.out.print(ColorConstants.ANSI_GREEN);
+		if ( ! ArgumentsHelper.useLogger ) {
+			System.out.print(ColorConstants.ANSI_GREEN);
+		}
 		LOGGER.info(text);
-		System.out.print(ColorConstants.ANSI_RESET);
+		if ( ! ArgumentsHelper.useLogger ) {
+			System.out.print(ColorConstants.ANSI_RESET);
+		}
 	}
 }

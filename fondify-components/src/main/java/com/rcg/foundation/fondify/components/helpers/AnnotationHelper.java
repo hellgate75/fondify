@@ -66,6 +66,14 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 	
 	public static final String getClassBeanName(Class<?> beanClass, String proposed) {
 		String name = proposed != null && ! proposed.isEmpty() ? proposed :  beanClass.getSimpleName();
+		Component compAnn = beanClass.getAnnotation(Component.class); 
+		if ( compAnn != null && compAnn.value() != null && ! compAnn.value().isEmpty() ) {
+			proposed = compAnn.value();
+		}
+		Injectable injAnn = beanClass.getAnnotation(Injectable.class); 
+		if ( injAnn != null && injAnn.component().value() != null && ! injAnn.component().value().isEmpty() ) {
+			proposed = injAnn.component().value();
+		}
 		TransformCase caseTransformer = beanClass.getAnnotation(TransformCase.class);
 		if ( caseTransformer != null ) {
 			name = com.rcg.foundation.fondify.annotations.helpers.AnnotationHelper.transformBeanName(name, caseTransformer);
@@ -75,6 +83,14 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 	
 	public static final String getClassMethodBeanName(Method m, String proposed) {
 		String name = proposed != null && ! proposed.isEmpty() ? proposed :  m.getName();
+		Component compAnn = m.getAnnotation(Component.class); 
+		if ( compAnn != null && compAnn.value() != null && ! compAnn.value().isEmpty() ) {
+			proposed = compAnn.value();
+		}
+		Injectable injAnn = m.getAnnotation(Injectable.class); 
+		if ( injAnn != null && injAnn.component().value() != null && ! injAnn.component().value().isEmpty() ) {
+			proposed = injAnn.component().value();
+		}
 		TransformCase caseTransformer = m.getAnnotation(TransformCase.class);
 		if ( caseTransformer != null ) {
 			name = com.rcg.foundation.fondify.annotations.helpers.AnnotationHelper.transformBeanName(name, caseTransformer);
@@ -84,6 +100,14 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 	
 	public static final String getClassFieldBeanName(Field f, String proposed) {
 		String name = proposed != null && ! proposed.isEmpty() ? proposed :  f.getName();
+		Component compAnn = f.getAnnotation(Component.class); 
+		if ( compAnn != null && compAnn.value() != null && ! compAnn.value().isEmpty() ) {
+			proposed = compAnn.value();
+		}
+		Injectable injAnn = f.getAnnotation(Injectable.class); 
+		if ( injAnn != null && injAnn.component().value() != null && ! injAnn.component().value().isEmpty() ) {
+			proposed = injAnn.component().value();
+		}
 		TransformCase caseTransformer = f.getAnnotation(TransformCase.class);
 		if ( caseTransformer != null ) {
 			name = com.rcg.foundation.fondify.annotations.helpers.AnnotationHelper.transformBeanName(name, caseTransformer);
@@ -93,6 +117,14 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 	
 	public static final String getMethodParameterBeanName(Parameter p, String proposed) {
 		String name = proposed != null && ! proposed.isEmpty() ? proposed :  p.getName();
+		Component compAnn = p.getAnnotation(Component.class); 
+		if ( compAnn != null && compAnn.value() != null && ! compAnn.value().isEmpty() ) {
+			proposed = compAnn.value();
+		}
+		Injectable injAnn = p.getAnnotation(Injectable.class); 
+		if ( injAnn != null && injAnn.component().value() != null && ! injAnn.component().value().isEmpty() ) {
+			proposed = injAnn.component().value();
+		}
 		TransformCase caseTransformer = p.getAnnotation(TransformCase.class);
 		if ( caseTransformer != null ) {
 			name = com.rcg.foundation.fondify.annotations.helpers.AnnotationHelper.transformBeanName(name, caseTransformer);

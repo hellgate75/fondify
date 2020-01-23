@@ -4,6 +4,7 @@
 package com.rcg.foundation.fondify.core;
 
 import com.rcg.foundation.fondify.core.constants.ColorConstants;
+import com.rcg.foundation.fondify.core.helpers.ArgumentsHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
@@ -19,8 +20,10 @@ public final class Foundation {
 	}
 	
 	public static final void credits() {
-		ColorConstants.initConsole();
-		System.out.print(ColorConstants.ANSI_YELLOW);
+		if ( ! ArgumentsHelper.useLogger ) {
+			ColorConstants.initConsole();
+			System.out.print(ColorConstants.ANSI_YELLOW);
+		}
 		System.out.println();
 		System.out.println("-------------------------------------------------");
 		System.out.println();
@@ -31,8 +34,10 @@ public final class Foundation {
 		System.out.println();
 		System.out.println("Disclaimer:");
 		System.out.println();
-		System.out.print(ColorConstants.ANSI_RESET);
-		System.out.print(ColorConstants.ANSI_YELLOW + ColorConstants.ANSI_UNDERLINE);
+		if ( ! ArgumentsHelper.useLogger ) {
+			System.out.print(ColorConstants.ANSI_RESET);
+			System.out.print(ColorConstants.ANSI_YELLOW + ColorConstants.ANSI_UNDERLINE);
+		}
 		System.out.println("All rights reserved, any commercial or production");
 		System.out.println("use must be nogotiated with the author, it's mot");
 		System.out.println("provided any warranty for the free use of the ");
@@ -40,14 +45,20 @@ public final class Foundation {
 		System.out.println("damage for the free use of the product. For any ");
 		System.out.println("further information please contact the author");
 		System.out.print("at the following address:");
-		System.out.print(ColorConstants.ANSI_RESET);
-		System.out.print(ColorConstants.ANSI_YELLOW);
-		System.out.print(ColorConstants.ANSI_HIGH_INTENSITY);
+		if ( ! ArgumentsHelper.useLogger ) {
+			System.out.print(ColorConstants.ANSI_RESET);
+			System.out.print(ColorConstants.ANSI_YELLOW);
+			System.out.print(ColorConstants.ANSI_HIGH_INTENSITY);
+		}
 		System.out.println("hellgate75@gmail.com");
-		System.out.print(ColorConstants.ANSI_RESET);
-		System.out.print(ColorConstants.ANSI_YELLOW);
+		if ( ! ArgumentsHelper.useLogger ) {
+			System.out.print(ColorConstants.ANSI_RESET);
+			System.out.print(ColorConstants.ANSI_YELLOW);
+		}
 		System.out.println("-------------------------------------------------");
-		System.out.print(ColorConstants.ANSI_RESET);
+		if ( ! ArgumentsHelper.useLogger ) {
+			System.out.print(ColorConstants.ANSI_RESET);
+		}
 		System.out.println();
 		System.out.println();
 	}

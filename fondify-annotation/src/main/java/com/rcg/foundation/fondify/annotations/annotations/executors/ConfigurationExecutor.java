@@ -7,12 +7,14 @@ import java.util.Arrays;
 
 import com.rcg.foundation.fondify.annotations.annotations.Configuration;
 import com.rcg.foundation.fondify.annotations.annotations.TransformCase;
+import com.rcg.foundation.fondify.annotations.contants.AnnotationConstants;
 import com.rcg.foundation.fondify.annotations.helpers.ScriptsHelper;
 import com.rcg.foundation.fondify.annotations.typings.BeanDefinition;
 import com.rcg.foundation.fondify.annotations.helpers.AnnotationHelper;
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
 import com.rcg.foundation.fondify.core.functions.BiProcessor;
+import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
 import com.rcg.foundation.fondify.core.typings.ExecutionAnswer;
@@ -24,9 +26,11 @@ import com.rcg.foundation.fondify.core.typings.ExecutionAnswer;
 public class ConfigurationExecutor implements AnnotationExecutor<Configuration> {
 	String beanName = "Configuration";
 	
-	public static String configurationLoadersRegistryKey="ConfigLoaders";
+	public static String configurationLoadersRegistryKey=AnnotationConstants.REGISTRY_CLASS_CONFIG_LOADERS;
 	
-	public static BiProcessor<Class<?>, BeanDefinition> beanDefinitionProcessor = (cls, bean, args) -> {};
+	public static BiProcessor<Class<?>, BeanDefinition> beanDefinitionProcessor = (elementClass, definition, arguments) -> {
+		LoggerHelper.logWarn("ConfigurationExecutor::init", "No customizetion for Bean Definition Processor feature, please customize with code used to execute and maintain your Method and Field Scanning feature for the single bean definition in Configuration annotation", null);
+	};
 	
 	/**
 	 * 
@@ -52,6 +56,7 @@ public class ConfigurationExecutor implements AnnotationExecutor<Configuration> 
 
 	@Override
 	public ExecutionAnswer<Configuration> executeAnnotation(AnnotationDeclaration t) throws ProcessException {
+		LoggerHelper.logTrace("ConfigurationExecutor::executeAnnotation(Configuration)", "Executing annotation in TRCG Annotation Engine Annotations Module");
 		String message="";
 		boolean warnings = false;
 		boolean errors = false;

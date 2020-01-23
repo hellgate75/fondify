@@ -45,6 +45,7 @@ public class PropertiesSetExecutor implements AnnotationExecutor<PropertiesSet> 
 
 	@Override
 	public ExecutionAnswer<PropertiesSet> executeAnnotation(AnnotationDeclaration t) throws ProcessException {
+		LoggerHelper.logTrace("PropertiesSetExecutor::executeAnnotation(PropertiesSet)", "Executing annotation in TRCG Annotation Engine Properties Module");
 		String message = "";
 		boolean warnings = false;
 		PropertiesSet set = (PropertiesSet) t.getAnnotation();

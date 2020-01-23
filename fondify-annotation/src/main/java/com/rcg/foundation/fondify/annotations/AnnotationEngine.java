@@ -3,6 +3,9 @@
  */
 package com.rcg.foundation.fondify.annotations;
 
+import static com.rcg.foundation.fondify.annotations.helpers.ScannerHelper.executeProvidedBaseAnnotationExecutors;
+import static com.rcg.foundation.fondify.annotations.helpers.ScannerHelper.scanBaseElementsAndStoreData;
+
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -42,14 +45,18 @@ public final class AnnotationEngine {
 			return;
 		}
 		
+		scanBaseElementsAndStoreData();
+		
+		executeProvidedBaseAnnotationExecutors();
+
 		ScannerHelper.collectModuleScanners();
 
 		ScannerHelper.executeScannerMainClasses();
 		
-		List<? extends Annotation> annotations = ScannerHelper.getApplicationClassAnnotations(mainClass);
-		
 		//Running extra annotation seek tasks
 		new Thread(tasks).start();
+		
+		List<? extends Annotation> annotations = ScannerHelper.getApplicationClassAnnotations(mainClass);
 
 		annotations
 		.stream()

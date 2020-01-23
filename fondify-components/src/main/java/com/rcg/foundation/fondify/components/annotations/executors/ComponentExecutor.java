@@ -14,6 +14,7 @@ import com.rcg.foundation.fondify.components.annotations.Inject;
 import com.rcg.foundation.fondify.components.helpers.AnnotationHelper;
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
+import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
 import com.rcg.foundation.fondify.core.typings.ExecutionAnswer;
@@ -65,6 +66,7 @@ public class ComponentExecutor implements AnnotationExecutor<Component> {
 	
 	@Override
 	public ExecutionAnswer<Component> executeAnnotation(AnnotationDeclaration t) throws ProcessException {
+		LoggerHelper.logTrace("ComponentExecutor::executeAnnotation(Component)", "Executing annotation in TRCG Annotation Engine Component Module");
 		String message="";
 		boolean warnings = false;
 		boolean errors = false;
@@ -73,11 +75,7 @@ public class ComponentExecutor implements AnnotationExecutor<Component> {
 		Scope scope = component.scope();
 		BeanDefinition definition = new BeanDefinition(t);
 		Class<?> elementClass = t.getAnnotatedClass();
-		beanName = elementClass.getSimpleName();
-		if ( ! component.value().isEmpty() ) {
-			beanName = component.value();
-		}
-		beanName = AnnotationHelper.getClassBeanName(elementClass, beanName);
+		beanName = AnnotationHelper.getClassBeanName(elementClass, elementClass.getSimpleName());
 		definition.setScope(scope);
 
 		AnnotationHelper.processFieldsAnnotations(elementClass, definition, beanName, ComponentExecutor::filterComponentFieldAnnotation);

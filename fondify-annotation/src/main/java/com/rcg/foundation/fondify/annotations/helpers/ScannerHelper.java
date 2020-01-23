@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
@@ -33,14 +34,18 @@ import com.rcg.foundation.fondify.annotations.annotations.ComponentsScan;
 import com.rcg.foundation.fondify.annotations.annotations.Configuration;
 import com.rcg.foundation.fondify.annotations.annotations.DependsOn;
 import com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig;
+import com.rcg.foundation.fondify.annotations.contants.AnnotationConstants;
 import com.rcg.foundation.fondify.core.exceptions.ScannerException;
 import com.rcg.foundation.fondify.core.functions.Matcher;
 import com.rcg.foundation.fondify.core.functions.Processor;
+import com.rcg.foundation.fondify.core.helpers.ArgumentsHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
 import com.rcg.foundation.fondify.core.registry.typings.ComponentRegistryItem;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
+import com.rcg.foundation.fondify.core.typings.AnnotationEngineInitializer;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
+import com.rcg.foundation.fondify.core.typings.AnnotationTypesCollector;
 import com.rcg.foundation.fondify.core.typings.ModuleMain;
 import com.rcg.foundation.fondify.core.typings.ModuleScanner;
 
@@ -63,6 +68,8 @@ public class ScannerHelper {
 	private static ExecutorService executorService = null;
 	
 	public static String annotationDescriptorsRegistryKey="AnnotationDescriptorsKey";
+	private static final List<Class<? extends Annotation>> baseAnnotationTypes = new ArrayList<>(0);
+	private static final Map<Class<? extends Annotation>, List<AnnotationDeclaration>> annotationsDeclarationMaps =  new ConcurrentHashMap<>(0);
 
 	/**
 	 * Denied access constructor
@@ -365,6 +372,24 @@ public class ScannerHelper {
 		List<Class<? extends T>> classes = new ArrayList<Class<? extends T>>(0);
 		Reflections r = new Reflections(builder.addScanners(new SubTypesScanner()));
 		classes.addAll(r.getSubTypesOf(superClass));
+		return classes;
+	}
+
+	/**
+	 * Collect all subTypes of provided interface or class one.
+	 * 
+	 * @param <T>
+	 * @param builder    Base package scanner builder
+	 * @param superClass implemented class or interface
+	 * @return list if sub types of provided one
+	 */
+	public static final List<Class<?>> collectSubTypesOf(ConfigurationBuilder builder,
+			List<Class<?>> superClassList) {
+		List<Class<?>> classes = new ArrayList<>(0);
+		Reflections r = new Reflections(builder.addScanners(new SubTypesScanner()));
+		superClassList.forEach(superClass -> {
+			classes.addAll(r.getSubTypesOf(superClass));
+		});
 		return classes;
 	}
 
@@ -779,5 +804,77 @@ public class ScannerHelper {
 		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners",
 				"Collection of exclusion class list and filtering of allowed scanners complete!!");
 	
+	}
+
+	/**
+	 * @return
+	 */
+	public static final List<Class<? extends Annotation>> getBaseAnnotationTypes() {
+		return baseAnnotationTypes;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static final void scanBaseElementsAndStoreData() {
+		ScannerHelper
+		.collectSubTypesOf(ScannerHelper.getRefletionsByPackages(new String[0]), Arrays.asList(new Class<?>[] {
+				AnnotationEngineInitializer.class,
+				AnnotationExecutor.class,
+				AnnotationTypesCollector.class
+			}))
+		.forEach(elementClass -> {
+			if ( AnnotationEngineInitializer.class.isAssignableFrom(elementClass) ) {
+				try {
+					LoggerHelper.logTrace("ScannerHelper::scanBaseElementsAndStoreData", "Running annotation engine initializer : " + elementClass);
+					((Class<AnnotationEngineInitializer>)elementClass).newInstance().initialize();
+				} catch (Exception e) {
+					LoggerHelper.logError("ScannerHelper::scanBaseElementsAndStoreData", "Errors during execution of annotation engine initializer : " + elementClass, e);
+				}
+			} else if ( AnnotationExecutor.class.isAssignableFrom(elementClass) ) {
+				try {
+					LoggerHelper.logTrace("ScannerHelper::scanBaseElementsAndStoreData", "Found Annotation executor: : " + elementClass);
+					AnnotationExecutor<? extends Annotation> executor = (AnnotationExecutor<? extends Annotation>) elementClass.newInstance();
+					ComponentsRegistry.getInstance().add(AnnotationConstants.REGISTRY_CLASS_ANNOTATION_EXECUTORS, executor.getAnnotationClass().getName(), executor);
+				} catch (Exception ex) {
+					LoggerHelper.logError("ScannerHelper::scanBaseElementsAndStoreData", String.format("Errors during collection of executor", ""+elementClass), ex);
+				}
+			} else if ( AnnotationTypesCollector.class.isAssignableFrom(elementClass) ) {
+				try {
+					LoggerHelper.logTrace("ScannerHelper::scanBaseElementsAndStoreData", "Found annotation engine Annotation Collector : " + elementClass);
+					baseAnnotationTypes.addAll(
+							((Class<AnnotationTypesCollector>)elementClass).newInstance().listAnnotationTypes()
+					);
+				} catch (Exception e) {
+					LoggerHelper.logError("ScannerHelper::scanBaseElementsAndStoreData", "Errors during execution of annotation engine initializer : " + elementClass, e);
+				}
+			} else {
+				
+			}
+		});
+	}
+	
+	public static final void executeProvidedBaseAnnotationExecutors() {
+		ConfigurationBuilder builder = ScannerHelper.getRefletionsByPackages(ScannerHelper.collectScanningPackages());
+		annotationsDeclarationMaps.putAll(
+				ScannerHelper.collectAnnotations(builder, baseAnnotationTypes)
+		);
+		annotationsDeclarationMaps
+			.entrySet()
+			.forEach(entry -> {
+				String className = entry.getKey().getClass().getName();
+				AnnotationExecutor<? extends Annotation> executor = ComponentsRegistry.getInstance().get(AnnotationConstants.REGISTRY_CLASS_ANNOTATION_EXECUTORS, className);
+				if ( executor != null ) {
+					entry.getValue().forEach(ad -> {
+						try {
+							executor.executeAnnotation(ad);
+						} catch (Exception e) {
+							LoggerHelper.logError("ScannerHelper::executeProvidedBaseAnnotationExecutors", 
+									String.format("Unable to execute annotation executor for annotation class %s : Error executing executor : %s", className, executor.getClass().getName()), e);
+						}
+					});
+				} else {
+					LoggerHelper.logWarn("ScannerHelper::executeProvidedBaseAnnotationExecutors", 
+							String.format("Unable to execute annotation executor for annotation class %s : EXECUTOR NOT FOUND", className), null);
+				}
+			});
 	}
 }

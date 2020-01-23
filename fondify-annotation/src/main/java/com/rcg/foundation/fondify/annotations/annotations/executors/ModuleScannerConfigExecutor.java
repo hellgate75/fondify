@@ -9,6 +9,7 @@ import com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig;
 import com.rcg.foundation.fondify.annotations.annotations.TransformCase;
 import com.rcg.foundation.fondify.annotations.helpers.AnnotationHelper;
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
+import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
 import com.rcg.foundation.fondify.core.typings.ExecutionAnswer;
@@ -46,6 +47,7 @@ public class ModuleScannerConfigExecutor implements AnnotationExecutor<ModuleSca
 
 	@Override
 	public ExecutionAnswer<ModuleScannerConfig> executeAnnotation(AnnotationDeclaration t) throws ProcessException {
+		LoggerHelper.logTrace("ModuleScannerConfigExecutor::executeAnnotation(ModuleScannerConfig)", "Executing annotation in TRCG Annotation Engine Annotations Module");
 		name = "ModuleScanner";
 		ModuleScannerConfig scanner = (ModuleScannerConfig)t.getAnnotation();
 		Class<? extends ModuleMain>[] classes = scanner.mainClasses();

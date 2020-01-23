@@ -11,12 +11,12 @@ import com.rcg.foundation.fondify.annotations.annotations.methods.Initialization
 import com.rcg.foundation.fondify.annotations.typings.BeanDefinition;
 import com.rcg.foundation.fondify.annotations.typings.MethodExecutor;
 import com.rcg.foundation.fondify.components.annotations.Autowired;
-import com.rcg.foundation.fondify.components.annotations.Component;
 import com.rcg.foundation.fondify.components.annotations.Inject;
 import com.rcg.foundation.fondify.components.annotations.Injectable;
 import com.rcg.foundation.fondify.components.helpers.AnnotationHelper;
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
+import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclarationType;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
@@ -69,19 +69,18 @@ public class InjectableExecutor implements AnnotationExecutor<Injectable> {
 	
 	@Override
 	public ExecutionAnswer<Injectable> executeAnnotation(AnnotationDeclaration t) throws ProcessException {
+		LoggerHelper.logTrace("InjectableExecutor::executeAnnotation(Injectable)", "Executing annotation in TRCG Annotation Engine Component Module");
 		String message="";
 		boolean warnings = false;
 		boolean errors = false;
 		ExecutionAnswer<Injectable> answer = new ExecutionAnswer<>(getAnnotationClass(), message, warnings, errors);
-		Injectable component = (Injectable)t.getAnnotation();
-		Scope scope = component.scope();
+		Injectable injectable = (Injectable)t.getAnnotation();
+		Scope scope = injectable.scope();
 		if ( t.getAnnotationDeclarationType() == AnnotationDeclarationType.TYPE ) {
 			BeanDefinition definition = new BeanDefinition(t);
 			Class<?> elementClass = t.getAnnotatedClass();
 			beanName = elementClass.getSimpleName();
-			if ( ! component.component().value().isEmpty() ) {
-				beanName = component.component().value();
-			}
+			beanName = AnnotationHelper.getClassBeanName(elementClass, elementClass.getSimpleName());
 			definition.setScope(scope);
 
 			AnnotationHelper.processFieldsAnnotations(elementClass, definition, beanName, InjectableExecutor::filterComponentFieldAnnotation);
@@ -96,26 +95,9 @@ public class InjectableExecutor implements AnnotationExecutor<Injectable> {
 			Method method = t.getAnnotationMethod();
 			Class<?> annotatedClass = t.getAnnotatedClass();
 			String proposed = annotatedClass.getSimpleName();
-			Component compAnn = annotatedClass.getAnnotation(Component.class); 
-			if ( compAnn != null ) {
-				proposed = compAnn.value();
-			}
-			Injectable injAnn = annotatedClass.getAnnotation(Injectable.class); 
-			if ( injAnn != null ) {
-				proposed = injAnn.component().value();
-			}
 			Initialization initializationAnnotation = method.getAnnotation(Initialization.class);
 			Finalization finalizationAnnotation = method.getAnnotation(Finalization.class);
-			String methodBeanPropesed = method.getName();
-			compAnn = method.getAnnotation(Component.class); 
-			if ( compAnn != null ) {
-				methodBeanPropesed = compAnn.value();
-			}
-			injAnn = method.getAnnotation(Injectable.class); 
-			if ( injAnn != null ) {
-				methodBeanPropesed = injAnn.component().value();
-			}
-			beanName = AnnotationHelper.getClassMethodBeanName(method, methodBeanPropesed);
+			beanName = AnnotationHelper.getClassMethodBeanName(method, method.getName());
 			MethodExecutor executor = new MethodExecutor(beanName, method, initializationAnnotation, finalizationAnnotation);
 			AnnotationHelper
 				.getParametersRefFor(method, annotatedClass, AnnotationHelper.getClassBeanName(annotatedClass, proposed))

@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.rcg.foundation.fondify.annotations.annotations.Defaults;
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
+import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
 import com.rcg.foundation.fondify.core.typings.ExecutionAnswer;
@@ -46,6 +47,7 @@ public class DefaultsExecutor implements AnnotationExecutor<Defaults> {
 
 	@Override
 	public ExecutionAnswer<Defaults> executeAnnotation(AnnotationDeclaration t) throws ProcessException {
+		LoggerHelper.logTrace("DefaultsExecutor::executeAnnotation(Defaults)", "Executing annotation in TRCG Annotation Engine Annotations Module");
 		Defaults defaults = (Defaults) t.getAnnotation();
 		List<String> jobFolders = Collections.synchronizedList(new ArrayList<>(0));
 		jobFolders.addAll(
