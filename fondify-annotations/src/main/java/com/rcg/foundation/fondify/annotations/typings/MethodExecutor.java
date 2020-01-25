@@ -14,8 +14,10 @@ import java.util.stream.Collectors;
 
 import com.rcg.foundation.fondify.annotations.annotations.methods.Finalization;
 import com.rcg.foundation.fondify.annotations.annotations.methods.Initialization;
+import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.functions.Transformer;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
+import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.methods.ParameterRef;
 
 /**
@@ -27,38 +29,61 @@ public class MethodExecutor implements Comparable<MethodExecutor> {
 	private Method method = null;
 	private Initialization initializationAnnotation = null;
 	private Finalization finalizationAnnotation = null;
-	List<ParameterRef> parameters = new ArrayList<>(0);
+	private List<ParameterRef> parameters = new ArrayList<>(0);
+	private AnnotationDeclaration descriptor;
+
+	private Scope scope = Scope.SINGLETON;
 	
 	/**
+	 * @param descriptor
 	 * @param beanName
 	 * @param method
 	 * @param initializationAnnotation
 	 * @param finalizationAnnotation
 	 */
-	public MethodExecutor(String beanName, Method method, Initialization initializationAnnotation, Finalization finalizationAnnotation) {
+	public MethodExecutor(AnnotationDeclaration descriptor, String beanName, Method method, Initialization initializationAnnotation, Finalization finalizationAnnotation) {
 		super();
+		this.descriptor = descriptor;
 		this.beanName = beanName;
 		this.method = method;
 		method.setAccessible(true);
 		this.initializationAnnotation = initializationAnnotation;
 		this.finalizationAnnotation = finalizationAnnotation;
+		com.rcg.foundation.fondify.annotations.annotations.Scope scopeAnn = 
+					method.getAnnotation(com.rcg.foundation.fondify.annotations.annotations.Scope.class);
+		if ( scopeAnn != null ) {
+			this.scope = scopeAnn.value();
+		}
 	}
 
 	/**
+	 * @param descriptor
 	 * @param beanName
 	 * @param method
 	 * @param initializationAnnotation
 	 * @param finalizationAnnotation
 	 * @param fieldsRef
 	 */
-	public MethodExecutor(String beanName, Method method, Initialization initializationAnnotation, Finalization finalizationAnnotation,
+	public MethodExecutor(AnnotationDeclaration descriptor, String beanName, Method method, Initialization initializationAnnotation, Finalization finalizationAnnotation,
 			Collection<ParameterRef> fieldsRef) {
-		this(beanName, method, initializationAnnotation, finalizationAnnotation);
+		this(descriptor, beanName, method, initializationAnnotation, finalizationAnnotation);
 		this.parameters.addAll(fieldsRef);
 	}
 
-	
-	
+	/**
+	 * @return the scope
+	 */
+	public Scope getScope() {
+		return scope;
+	}
+
+	/**
+	 * @param scope the scope to set
+	 */
+	public void setScope(Scope scope) {
+		this.scope = scope;
+	}
+
 	/**
 	 * @return the beanName
 	 */
@@ -71,6 +96,13 @@ public class MethodExecutor implements Comparable<MethodExecutor> {
 	 */
 	public List<ParameterRef> getParameters() {
 		return parameters;
+	}
+
+	/**
+	 * @return the descriptor
+	 */
+	public AnnotationDeclaration getDescriptor() {
+		return descriptor;
 	}
 
 	/**
@@ -123,7 +155,8 @@ public class MethodExecutor implements Comparable<MethodExecutor> {
 	}
 
 	public Object execute(Object instance, Transformer<Annotation, String> valueExtractor, 
-						Transformer<Annotation, Object> autowiredTransformer, Transformer<Annotation, Object> injectTransformer) throws Exception {
+						Transformer<Annotation, Object> autowiredTransformer, Transformer<Annotation, Object> injectTransformer,
+						Transformer<Object, Object> typeFunction) throws Exception {
 		
 		try {
 			Object[] args = new Object[method.getParameterCount()];
@@ -140,9 +173,17 @@ public class MethodExecutor implements Comparable<MethodExecutor> {
 				args[index] = list.get(0).execute(valueExtractor, autowiredTransformer, injectTransformer);
 				counter.incrementAndGet();
 			} );
-			return method.invoke(instance, args);
+			if ( ( initializationAnnotation != null && 
+				 finalizationAnnotation != null ) || 
+				 typeFunction == null ) {
+				return method.invoke(instance, args);
+			}
+			else {
+				Object obj = method.invoke(instance, args);
+				return typeFunction.tranform(obj);
+			}
 		} catch (Exception e) {
-			String message = "Unable to eecute method as follow: " + this;
+			String message = "Unable to execute method as follow: " + this;
 			LoggerHelper.logError("MethodExecutor::execute", message, e);
 			throw new Exception(message, e);
 		}

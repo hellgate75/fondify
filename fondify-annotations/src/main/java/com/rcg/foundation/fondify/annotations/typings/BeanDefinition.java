@@ -3,13 +3,18 @@
  */
 package com.rcg.foundation.fondify.annotations.typings;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import com.rcg.foundation.fondify.annotations.lifecycle.SessionContext;
 import com.rcg.foundation.fondify.core.domain.Scope;
+import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
+import com.rcg.foundation.fondify.core.properties.PropertyArchive;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
+import com.rcg.foundation.fondify.core.typings.Session;
 import com.rcg.foundation.fondify.core.typings.fields.ComponentReference;
 import com.rcg.foundation.fondify.core.typings.methods.PropertyRef;
 
@@ -174,6 +179,53 @@ public class BeanDefinition {
 		} else if (!declaration.equals(other.declaration))
 			return false;
 		return true;
+	}
+	
+	public Object execute(Object defaultValue) {
+		Object instance = defaultValue;
+		if ( instance == null ) {
+			try {
+				this.declaration.getAnnotatedClass().newInstance();
+			} catch (Exception ex) {
+				String message = String.format("Unable to make instance of AnnotationDeclaration element: %s", this.declaration.toString());
+				LoggerHelper.logError("BeanDefinition::execute", 
+										message,
+										ex);
+				throw new IllegalStateException(message, ex);
+			}
+		}
+		propertiesReference.forEach(property ->{
+			String ref = property.getTypeRef();
+			try {
+				Field f = instance.getClass().getField(ref);
+				if ( f != null ) {
+					
+				}
+				String element = property.getPropertyDescr();
+				Object value = null;
+				if ( property.isValueProperty() ) {
+					value = PropertyArchive.getInstance().getProperty(element);
+				} else if (ref.equals("applicationContext") ||
+						Session.class.isAssignableFrom(f.getType())) {
+					
+				} else if (ref.equals("sessionContext") ||
+						SessionContext.class.isAssignableFrom(f.getType())) {
+					
+				} else {
+					
+				}
+				f.set(instance, value);
+			} catch (Exception ex) {
+				String message = String.format("Unable to populate field %s of element: %s", 
+										ref,
+										instance.getClass().getName());
+				LoggerHelper.logError("BeanDefinition::execute", 
+										message,
+										ex);
+				throw new IllegalArgumentException(message, ex);
+			}
+		});
+		return null;
 	}
 
 	@Override

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -217,5 +218,22 @@ public class AnnotationHelper {
 			}
 		}
 		return name;
+	}
+	
+	public static final <T> Optional<T> getImplementedType(Class<T> cls) {
+		
+		return ScannerHelper
+			.collectSubTypesOf(ScannerHelper.getRefletionsByPackages(new String[0]), cls)
+			.stream()
+			.map(anyCls -> {
+				try {
+					return anyCls.newInstance();
+				} catch (Exception e) {
+				}
+				return (T)null;
+			})
+			.filter( instance -> instance != null )
+			.findFirst();
+			
 	}
 }

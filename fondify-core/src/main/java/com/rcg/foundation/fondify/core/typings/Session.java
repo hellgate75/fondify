@@ -10,7 +10,7 @@ import java.util.Properties;
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */
-public interface ApplicationContext {
+public interface Session {
 	
 	Properties getApplicationProperties();
 	

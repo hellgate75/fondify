@@ -11,5 +11,7 @@
   	<module>fondify-annotations</module>
   	<module>fondify-properties</module>
   	<module>fondify-components</module>
+  	<module>fondify-context</module>
+  	<module>fondify-bom</module>
   </modules>
 </project>

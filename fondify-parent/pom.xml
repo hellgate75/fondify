@@ -1,20 +1,22 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <artifactId>fondify-parent</artifactId>
+  <packaging>pom</packaging>
+  <name>Parent Library for Fondify modules</name>
+
   <parent>
     <groupId>com.trcg.fondify</groupId>
     <artifactId>fondify</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>fondify-parent</artifactId>
-  <packaging>pom</packaging>
-  <name>Parent Library for Fondify modules</name>
+
   
   <properties>
 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	<maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     
-    <com.rcg.fondify.varsion>${project.parent.version}</com.rcg.fondify.varsion>
+    <com.rcg.fondify.version>${project.parent.version}</com.rcg.fondify.version>
 
   	<commons.lang.version>3.9</commons.lang.version>
   	<commons.io.version>2.6</commons.io.version>

@@ -14,17 +14,17 @@
   	<dependency>
   		<groupId>com.trcg.fondify</groupId>
   		<artifactId>fondify-core</artifactId>
-  		<version>${com.rcg.fondify.varsion}</version>
+  		<version>${com.rcg.fondify.version}</version>
   	</dependency>
   	<dependency>
   		<groupId>com.trcg.fondify</groupId>
   		<artifactId>fondify-annotations</artifactId>
-  		<version>${com.rcg.fondify.varsion}</version>
+  		<version>${com.rcg.fondify.version}</version>
   	</dependency>
   	<dependency>
   		<groupId>com.trcg.fondify</groupId>
   		<artifactId>fondify-properties</artifactId>
-  		<version>${com.rcg.fondify.varsion}</version>
+  		<version>${com.rcg.fondify.version}</version>
   	</dependency>
   </dependencies>
 </project>

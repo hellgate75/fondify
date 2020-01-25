@@ -53,17 +53,17 @@ public class InjectableExecutor implements AnnotationExecutor<Injectable> {
 		return beanName;
 	}
 	
-	protected static final boolean filterComponentMethodAnnotation(Annotation ann) {
+	public static final boolean filterComponentMethodAnnotation(Annotation ann) {
 		return Initialization.class.isAssignableFrom(ann.getClass()) ||
 				Finalization.class.isAssignableFrom(ann.getClass());
 	}
 	
-	protected static final boolean filterComponentFieldAnnotation(Annotation ann) {
+	public static final boolean filterComponentFieldAnnotation(Annotation ann) {
 		return Autowired.class.isAssignableFrom(ann.getClass()) ||
 				   Inject.class.isAssignableFrom(ann.getClass());
 	}
 	
-	protected static final boolean filterComponentFieldValueAnnotation(Annotation ann) {
+	public static final boolean filterComponentFieldValueAnnotation(Annotation ann) {
 		return Value.class.isAssignableFrom(ann.getClass());
 	}
 	
@@ -76,10 +76,18 @@ public class InjectableExecutor implements AnnotationExecutor<Injectable> {
 		ExecutionAnswer<Injectable> answer = new ExecutionAnswer<>(getAnnotationClass(), message, warnings, errors);
 		Injectable injectable = (Injectable)t.getAnnotation();
 		Scope scope = injectable.scope();
+		beanName = t.getAnnotationDeclarationClass().getSimpleName();
+		if ( injectable.component() != null &&
+				injectable.component().value() != null &&
+				! injectable.component().value().isEmpty()) {
+			beanName = injectable.component().value();
+		} else  {
+			beanName = t.getAnnotatedClass().getSimpleName();
+			beanName = ("" + beanName.charAt(0)).toLowerCase() + beanName.substring(1);
+		}
 		if ( t.getAnnotationDeclarationType() == AnnotationDeclarationType.TYPE ) {
 			BeanDefinition definition = new BeanDefinition(t);
 			Class<?> elementClass = t.getAnnotatedClass();
-			beanName = elementClass.getSimpleName();
 			beanName = AnnotationHelper.getClassBeanName(elementClass, elementClass.getSimpleName());
 			definition.setScope(scope);
 
@@ -98,12 +106,17 @@ public class InjectableExecutor implements AnnotationExecutor<Injectable> {
 			Initialization initializationAnnotation = method.getAnnotation(Initialization.class);
 			Finalization finalizationAnnotation = method.getAnnotation(Finalization.class);
 			beanName = AnnotationHelper.getClassMethodBeanName(method, method.getName());
-			MethodExecutor executor = new MethodExecutor(beanName, method, initializationAnnotation, finalizationAnnotation);
+			MethodExecutor executor = new MethodExecutor(t, beanName, method, initializationAnnotation, finalizationAnnotation);
 			AnnotationHelper
 				.getParametersRefFor(method, annotatedClass, AnnotationHelper.getClassBeanName(annotatedClass, proposed))
-				.forEach(executor::addParameter);
-			
+				.forEach(executor::addParameter);		
 			answer.addResult(executor);
+		} else {
+			LoggerHelper.logWarn("InjectableExecutor::executeAnnotation", 
+								String.format("Unable to instantiate Bean (name: %s) for Injectable with scope: %s", 
+												beanName, 
+												t.getAnnotationDeclarationType().name()),
+								null);
 		}
 		return answer;
 	}

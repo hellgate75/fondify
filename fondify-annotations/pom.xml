@@ -14,7 +14,7 @@
   	<dependency>
   		<groupId>com.trcg.fondify</groupId>
   		<artifactId>fondify-core</artifactId>
-  		<version>${com.rcg.fondify.varsion}</version>
+  		<version>${com.rcg.fondify.version}</version>
   	</dependency>
   </dependencies>
 </project>

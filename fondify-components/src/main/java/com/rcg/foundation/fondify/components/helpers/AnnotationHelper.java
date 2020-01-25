@@ -32,6 +32,7 @@ import com.rcg.foundation.fondify.core.functions.SimpleEntryPredicate;
 import com.rcg.foundation.fondify.core.functions.SimplePredicate;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
+import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
 import com.rcg.foundation.fondify.core.typings.methods.ParameterRef;
 import com.rcg.foundation.fondify.core.typings.methods.PropertyRef;
@@ -307,7 +308,10 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 					if ( Finalization.class.isAssignableFrom(ann.getClass()) ) {
 						finalizationAnnotation = m.getAnnotation(Finalization.class);
 					}
-					MethodExecutor executor = new MethodExecutor(beanName, m, initializationAnnotation, finalizationAnnotation);
+					Class<?> annotatedClass = m.getReturnType();
+					
+					AnnotationDeclaration declaration = new AnnotationDeclaration(ann.getClass(), annotatedClass, null, m, null);
+					MethodExecutor executor = new MethodExecutor(declaration, beanName, m, initializationAnnotation, finalizationAnnotation);
 					final String methodName = beanName;
 					Arrays.asList(m.getParameters())
 						.stream()

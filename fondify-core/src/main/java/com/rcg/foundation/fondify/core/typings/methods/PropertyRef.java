@@ -17,9 +17,9 @@ public class PropertyRef {
 
 	private String propertyDescr;
 	
-	private boolean isTypeProperty;
+	private boolean typeProperty;
 	
-	private boolean isMethodProperty;
+	private boolean valueProperty;
 
 	
 	private Annotation valueAnnotation = null;
@@ -35,17 +35,17 @@ public class PropertyRef {
 	 * @param typeRef
 	 * @param elemRef
 	 * @param propertyDescr
-	 * @param isTypeProperty
-	 * @param isMethodProperty
+	 * @param typeProperty
+	 * @param valueProperty
 	 */
-	public PropertyRef(String typeRef, String elemRef, String propertyDescr, boolean isTypeProperty,
-			boolean isMethodProperty) {
+	public PropertyRef(String typeRef, String elemRef, String propertyDescr, boolean typeProperty,
+			boolean valueProperty) {
 		super();
 		this.typeRef = typeRef;
 		this.elemRef = elemRef;
 		this.propertyDescr = propertyDescr;
-		this.isTypeProperty = isTypeProperty;
-		this.isMethodProperty = isMethodProperty;
+		this.typeProperty = typeProperty;
+		this.valueProperty = valueProperty;
 	}
 
 	/**
@@ -94,28 +94,28 @@ public class PropertyRef {
 	 * @return the isTypeProperty
 	 */
 	public boolean isTypeProperty() {
-		return isTypeProperty;
+		return typeProperty;
 	}
 
 	/**
-	 * @param isTypeProperty the isTypeProperty to set
+	 * @param typeProperty the isTypeProperty to set
 	 */
-	public void setTypeProperty(boolean isTypeProperty) {
-		this.isTypeProperty = isTypeProperty;
+	public void setTypeProperty(boolean typeProperty) {
+		this.typeProperty = typeProperty;
 	}
 
 	/**
 	 * @return the isMethodProperty
 	 */
-	public boolean isMethodProperty() {
-		return isMethodProperty;
+	public boolean isValueProperty() {
+		return valueProperty;
 	}
 
 	/**
-	 * @param isMethodProperty the isMethodProperty to set
+	 * @param valueProperty the isMethodProperty to set
 	 */
-	public void setMethodProperty(boolean isMethodProperty) {
-		this.isMethodProperty = isMethodProperty;
+	public void setValueProperty(boolean valueProperty) {
+		this.valueProperty = valueProperty;
 	}
 
 	/**
@@ -137,8 +137,8 @@ public class PropertyRef {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((elemRef == null) ? 0 : elemRef.hashCode());
-		result = prime * result + (isMethodProperty ? 1231 : 1237);
-		result = prime * result + (isTypeProperty ? 1231 : 1237);
+		result = prime * result + (valueProperty ? 1231 : 1237);
+		result = prime * result + (typeProperty ? 1231 : 1237);
 		result = prime * result + ((propertyDescr == null) ? 0 : propertyDescr.hashCode());
 		result = prime * result + ((typeRef == null) ? 0 : typeRef.hashCode());
 		result = prime * result + ((valueAnnotation == null) ? 0 : valueAnnotation.hashCode());
@@ -159,9 +159,9 @@ public class PropertyRef {
 				return false;
 		} else if (!elemRef.equals(other.elemRef))
 			return false;
-		if (isMethodProperty != other.isMethodProperty)
+		if (valueProperty != other.valueProperty)
 			return false;
-		if (isTypeProperty != other.isTypeProperty)
+		if (typeProperty != other.typeProperty)
 			return false;
 		if (propertyDescr == null) {
 			if (other.propertyDescr != null)
@@ -184,7 +184,7 @@ public class PropertyRef {
 	@Override
 	public String toString() {
 		return "PropertyRef [typeRef=" + typeRef + ", elemRef=" + elemRef + ", propertyDescr=" + propertyDescr
-				+ ", isTypeProperty=" + isTypeProperty + ", isMethodProperty=" + isMethodProperty + ", valueAnnotation="
+				+ ", typeProperty=" + typeProperty + ", valueProperty=" + valueProperty + ", valueAnnotation="
 				+ valueAnnotation + "]";
 	}
 	

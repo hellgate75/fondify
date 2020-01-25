@@ -16,10 +16,10 @@ public interface Mapper<S, D> {
 	
 	/**
 	 * Initialization method used to setUp the Mapper element at any moment before use
-	 * in the session. It's used to pass the {@link ApplicationContext} to the mapper
+	 * in the session. It's used to pass the {@link Session} to the mapper
 	 * @param context <ApplicationContext> context used by the mapper.
 	 */
-	void init(ApplicationContext context);
+	void init(Session context);
 
 	/**
 	 * Maps and cast a source element of type <S> in an element of type <D>
