@@ -7,22 +7,27 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 import com.rcg.foundation.fondify.annotations.contants.AnnotationConstants;
+import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationManagerProvider;
 import com.rcg.foundation.fondify.annotations.typings.BeanDefinition;
 import com.rcg.foundation.fondify.annotations.typings.MethodExecutor;
 import com.rcg.foundation.fondify.components.annotations.Autowired;
 import com.rcg.foundation.fondify.components.annotations.Inject;
 import com.rcg.foundation.fondify.components.annotations.executors.InjectableExecutor;
+import com.rcg.foundation.fondify.core.domain.Scope;
+import com.rcg.foundation.fondify.core.exceptions.InitializationException;
 import com.rcg.foundation.fondify.core.functions.Transformer;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.properties.PropertyArchive;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclarationType;
+import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentManagerProvider;
 import com.rcg.foundation.fondify.properties.annotations.Value;
 
 /**
@@ -48,6 +53,7 @@ public final class ComponentsHelper {
 	public static final <T> T createNewBean(String beanName, BeanDefinition definition) {
 		AnnotationDeclaration declaration = definition.getDeclaration();
 		AnnotationDeclarationType typeRef = declaration.getAnnotationDeclarationType();
+		
 		try {
 			switch ( typeRef ) {
 				case TYPE:
@@ -95,7 +101,59 @@ public final class ComponentsHelper {
 		} catch (Exception ex) {
 			String message = String.format("Error creating bean for bean definition : %s", ""+definition);
 			LoggerHelper.logError("ApplicationHelper::createNewBean", message, ex);
-			throw new RuntimeException(message, ex);
+			throw new InitializationException(message, ex);
+		}
+		return null;
+	}
+	
+	public static final Object tranformNameToBeanInstance(String name, Object... arguments) {
+		ApplicationManagerProvider provider = null;
+		Scope scope = Scope.APPLICATION;
+		if ( arguments.length > 0 && Scope.class.isAssignableFrom(arguments[0].getClass())) {
+			scope = (Scope) arguments[0];
+		}
+		Optional<ApplicationManagerProvider> providerOpt = AnnotationHelper.getImplementedType(ApplicationManagerProvider.class);
+		if ( providerOpt.isPresent() ) {
+			provider = providerOpt.get();
+		}
+		if ( provider == null ) {
+			String message = "Unable to load implementation of interface ApplicationManagerProvider!!";
+			LoggerHelper.logError("ApplicationHelper::tranformNameToBeanInstance", 
+									message, 
+									null);
+			throw new InitializationException(message);
+		}
+		ComponentManagerProvider componentProvider = null;
+		Optional<ComponentManagerProvider> componentProviderOpt = AnnotationHelper.getImplementedType(ComponentManagerProvider.class);
+		if ( componentProviderOpt.isPresent() ) {
+			componentProvider = componentProviderOpt.get();
+		}
+		if ( componentProvider == null ) {
+			String message = "Unable to load implementation of interface ComponentManagerProvider!!";
+			LoggerHelper.logError("ApplicationHelper::tranformNameToBeanInstance", 
+									message, 
+									null);
+			throw new InitializationException(message);
+		}
+		if ( name.startsWith("?") && name.endsWith("?") ) {
+			name = name.substring(1, name.length() - 1);
+			if ( name.equalsIgnoreCase("sessioncontext") ) {
+				return provider.getApplicationManager().getSessionContext();
+			} else if ( name.equalsIgnoreCase("applicationcontext") ) {
+				return provider.getApplicationManager().getApplicationContext();
+			} else if ( name.equalsIgnoreCase("session") ) {
+				return provider.getApplicationManager().getSession();
+			} else {
+				LoggerHelper.logWarn("ComponentHelper::tranformNameToBeanInstance", String.format("Undefined system/custom type: %s!!", name), null);
+			}
+		} else {
+			try {
+				return componentProvider.getComponentManager().getInjectableOrComponentByName(name, null, scope);
+			} catch (Exception e) {
+				String message = String.format("Error lading/creating instance of component/injectable bean named: %s!!", name);
+				LoggerHelper.logError("ComponentHelper::tranformNameToBeanInstance", message, e);
+				throw new InitializationException(message, e);
+			}
 		}
 		return null;
 	}
@@ -124,7 +182,7 @@ public final class ComponentsHelper {
 						
 						AnnotationHelper.processMethodInitializationFinalizationAnnotations(beanName, elementClass, definition, InjectableExecutor::filterComponentMethodAnnotation);
 						
-						return definition;
+						return definition.execute(in, (name, params) -> tranformNameToBeanInstance(name, params));
 					});
 		} catch (Exception ex) {
 			String message = String.format("Error creating bean for bean definition : %s", ""+executor);

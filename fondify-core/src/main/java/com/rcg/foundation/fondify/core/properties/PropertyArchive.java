@@ -39,6 +39,10 @@ public final class PropertyArchive {
 
 	}
 	
+	public final Map<String, Object> getAllProperties() {
+		return properties;
+	}
+	
 	public final boolean contains(String key) {
 		if ( key == null || key.isEmpty() ) {
 			return false;

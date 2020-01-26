@@ -3,13 +3,15 @@
  */
 package com.rcg.foundation.fondify.components.injecables;
 
+import com.rcg.foundation.fondify.core.typings.Injectable;
+
 /**
  * Manage custom, virtual or composite properties, eventually using
  * other components and annotations
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */
-public interface Properties<T> {
+public interface Properties<T> extends Injectable {
 	
 	/**
 	 * Recover a key element

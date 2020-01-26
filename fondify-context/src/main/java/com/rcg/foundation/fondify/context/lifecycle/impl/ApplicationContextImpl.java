@@ -16,7 +16,7 @@ import com.rcg.foundation.fondify.annotations.lifecycle.SessionContext;
 import com.rcg.foundation.fondify.annotations.typings.BeanDefinition;
 import com.rcg.foundation.fondify.annotations.typings.MethodExecutor;
 import com.rcg.foundation.fondify.components.helpers.ComponentsHelper;
-import com.rcg.foundation.fondify.context.ApplicationManager;
+import com.rcg.foundation.fondify.context.ApplicationManagerImpl;
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.exceptions.LifeCycleException;
 import com.rcg.foundation.fondify.core.properties.PropertyArchive;
@@ -32,12 +32,12 @@ public class ApplicationContextImpl implements ApplicationContext {
 	private Map<String, BeanDefinition> components = new ConcurrentHashMap<String, BeanDefinition>(0);
 	private Map<String, BeanDefinition> injectables = new ConcurrentHashMap<String, BeanDefinition>(0);
 	private Map<String, MethodExecutor> injectablesMethod = new ConcurrentHashMap<String, MethodExecutor>(0);
+	private ComponentsRegistry registry = ComponentsRegistry.getInstance();
 
 	/**
 	 * 
 	 */
 	public ApplicationContextImpl() {
-		ComponentsRegistry registry = ComponentsRegistry.getInstance();
 		components.putAll(registry.getAllAsMap(AnnotationConstants.REGISTRY_COMPONENT_REFERENCES));
 		injectables.putAll(registry.getAllAsMap(AnnotationConstants.REGISTRY_INJECTABLE_REFERENCES));
 		injectablesMethod.putAll(registry.getAllAsMap(AnnotationConstants.REGISTRY_INJECTABLE_METHODD_REFERENCES));
@@ -101,7 +101,7 @@ public class ApplicationContextImpl implements ApplicationContext {
 	@Override
 	public <T> T getBean(String beanName, Scope scope) {
 		if ( scope == Scope.APPLICATION ) {
-			return ApplicationManager.getInstance().getApplicationContext().getBean(beanName, scope);
+			return ApplicationManagerImpl.getInstance().getApplicationContext().getBean(beanName, scope);
 		} else if ( scope == Scope.INSTANCE ) {
 			List<BeanDefinition> beansDef = getBeanByName(beanName);
 			if ( beansDef.size() > 0 ) {
@@ -159,7 +159,7 @@ public class ApplicationContextImpl implements ApplicationContext {
 
 	@Override
 	public SessionContext sessionContext() throws LifeCycleException {
-		return ApplicationManager.getInstance().getSessionContext();
+		return ApplicationManagerImpl.getInstance().getSessionContext();
 	}
 
 }

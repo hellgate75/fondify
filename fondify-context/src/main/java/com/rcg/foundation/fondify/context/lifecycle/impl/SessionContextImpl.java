@@ -17,7 +17,7 @@ import com.rcg.foundation.fondify.annotations.lifecycle.SessionContext;
 import com.rcg.foundation.fondify.annotations.typings.BeanDefinition;
 import com.rcg.foundation.fondify.annotations.typings.MethodExecutor;
 import com.rcg.foundation.fondify.components.helpers.ComponentsHelper;
-import com.rcg.foundation.fondify.context.ApplicationManager;
+import com.rcg.foundation.fondify.context.ApplicationManagerImpl;
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.exceptions.LifeCycleException;
 import com.rcg.foundation.fondify.core.properties.PropertyArchive;
@@ -38,7 +38,7 @@ public class SessionContextImpl implements SessionContext {
 	 * 
 	 */
 	public SessionContextImpl() {
-		uuid = UUID.randomUUID();
+		uuid = ApplicationManagerImpl.getInstance().getCurrentSessionId();
 		ComponentsRegistry registry = ComponentsRegistry.getInstance();
 		components.putAll(registry.getAllAsMap(AnnotationConstants.REGISTRY_COMPONENT_REFERENCES));
 		injectables.putAll(registry.getAllAsMap(AnnotationConstants.REGISTRY_INJECTABLE_REFERENCES));
@@ -99,7 +99,7 @@ public class SessionContextImpl implements SessionContext {
 	@Override
 	public <T> T getBean(String beanName, Scope scope) {
 		if ( scope == Scope.APPLICATION ) {
-			return ApplicationManager.getInstance().getApplicationContext().getBean(beanName, scope);
+			return ApplicationManagerImpl.getInstance().getApplicationContext().getBean(beanName, scope);
 		} else if ( scope == Scope.INSTANCE ) {
 			List<BeanDefinition> beansDef = getBeanByName(beanName);
 			if ( beansDef.size() > 0 ) {
@@ -109,7 +109,7 @@ public class SessionContextImpl implements SessionContext {
 				return ComponentsHelper.createNewBean(beanName, beanMethod.get(0));
 			}
 		}  else if ( scope == Scope.SINGLETON ) {
-			return ApplicationManager.getInstance().getApplicationContext().getBean(beanName, scope);
+			return ApplicationManagerImpl.getInstance().getApplicationContext().getBean(beanName, scope);
 		} else if ( scope == Scope.SESSION ){
 			return (T) sessionRegistry.get(beanName);
 		}
@@ -139,7 +139,7 @@ public class SessionContextImpl implements SessionContext {
 
 	@Override
 	public ApplicationContext getApplicationContext() throws LifeCycleException {
-		return ApplicationManager.getInstance().getApplicationContext();
+		return ApplicationManagerImpl.getInstance().getApplicationContext();
 	}
 
 	@Override
@@ -149,7 +149,7 @@ public class SessionContextImpl implements SessionContext {
 
 	@Override
 	public void close() {
-		ApplicationManager.getInstance().unregisterSession(uuid);
+		ApplicationManagerImpl.getInstance().unregisterSession(uuid);
 	}
 
 	@Override

@@ -8,7 +8,7 @@ package com.rcg.foundation.fondify.core.exceptions;
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */
-public class InitializationException extends Exception {
+public class InitializationException extends RuntimeException {
 
 	/**
 	 * 

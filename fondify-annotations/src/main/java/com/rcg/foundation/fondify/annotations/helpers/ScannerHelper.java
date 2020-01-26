@@ -40,6 +40,7 @@ import com.rcg.foundation.fondify.core.exceptions.ScannerException;
 import com.rcg.foundation.fondify.core.functions.Matcher;
 import com.rcg.foundation.fondify.core.functions.Processor;
 import com.rcg.foundation.fondify.core.helpers.ArgumentsHelper;
+import com.rcg.foundation.fondify.core.helpers.BeansHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
 import com.rcg.foundation.fondify.core.registry.typings.ComponentRegistryItem;
@@ -96,9 +97,7 @@ public class ScannerHelper {
 	 * @return
 	 */
 	public static final ConfigurationBuilder getRefletionsByPackages(String[] packages) {
-		List<String> list = new ArrayList<>(0);
-		list.addAll(Arrays.asList(packages));
-		return getRefletionsByPackages(list);
+		return BeansHelper.getRefletionsByPackages(packages);
 	}
 
 	public static final boolean isApplicationClass(Class<?> mainClass) {
@@ -140,43 +139,7 @@ public class ScannerHelper {
 	 * @return
 	 */
 	public static final ConfigurationBuilder getRefletionsByPackages(Collection<String> packages) {
-		ConfigurationBuilder config = new ConfigurationBuilder();
-		if (packages != null && packages.size() > 0) {
-			List<java.net.URL> listOfClassPathRefs = new ArrayList<java.net.URL>(0);
-			listOfClassPathRefs.addAll(
-					packages
-					.stream()
-					.filter(pkg -> pkg != null && !pkg.isEmpty())
-					.map(pkg -> {
-						ArrayList<java.net.URL> classpathUrls = new ArrayList<java.net.URL>(0);
-						try {
-							classpathUrls.addAll( 
-									ClasspathHelper.forPackage(pkg)
-							);
-						} catch (Exception e) {
-							
-						}
-						return classpathUrls;
-					})
-					.flatMap(List::stream)
-					.distinct()
-					.collect(Collectors.toList())
-			);
-			if ( listOfClassPathRefs.size() > 0 ) {
-				config.addUrls(
-						listOfClassPathRefs
-				);
-			} else {
-				LoggerHelper.logWarn("ScannerHelper::getRefletionsByPackages", 
-						String.format("Unable to discover classpath packages: %s, then loading full classpath urls", Arrays.toString(packages.toArray())), 
-						null);
-				config.addUrls(ClasspathHelper.forJavaClassPath());
-			}
-
-		} else {
-			config.addUrls(ClasspathHelper.forJavaClassPath());
-		}
-		return config;
+		return BeansHelper.getRefletionsByPackages(packages);
 	}
 
 	protected static List<String> DEFAULT_SCANNERS = new ArrayList<>(0);
@@ -408,10 +371,7 @@ public class ScannerHelper {
 	 */
 	public static final <T> List<Class<? extends T>> collectSubTypesOf(ConfigurationBuilder builder,
 			Class<T> superClass) {
-		List<Class<? extends T>> classes = new ArrayList<Class<? extends T>>(0);
-		Reflections r = new Reflections(builder.addScanners(new SubTypesScanner()));
-		classes.addAll(r.getSubTypesOf(superClass));
-		return classes;
+		return BeansHelper.collectSubTypesOf(builder, superClass);
 	}
 
 	/**
@@ -423,12 +383,7 @@ public class ScannerHelper {
 	 * @return list if sub types of provided one
 	 */
 	public static final List<Class<?>> collectSubTypesOf(ConfigurationBuilder builder, List<Class<?>> superClassList) {
-		List<Class<?>> classes = new ArrayList<>(0);
-		Reflections r = new Reflections(builder.addScanners(new SubTypesScanner()));
-		superClassList.forEach(superClass -> {
-			classes.addAll(r.getSubTypesOf(superClass));
-		});
-		return classes;
+		return BeansHelper.collectSubTypesOf(builder, superClassList);
 	}
 
 	/**

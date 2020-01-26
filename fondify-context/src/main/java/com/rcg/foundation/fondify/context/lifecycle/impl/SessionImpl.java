@@ -4,63 +4,91 @@
 package com.rcg.foundation.fondify.context.lifecycle.impl;
 
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
-import com.rcg.foundation.fondify.core.typings.Session;
+import com.rcg.foundation.fondify.context.ApplicationManagerImpl;
+import com.rcg.foundation.fondify.core.properties.PropertyArchive;
+import com.rcg.foundation.fondify.core.typings.KeyPair;
+import com.rcg.foundation.fondify.core.typings.lifecycle.Session;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */
 public class SessionImpl implements Session {
-
+	private UUID uuid;
+	private Map<String, Object> applicationProperties = new ConcurrentHashMap<String, Object>(0);
+	private Map<String, String> sessionProperties = new ConcurrentHashMap<String, String>(0);
+	private Map<String, Object> sessionObjects = new ConcurrentHashMap<String, Object>(0);
 	/**
 	 * 
 	 */
 	public SessionImpl() {
-		// TODO Auto-generated constructor stub
+		super();
+		uuid = ApplicationManagerImpl.getInstance().getCurrentSessionId();
+		applicationProperties.putAll(
+				PropertyArchive.getInstance()
+				.getAllProperties()
+		);
 	}
 
 	@Override
-	public Properties getApplicationProperties() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<KeyPair<String, Object>> getApplicationProperties() {
+		return applicationProperties.entrySet()
+				.stream()
+				.map(entry -> (KeyPair<String, Object>)KeyPair.newKeyPair(entry.getKey(), entry.getValue()))
+				.collect(Collectors.toList());
+		
 	}
 
 	@Override
-	public String getApplicationProperty(String name) {
-		// TODO Auto-generated method stub
-		return null;
+	public Object getApplicationProperty(String name) {
+		return applicationProperties
+			.get(name);
 	}
 
 	@Override
 	public List<KeyPair<String, Object>> getSessionObjects() {
-		// TODO Auto-generated method stub
-		return null;
+		return sessionObjects.entrySet()
+				.stream()
+				.map(entry -> (KeyPair<String, Object>)KeyPair.newKeyPair(entry.getKey(), entry.getValue()))
+				.collect(Collectors.toList());
 	}
 
 	@Override
 	public Object getSessionObject(String key) {
-		// TODO Auto-generated method stub
-		return null;
+		return sessionObjects.get(key);
 	}
 
 	@Override
 	public void registerSessionObject(String key, Object value) {
-		// TODO Auto-generated method stub
-
+		sessionObjects.put(key,  value);
 	}
 
 	@Override
-	public Properties getSessionProperties() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<KeyPair<String, String>> getSessionProperties() {
+		return sessionProperties.entrySet()
+				.stream()
+				.map(entry -> (KeyPair<String, String>)KeyPair.newKeyPair(entry.getKey(), ""+entry.getValue()))
+				.collect(Collectors.toList());
 	}
 
 	@Override
 	public String getSessionProperty(String name) {
-		// TODO Auto-generated method stub
-		return null;
+		return sessionProperties.get(name);
+	}
+
+	@Override
+	public void registerSessionProperty(String key, String value) {
+		sessionProperties.put(key,  value);
+	}
+
+	@Override
+	public UUID getSessionId() {
+		return uuid;
 	}
 
 }

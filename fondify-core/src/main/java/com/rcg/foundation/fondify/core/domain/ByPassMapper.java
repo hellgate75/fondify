@@ -7,7 +7,7 @@ import java.util.List;
 
 import com.rcg.foundation.fondify.core.exceptions.MappingException;
 import com.rcg.foundation.fondify.core.typings.Mapper;
-import com.rcg.foundation.fondify.core.typings.Session;
+import com.rcg.foundation.fondify.core.typings.lifecycle.Session;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

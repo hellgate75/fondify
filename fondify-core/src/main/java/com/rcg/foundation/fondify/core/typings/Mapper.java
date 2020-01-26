@@ -6,6 +6,7 @@ package com.rcg.foundation.fondify.core.typings;
 import java.util.List;
 
 import com.rcg.foundation.fondify.core.exceptions.MappingException;
+import com.rcg.foundation.fondify.core.typings.lifecycle.Session;
 
 /**
  * Protorype for a Data or element mapper, it's used to transform an element and cast it 

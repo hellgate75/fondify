@@ -2,6 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>fondify-bom</artifactId>
   <packaging>pom</packaging>
+  <name>Fondify Bill of Material</name>
 
   <parent>
     <groupId>com.trcg.fondify</groupId>
@@ -36,6 +37,11 @@
 		  	<dependency>
 		  		<groupId>com.trcg.fondify</groupId>
 		  		<artifactId>fondify-properties</artifactId>
+		  		<version>${com.rcg.fondify.version}</version>
+		  	</dependency>
+		  	<dependency>
+		  		<groupId>com.trcg.fondify</groupId>
+		  		<artifactId>fondify-context</artifactId>
 		  		<version>${com.rcg.fondify.version}</version>
 		  	</dependency>
 		</dependencies>

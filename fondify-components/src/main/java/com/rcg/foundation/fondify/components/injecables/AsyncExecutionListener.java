@@ -3,12 +3,14 @@
  */
 package com.rcg.foundation.fondify.components.injecables;
 
+import com.rcg.foundation.fondify.core.typings.Injectable;
+
 /**
  * Listener for async activation
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */
-public interface AsyncExecutionListener<T, K> {
+public interface AsyncExecutionListener<T, K> extends Injectable {
 
 	/**
 	 * Reports success state for a request, including a related response

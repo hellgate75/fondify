@@ -3,13 +3,15 @@
  */
 package com.rcg.foundation.fondify.components.injecables;
 
+import com.rcg.foundation.fondify.core.typings.Injectable;
+
 /**
  * Activation task Executor
  * 
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */
-public interface Activation<T, K> {
+public interface Activation<T, K> extends Injectable {
 	/**
 	 * Request activation of sleeping action
 	 * @param request for activation

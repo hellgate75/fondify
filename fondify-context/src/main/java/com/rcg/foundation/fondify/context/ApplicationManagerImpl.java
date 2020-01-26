@@ -11,17 +11,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.rcg.foundation.fondify.annotations.helpers.AnnotationHelper;
 import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationContext;
+import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationManager;
 import com.rcg.foundation.fondify.annotations.lifecycle.SessionContext;
 import com.rcg.foundation.fondify.context.lifecycle.impl.ApplicationContextImpl;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
-import com.rcg.foundation.fondify.core.typings.Session;
+import com.rcg.foundation.fondify.core.typings.lifecycle.Session;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */
-public class ApplicationManager {
-	private static final ApplicationManager instance = new ApplicationManager();
+public class ApplicationManagerImpl implements ApplicationManager {
+	private static final ApplicationManagerImpl instance = new ApplicationManagerImpl();
 	
 	private static final ApplicationContext context = new ApplicationContextImpl();
 	
@@ -34,7 +35,7 @@ public class ApplicationManager {
 	/**
 	 * Create New Application Manager
 	 */
-	private ApplicationManager() {
+	private ApplicationManagerImpl() {
 	}
 	
 	/**
@@ -42,6 +43,7 @@ public class ApplicationManager {
 	 * 
 	 * @return Current {@link ApplicationContext}
 	 */
+	@Override
 	public ApplicationContext getApplicationContext() {
 		return context;
 	}
@@ -52,6 +54,7 @@ public class ApplicationManager {
 	 * @param sessionId required session {@link UUID}
 	 * @return Provided {@link SessionContext} or null, in case UUID is not part of registered session 
 	 */
+	@Override
 	public SessionContext getSession(UUID sessionId) {
 		return contextMap.get(sessionId);
 	}
@@ -62,6 +65,7 @@ public class ApplicationManager {
 	 * 
 	 * @return Provided {@link SessionContext} or null, in case thread is the ore registered the session 
 	 */
+	@Override
 	public SessionContext getSessionContext() {
 		UUID sessionId = threadSessionMap.get(Thread.currentThread().getId());
 		return contextMap.get(sessionId);
@@ -72,6 +76,7 @@ public class ApplicationManager {
 	 * 
 	 * @return Provided {@link Session} or null, in case thread is the ore registered the session 
 	 */
+	@Override
 	public Session getSession() {
 		UUID sessionId = threadSessionMap.get(Thread.currentThread().getId());
 		return sessionMap.get(sessionId);
@@ -82,6 +87,7 @@ public class ApplicationManager {
 	 * 
 	 * @return Session {@link UUID}
 	 */
+	@Override
 	public UUID createNewSession() {
 		Optional<SessionContext> contextOpt = AnnotationHelper.getImplementedType(SessionContext.class);
 		SessionContext context = null;
@@ -113,16 +119,17 @@ public class ApplicationManager {
 	 * 
 	 * @return {{@link UUID}} Current thread Session Identifier
 	 */
+	@Override
 	public UUID getCurrentSessionId() {
 		return threadSessionMap.get(Thread.currentThread().getId());
 	}
 
 	/**
-	 * Retrieve current {@link ApplicationManager} instance
+	 * Retrieve current {@link ApplicationManagerImpl} instance
 	 * 
-	 * @return <{@link ApplicationManager}> current instance
+	 * @return <{@link ApplicationManagerImpl}> current instance
 	 */
-	public static final ApplicationManager getInstance() {
+	public static final ApplicationManagerImpl getInstance() {
 		return instance;
 	}
 	
@@ -130,6 +137,7 @@ public class ApplicationManager {
 	 * List all session unique identifiers
 	 * @return <Collection<UUID>> Collection of registered session id
 	 */
+	@Override
 	public Collection<UUID> listSessionIds() {
 		return contextMap.keySet();
 	}
@@ -138,6 +146,7 @@ public class ApplicationManager {
 	 * Unregister required session
 	 * @param sessionId Current session Id
 	 */
+	@Override
 	public void unregisterSession(UUID sessionId) {
 		contextMap.remove(sessionId);
 		threadSessionMap

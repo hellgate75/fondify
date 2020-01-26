@@ -26,6 +26,7 @@ import com.rcg.foundation.fondify.core.functions.Matcher;
 import com.rcg.foundation.fondify.core.functions.Processor;
 import com.rcg.foundation.fondify.core.functions.SimpleEntryPredicate;
 import com.rcg.foundation.fondify.core.functions.SimplePredicate;
+import com.rcg.foundation.fondify.core.helpers.BeansHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
@@ -219,21 +220,13 @@ public class AnnotationHelper {
 		}
 		return name;
 	}
-	
-	public static final <T> Optional<T> getImplementedType(Class<T> cls) {
-		
-		return ScannerHelper
-			.collectSubTypesOf(ScannerHelper.getRefletionsByPackages(new String[0]), cls)
-			.stream()
-			.map(anyCls -> {
-				try {
-					return anyCls.newInstance();
-				} catch (Exception e) {
-				}
-				return (T)null;
-			})
-			.filter( instance -> instance != null )
-			.findFirst();
+
+	public static final <T> List<T> getImplementedTypes(Class<T> cls) {
+		return BeansHelper.getImplementedTypes(cls);
 			
+	}
+
+	public static final <T> Optional<T> getImplementedType(Class<T> cls) {
+		return BeansHelper.getImplementedType(cls);
 	}
 }
