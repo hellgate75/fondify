@@ -23,7 +23,7 @@ public final class LoggerHelper {
 	public static synchronized void logTrace(String place, String message) {
 		if ( message != null && ! message.isEmpty() ) {
 			if ( ! ArgumentsHelper.useLogger ) {
-				System.out.print(ColorConstants.ANSI_YELLOW);
+				System.out.print(ColorConstants.ANSI_YELLOW + ColorConstants.ANSI_LOW_INTENSITY);
 			}
 			LOGGER.trace(String.format("%s::trace >> %s", place, message));
 			if ( ! ArgumentsHelper.useLogger ) {
@@ -59,7 +59,7 @@ public final class LoggerHelper {
 	public static synchronized void logWarn(String place, String message, Exception ex) {
 		if ( message != null && ! message.isEmpty() ) {
 			if ( ! ArgumentsHelper.useLogger ) {
-				System.out.print(ColorConstants.ANSI_YELLOW);
+				System.out.print(ColorConstants.ANSI_YELLOW + ColorConstants.ANSI_HIGH_INTENSITY);
 			}
 			LOGGER.warn(String.format("%s::warn >> %s", place, message));
 			if ( ! ArgumentsHelper.useLogger ) {
@@ -79,7 +79,9 @@ public final class LoggerHelper {
 
 	public static synchronized void logError(String place, String message, Exception ex) {
 		if ( message != null && ! message.isEmpty() ) {
-			System.out.print(ColorConstants.ANSI_RED);
+			if ( ! ArgumentsHelper.useLogger ) {
+				System.out.print(ColorConstants.ANSI_RED + ColorConstants.ANSI_HIGH_INTENSITY);
+			}
 			LOGGER.error(String.format("%s::error >> %s", place, message));
 			if ( ! ArgumentsHelper.useLogger ) {
 				System.out.print(ColorConstants.ANSI_RESET);

@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.rcg.foundation.fondify.core.arguments.ArgumentDescriptor;
 import com.rcg.foundation.fondify.core.arguments.Feature;
+import com.rcg.foundation.fondify.core.constants.ArgumentsConstants;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
@@ -77,6 +78,13 @@ public class ArgumentsHelper {
 	 */
 	public static final String getArgument(String argumentName) {
 		return arguments.getProperty(argumentName);
+	}
+
+	/**
+	 * @return
+	 */
+	public static final Properties getArguments() {
+		return arguments;
 	}
 
 	/**
@@ -146,33 +154,33 @@ public class ArgumentsHelper {
 				}
 			}
 		}
-		String debugStr = System.getProperty("debug.arguments");
+		String debugStr = System.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_DEBUG_ARGUMENTS);
 		if (debugStr == null || debugStr.trim().isEmpty()) {
-			debugStr = arguments.getProperty("debug.arguments");
+			debugStr = arguments.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_DEBUG_ARGUMENTS);
 		}
 		debugArguments = false;
 		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
 			debugArguments = true;
 		}
-		debugStr = System.getProperty("debug");
+		debugStr = System.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_DEBUG_APPLICATION);
 		if (debugStr == null || debugStr.trim().isEmpty()) {
-			debugStr = arguments.getProperty("debug");
+			debugStr = arguments.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_DEBUG_APPLICATION);
 		}
 		debug = false;
 		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
 			debug = true;
 		}
 
-		debugStr = System.getProperty("use.logger");
+		debugStr = System.getProperty(ArgumentsConstants.FORMAT_APPLICATION_OUTPUT_FOR_LOGGER);
 
 		if (debugStr == null || debugStr.trim().isEmpty()) {
-			debugStr = arguments.getProperty("use.logger");
+			debugStr = arguments.getProperty(ArgumentsConstants.FORMAT_APPLICATION_OUTPUT_FOR_LOGGER);
 		}
 
-		useLogger = false;
-		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
-			useLogger = true;
-			LoggerHelper.logTrace("ArgumentsHelper::storeArguments", "Enabled Application using logger!!!");
+		useLogger = true;
+		if (debugStr != null && !debugStr.trim().isEmpty() && ! debugStr.equalsIgnoreCase("true")) {
+			useLogger = false;
+			LoggerHelper.logTrace("ArgumentsHelper::storeArguments", "Disable Application using logger!!!");
 		}
 		
 		messages.forEach(message -> LoggerHelper.logWarn("AgumentsHelper::storeArguments", message, null) );

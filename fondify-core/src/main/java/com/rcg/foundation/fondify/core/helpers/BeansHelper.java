@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.reflections.Reflections;
@@ -15,11 +17,17 @@ import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
+import com.rcg.foundation.fondify.core.constants.ArgumentsConstants;
+import com.rcg.foundation.fondify.core.typings.autorun.Autorun;
+import com.rcg.foundation.fondify.core.typings.autorun.AutorunPhasesActuatorProvider;
+
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */
 public final class BeansHelper {
+
+	public static ExecutorService executorService = null;
 
 	/**
 	 * 
@@ -153,6 +161,70 @@ public final class BeansHelper {
 			config.addUrls(ClasspathHelper.forJavaClassPath());
 		}
 		return config;
+	}
+	
+	public static synchronized final void executeAutorunComponents() {
+		if ( executorService != null ) {
+			LoggerHelper.logWarn("BeansHelper::executeAutorunComponents", 
+					"Autorun execution still in progress. Skipping the autorun execution request!!",
+					null);
+			return;
+		}
+		List<Autorun> autorunComponentsList = getImplementedTypes(Autorun.class);
+		int numeberOfActiveProcesses = Runtime.getRuntime().availableProcessors();
+		if ( ArgumentsHelper.hasArgument(ArgumentsConstants.MAX_AUTORUN_THREADS) ) {
+			String numProcsStr = ArgumentsHelper.getArgument(ArgumentsConstants.MAX_AUTORUN_THREADS);
+			try {
+				numeberOfActiveProcesses = Integer.parseInt(numProcsStr);
+			} catch (NumberFormatException e) {
+				LoggerHelper.logError("BeansHelper::executeAutorunComponents", 
+								String.format("Invalid numeric value for argument %s -> Not a numer : <%s>!!", "max.autorun.threads", numProcsStr),
+								e);
+			}
+		}
+		if ( ArgumentsHelper.hasArgument(ArgumentsConstants.UNLIMITED_AUTORUN_THREADS) ) {
+			if ( ArgumentsHelper.getArgument(ArgumentsConstants.UNLIMITED_AUTORUN_THREADS).equalsIgnoreCase("true") ) {
+				numeberOfActiveProcesses = autorunComponentsList.size();
+			}
+		}
+		executorService = Executors.newFixedThreadPool(numeberOfActiveProcesses);
+		AutorunPhasesActuatorProvider provider = AutorunPhasesActuatorProvider.getInstance();
+		autorunComponentsList
+			.forEach( autorun -> {
+				executorService.execute(new Runnable() {
+					
+					@Override
+					public void run() {
+						try {
+							provider.actuateInitializerForAutorun(autorun);
+							autorun.run(ArgumentsHelper.getArguments());
+							provider.actuateFinalizerForAutorun(autorun);
+						} catch (Exception e) {
+							LoggerHelper.logError("BeansHelper::executeAutorunComponents", 
+									String.format("Unable to execute autrun for element %s sue to ERRORS!!", autorun != null ? autorun.getClass().getName() : "<NULL>"), 
+									e);
+						}
+					}
+				});
+			});
+		// Request shutdown of completed tasks!!
+		executorService.shutdown();
+		// Execute thread service cleaning asynchronous thread!!
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				while ( BeansHelper.executorService != null && ! BeansHelper.executorService.isShutdown() ) {
+					try {
+						Thread.sleep(2500l);
+					} catch (InterruptedException e) {
+						//NOTHING TO DO HERE
+						;
+					}
+				}
+				BeansHelper.executorService = null;
+			}
+		}).start();
 	}
 
 }

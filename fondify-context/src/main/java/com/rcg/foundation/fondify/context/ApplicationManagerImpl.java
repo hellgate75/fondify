@@ -22,7 +22,7 @@ import com.rcg.foundation.fondify.core.typings.lifecycle.Session;
  *
  */
 public class ApplicationManagerImpl implements ApplicationManager {
-	private static final ApplicationManagerImpl instance = new ApplicationManagerImpl();
+	private static ApplicationManagerImpl instance = null;
 	
 	private static final ApplicationContext context = new ApplicationContextImpl();
 	
@@ -129,7 +129,10 @@ public class ApplicationManagerImpl implements ApplicationManager {
 	 * 
 	 * @return <{@link ApplicationManagerImpl}> current instance
 	 */
-	public static final ApplicationManagerImpl getInstance() {
+	public static synchronized final ApplicationManagerImpl getInstance() {
+		if ( instance == null ) {
+			instance = new ApplicationManagerImpl();
+		}
 		return instance;
 	}
 	

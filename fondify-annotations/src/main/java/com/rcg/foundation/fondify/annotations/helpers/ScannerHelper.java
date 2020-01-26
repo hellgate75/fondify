@@ -36,6 +36,10 @@ import com.rcg.foundation.fondify.annotations.annotations.Configuration;
 import com.rcg.foundation.fondify.annotations.annotations.DependsOn;
 import com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig;
 import com.rcg.foundation.fondify.annotations.contants.AnnotationConstants;
+import com.rcg.foundation.fondify.annotations.typings.BeanDefinition;
+import com.rcg.foundation.fondify.annotations.typings.MethodExecutor;
+import com.rcg.foundation.fondify.core.exceptions.MappingException;
+import com.rcg.foundation.fondify.core.exceptions.ProcessException;
 import com.rcg.foundation.fondify.core.exceptions.ScannerException;
 import com.rcg.foundation.fondify.core.functions.Matcher;
 import com.rcg.foundation.fondify.core.functions.Processor;
@@ -48,8 +52,10 @@ import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationEngineInitializer;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
 import com.rcg.foundation.fondify.core.typings.AnnotationTypesCollector;
+import com.rcg.foundation.fondify.core.typings.ExecutionAnswer;
 import com.rcg.foundation.fondify.core.typings.ModuleMain;
 import com.rcg.foundation.fondify.core.typings.ModuleScanner;
+import com.rcg.foundation.fondify.core.typings.registry.AnnotationBeanActuatorProvider;
 
 /**
  * Utility class that provides features for helping with Java artifacts Scan and
@@ -872,50 +878,101 @@ public class ScannerHelper {
 					}
 				});
 	}
+	
+	public static final boolean isInjectable(Object obj) {
+		return obj != null && 
+				com.rcg.foundation.fondify.core.typings.Injectable.class.isAssignableFrom(obj.getClass());
+	}
+	
+	public static final boolean isBeanDefinition(Object obj) {
+		return obj != null && 
+				BeanDefinition.class.isAssignableFrom(obj.getClass());
+	}
+	
+	public static final boolean isMethodExecutor(Object obj) {
+		return obj != null && 
+				MethodExecutor.class.isAssignableFrom(obj.getClass());
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static final void executeAnnotationExecutor(AnnotationDeclaration ad, AnnotationExecutor<? extends Annotation> executor) {
+		Class<Annotation> annCls = (Class<Annotation>)ad.getAnnotationDeclarationClass(); 
+		String annName = annCls.getName();
+			if ( executor !=  null ) {
+				LoggerHelper.logTrace("ScannerHelperHelper::executeAnnotationExecutor [stream cycle]", 
+						String.format("Executing AnnotationExecutor for annotation name: %s of type: %s!!", annName, executor.getClass().getCanonicalName()));
+				try {
+					ExecutionAnswer<? extends Annotation> answer = executor.executeAnnotation(ad);
+					if (answer.isErrors()) {
+						LoggerHelper.logWarn("ScannerHelperHelper::executeAnnotationExecutor  [stream cycle]", String.format("Errors executing annotation : %s, message is :%s ", annName, answer.getMessage()), null);
+					} else {
+						if (answer.isWarnings()) {
+							LoggerHelper.logWarn("ScannerHelperHelper::executeAnnotationExecutor  [stream cycle]", String.format("Warning executing annotation : %s, message is :%s ", annName, answer.getMessage()), null);
+						}
+						if ( executor.containsResults() ) {
+							List<Object> test = new ArrayList<>(answer.getResults());
+							List<Object> results = new ArrayList<>(test);
+							Object obj = test.iterator().next();
+							boolean isComponent = isBeanDefinition(obj) || isMethodExecutor(obj);
+							boolean isInjectable = obj!= null && isComponent && isInjectable(obj.getClass());
+							if ( isComponent ) {
+								String regName = isInjectable ? (
+										MethodExecutor.class.isAssignableFrom(obj.getClass()) ? 
+												AnnotationConstants.REGISTRY_INJECTABLE_METHODD_DEFINITIONS : 
+												AnnotationConstants.REGISTRY_INJECTABLE_BEAN_DEFINITIONS ) :
+													AnnotationConstants.REGISTRY_COMPONENT_BEAN_DEFINITIONS;
+								if ( results.size() == 1 ) {
+									ComponentsRegistry.getInstance().add(regName, executor.getComponentName(), results.get(0));
+								} else if ( results.size() > 1 ) {
+									ComponentsRegistry.getInstance().add(regName, executor.getComponentName(), results);
+								}
+							} else {
+								//NO COMPONENT TYPE
+								LoggerHelper.logWarn("ScannerHelperHelper::executeAnnotationExecutor", 
+										String.format("Undefined type for annotations' executor of type : %s and bean's type", annName, obj!= null ? obj.getClass().getName():"<NULL>"), null);
+								if ( obj != null ) {
+									LoggerHelper.logWarn("ScannerHelperHelper::executeAnnotationExecutor", 
+											String.format("Trying registration of custom bean : %s ", obj.getClass().getName()), null);
+									AnnotationBeanActuatorProvider.getInstance().registerCustomBean(obj);
+								}
+							}
+						}
+					}
+					
+				} catch (ProcessException e) {
+					String message = String.format("Unable to run executor due to ERRORS for annotation type : %s", annName);
+					LoggerHelper.logError("ScannerHelperHelper::executeAnnotationExecutor [stream cycle]", message, e);
+					throw new MappingException(message, e);
+				}
+			} else {
+				LoggerHelper.logWarn("ScannerHelperHelper::executeAnnotationExecutor", 
+						String.format("Unable to find annotations' executor of type : %s", annName), null);
+			}
+	}
 
 	@SuppressWarnings("unchecked")
 	public static final void executeProvidedBaseAnnotationExecutors() {
 		ConfigurationBuilder builder = ScannerHelper.getRefletionsByPackages(ScannerHelper.collectScanningPackages());
 		annotationsDeclarationMaps.putAll(ScannerHelper.collectAnnotations(builder, baseAnnotationTypes
 																						.stream()
-																						.map(ann -> (Class<Annotation>)ann)
+																						.map( baseCls -> (Class<Annotation>) baseCls )
 																						.collect(Collectors.toList())));
+
 		LoggerHelper.logTrace("ScannerHelper::executeProvidedBaseAnnotationExecutors", String
 				.format("Found follwoing number of annotations %s declaration in the classpath", ""+annotationsDeclarationMaps.size()));
 		annotationsDeclarationMaps.entrySet().forEach(entry -> {
 			String className = entry.getKey().getName();
-			AnnotationExecutor<? extends Annotation> executor = ComponentsRegistry.getInstance()
-					.get(AnnotationConstants.REGISTRY_CLASS_ANNOTATION_EXECUTORS, className);
-			if (entry.getValue().size() > 0) {
-				LoggerHelper.logTrace("ScannerHelper::executeProvidedBaseAnnotationExecutors", String
-						.format("Praparing execution for annotation %s from executor: %s", className, "" + executor));
-				if (executor != null) {
-					LoggerHelper.logTrace("ScannerHelper::executeProvidedBaseAnnotationExecutors",
-							String.format("Executing annotation %s from executor: %s on %s annotations!!", className,
-									"" + executor, "" + entry.getValue().size()));
-					entry.getValue().forEach(ad -> {
-						try {
-							executor.executeAnnotation(ad);
-						} catch (Exception e) {
-							LoggerHelper.logError("ScannerHelper::executeProvidedBaseAnnotationExecutors",
-									String.format(
-											"Unable to execute annotation executor for annotation class %s : Error executing executor : %s",
-											className, executor.getClass().getName()),
-									e);
-						}
-					});
-				} else {
-					LoggerHelper.logWarn("ScannerHelper::executeProvidedBaseAnnotationExecutors", String.format(
-							"Unable to execute annotation executor for annotation class %s : EXECUTOR NOT FOUND",
-							className), null);
-				}
-			} else {
-				LoggerHelper.logWarn("ScannerHelper::executeProvidedBaseAnnotationExecutors",
-						String.format("Cannot eecute annotation %s from executor: %s NO ANNOTATIONS FOUND!!", className,
-								"" + executor),
-						null);
-
-			}
+			entry.getValue().forEach(ad -> {
+				LoggerHelper.logTrace("ScannerHelper::executeProvidedBaseAnnotationExecutors [stream cycle]", 
+						String.format("Scanning executors for annotation class name: %s...", className));
+				AnnotationExecutor<? extends Annotation> executor = ComponentsRegistry.getInstance()
+						.get(AnnotationConstants.REGISTRY_CLASS_ANNOTATION_EXECUTORS, className);
+				Class<Annotation> annCls = (Class<Annotation>) ad.getAnnotationDeclarationClass();
+				String annName = annCls.getName();
+				LoggerHelper.logTrace("ScannerHelper::executeProvidedBaseAnnotationExecutors [stream cycle]", 
+						String.format("Found annotation name: %s of executor type: %s!!", annName, executor != null ? executor.getClass().getCanonicalName() : "<NULL>"));
+				ScannerHelper.executeAnnotationExecutor(ad, executor);
+			});
 		});
 	}
 }
