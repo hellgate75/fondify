@@ -35,6 +35,11 @@ public final class AnnotationEngine {
 	private static boolean completed = false;
 	private static boolean waiting = false;
 	
+	private static long startTime = 0l;
+	
+	private static double elapsedTimeSeconds = 0l;
+
+	
 	/**
 	 * Private blocked constructor
 	 */
@@ -48,8 +53,13 @@ public final class AnnotationEngine {
 	 * @param mainClass Main Class
 	 */
 	public static void run(Class<?> mainClass, Runnable disclaimerTask, Runnable tasks, String[] arguments) throws Exception {
+		ArgumentsHelper.storeArguments(arguments);
+
+		startTime = System.nanoTime();
 		completed = false;
 		Foundation.credits();
+
+
 		new Thread(disclaimerTask).start();
 		if ( ! ScannerHelper.isApplicationClass(mainClass) ) {
 			String message = String.format("Null or not 'Application' class for bootstrap: %s!!", mainClass);
@@ -76,8 +86,11 @@ public final class AnnotationEngine {
 				throw new InitializationException(message, e);
 			} 
 		}
+
 		List<? extends Annotation> annotations = ScannerHelper.getApplicationClassAnnotations(mainClass);
 
+		//Executing Feature(s)
+		ArgumentsHelper.processArguments();
 
 		//Execute available autorun components and relative extension when not declared
 		if ( ArgumentsHelper.hasArgument(ArgumentsConstants.ENABLE_AUTORUN_EXECUTION) &&
@@ -88,6 +101,7 @@ public final class AnnotationEngine {
 					  && ! BeansHelper.executorService.isShutdown() );
 		}
 		
+		//Recovering Application Console(s)
 		List<Class<? extends ApplicationConsole>> applicationConsoles = new ArrayList<>(0);
 		applicationConsoles.addAll(
 				annotations
@@ -152,7 +166,7 @@ public final class AnnotationEngine {
 			}).start();
 			
 		} else {
-			
+			LoggerHelper.logWarn("AnnotationEngine::run", "No Application Console found!!", null);
 		}
 
 		completed = true;
@@ -168,6 +182,11 @@ public final class AnnotationEngine {
 			}
 		}
 		waiting = false;
+		elapsedTimeSeconds = Math.ceil((System.nanoTime() - startTime) / 1000000000);
+	}
+	
+	public static final double getAnnotationEngineExecutionElapsedTimeSeconds() {
+		return elapsedTimeSeconds;
 	}
 	
 	/**
