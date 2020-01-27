@@ -13,5 +13,6 @@
   	<module>fondify-components</module>
   	<module>fondify-context</module>
   	<module>fondify-bom</module>
+  	<module>fondify-sample</module>
   </modules>
 </project>

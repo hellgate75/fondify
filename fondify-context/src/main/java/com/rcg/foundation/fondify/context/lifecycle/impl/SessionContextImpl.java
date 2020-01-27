@@ -22,12 +22,13 @@ import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.exceptions.LifeCycleException;
 import com.rcg.foundation.fondify.core.properties.PropertyArchive;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
+import com.rcg.foundation.fondify.core.typings.lifecycle.SessionSetter;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */
-public class SessionContextImpl implements SessionContext {
+public class SessionContextImpl implements SessionContext, SessionSetter {
 	private Map<String, Object> sessionRegistry = new ConcurrentHashMap<String, Object>(0);
 	private Map<String, BeanDefinition> components = new ConcurrentHashMap<String, BeanDefinition>(0);
 	private Map<String, BeanDefinition> injectables = new ConcurrentHashMap<String, BeanDefinition>(0);
@@ -38,7 +39,6 @@ public class SessionContextImpl implements SessionContext {
 	 * 
 	 */
 	public SessionContextImpl() {
-		uuid = ApplicationManagerImpl.getInstance().getCurrentSessionId();
 		ComponentsRegistry registry = ComponentsRegistry.getInstance();
 		components.putAll(registry.getAllAsMap(AnnotationConstants.REGISTRY_COMPONENT_REFERENCES));
 		injectables.putAll(registry.getAllAsMap(AnnotationConstants.REGISTRY_INJECTABLE_REFERENCES));
@@ -156,6 +156,11 @@ public class SessionContextImpl implements SessionContext {
 	protected void finalize() throws Throwable {
 		this.close();
 		super.finalize();
+	}
+
+	@Override
+	public void setSessionId(UUID uuid) {
+		this.uuid = uuid;
 	}
 	
 	

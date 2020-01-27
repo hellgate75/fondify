@@ -9,12 +9,16 @@ import static com.rcg.foundation.fondify.annotations.helpers.ScannerHelper.scanB
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import com.rcg.foundation.fondify.annotations.annotations.Application;
 import com.rcg.foundation.fondify.annotations.helpers.ScannerHelper;
+import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationManager;
+import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationManagerProvider;
 import com.rcg.foundation.fondify.annotations.typings.ApplicationConsole;
 import com.rcg.foundation.fondify.core.Foundation;
 import com.rcg.foundation.fondify.core.constants.ArgumentsConstants;
@@ -39,6 +43,9 @@ public final class AnnotationEngine {
 	
 	private static double elapsedTimeSeconds = 0l;
 
+	private static ApplicationManager applicationManager = null;
+	
+	public static UUID defaultSessionUUID = null;
 	
 	/**
 	 * Private blocked constructor
@@ -59,8 +66,29 @@ public final class AnnotationEngine {
 		completed = false;
 		Foundation.credits();
 
-
-		new Thread(disclaimerTask).start();
+		if ( disclaimerTask != null )
+			disclaimerTask.run();
+		
+		//Start New Session on this thread.
+		Optional<ApplicationManagerProvider> appManProviderOpt =  BeansHelper.getImplementedType(ApplicationManagerProvider.class);
+		if ( appManProviderOpt.isPresent() ) {
+			applicationManager = appManProviderOpt.get().getApplicationManager();
+		}
+		if ( applicationManager == null ) {
+			String message = "Unable to find implementations of ApplicationManagerProvider, please load specific modules, such as Fondify Context or similar";
+			LoggerHelper.logError("AnnatationEngine::run", message, null);
+			throw new IllegalStateException(message);
+		}
+		defaultSessionUUID = applicationManager.createNewSession();
+		
+		if ( defaultSessionUUID == null ) {
+			String message = "Unable to create new session with current version of ApplicationManagerProvider, please load a more specific modules, such as Fondify Context or similar";
+			LoggerHelper.logError("AnnatationEngine::run", message, null);
+			throw new IllegalStateException(message);
+		}
+		
+		LoggerHelper.logInfo("AnnatationEngine::run", String.format("Create new main session -> id: %s!!", defaultSessionUUID.toString()));
+		
 		if ( ! ScannerHelper.isApplicationClass(mainClass) ) {
 			String message = String.format("Null or not 'Application' class for bootstrap: %s!!", mainClass);
 			LoggerHelper.logError("AnnotationEngineAnnotationEngine::run", message, null);
@@ -96,7 +124,7 @@ public final class AnnotationEngine {
 		if ( ArgumentsHelper.hasArgument(ArgumentsConstants.ENABLE_AUTORUN_EXECUTION) &&
 			  ArgumentsHelper.getArgument(ArgumentsConstants.ENABLE_AUTORUN_EXECUTION).equalsIgnoreCase("true")) {
 			LoggerHelper.logInfo("AnnotationEngine::run", "Enabled Autorun feature!!");
-			BeansHelper.executeAutorunComponents();
+			BeansHelper.executeAutorunComponents(defaultSessionUUID);
 			ProcessStateTracker.getInstance().registerNewProcessStateReference(() -> BeansHelper.executorService != null 
 					  && ! BeansHelper.executorService.isShutdown() );
 		}

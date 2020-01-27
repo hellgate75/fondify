@@ -16,6 +16,7 @@ import com.rcg.foundation.fondify.annotations.lifecycle.SessionContext;
 import com.rcg.foundation.fondify.context.lifecycle.impl.ApplicationContextImpl;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.lifecycle.Session;
+import com.rcg.foundation.fondify.core.typings.lifecycle.SessionSetter;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
@@ -26,16 +27,21 @@ public class ApplicationManagerImpl implements ApplicationManager {
 	
 	private static final ApplicationContext context = new ApplicationContextImpl();
 	
-	private Map<UUID, SessionContext> contextMap = new ConcurrentHashMap<>(0);
+	private Map<UUID, SessionContext> contextMap = null;
 	
-	private Map<UUID, Session> sessionMap = new ConcurrentHashMap<>(0);
+	private Map<UUID, Session> sessionMap = null;
 
-	private Map<Long, UUID> threadSessionMap = new ConcurrentHashMap<>(0);
+	private Map<Long, UUID> threadSessionMap = null;
 	
 	/**
 	 * Create New Application Manager
 	 */
 	private ApplicationManagerImpl() {
+		LoggerHelper.logTrace("ApplicationManager::constructor", "Creating Application and Session Storage...");
+		contextMap = new ConcurrentHashMap<>(0);
+		sessionMap = new ConcurrentHashMap<>(0);
+		threadSessionMap = new ConcurrentHashMap<>(0);
+		LoggerHelper.logTrace("ApplicationManager::constructor", "Application and Session Storage created!!");
 	}
 	
 	/**
@@ -49,17 +55,33 @@ public class ApplicationManagerImpl implements ApplicationManager {
 	}
 	
 	/**
-	 * Recover Session Context, from creation session {@link UUID}
+	 * Recover Session, from creation session {@link UUID}
 	 * 
 	 * @param sessionId required session {@link UUID}
-	 * @return Provided {@link SessionContext} or null, in case UUID is not part of registered session 
+	 * @return Provided {@link Session} or null, in case UUID is not part of registered session 
 	 */
 	@Override
-	public SessionContext getSession(UUID sessionId) {
-		return contextMap.get(sessionId);
+	public Session getSession(UUID sessionId) {
+		if ( sessionId == null ) {
+			return null;
+		}
+		return sessionMap.get(sessionId);
 	}
 
 	
+	/**
+	 * Recover Session Context, from creation session {@link UUID}
+	 * 
+	 * @return Provided {@link SessionContext} or null, in case thread is the ore registered the session 
+	 */
+	@Override
+	public SessionContext getSessionContext(UUID sessionId) {
+		if ( sessionId == null ) {
+			return null;
+		}
+		return contextMap.get(sessionId);
+	}
+
 	/**
 	 * Recover Session Context, from running thread
 	 * 
@@ -68,6 +90,9 @@ public class ApplicationManagerImpl implements ApplicationManager {
 	@Override
 	public SessionContext getSessionContext() {
 		UUID sessionId = threadSessionMap.get(Thread.currentThread().getId());
+		if ( sessionId == null ) {
+			return null;
+		}
 		return contextMap.get(sessionId);
 	}
 
@@ -79,6 +104,9 @@ public class ApplicationManagerImpl implements ApplicationManager {
 	@Override
 	public Session getSession() {
 		UUID sessionId = threadSessionMap.get(Thread.currentThread().getId());
+		if ( sessionId == null ) {
+			return null;
+		}
 		return sessionMap.get(sessionId);
 	}
 	
@@ -108,6 +136,14 @@ public class ApplicationManagerImpl implements ApplicationManager {
 			throw new IllegalStateException(message);
 		}
 		UUID uuid = context.getSessionId();
+		if ( uuid == null )
+			uuid = UUID.randomUUID();
+		if ( SessionSetter.class.isAssignableFrom(session.getClass()) ) {
+			((SessionSetter)session).setSessionId(uuid);
+		}
+		if ( SessionSetter.class.isAssignableFrom(context.getClass()) ) {
+			((SessionSetter)context).setSessionId(uuid);
+		}
 		contextMap.put(uuid, context);
 		sessionMap.put(uuid, session);
 		threadSessionMap.put(Thread.currentThread().getId(), uuid);

@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -163,7 +164,7 @@ public final class BeansHelper {
 		return config;
 	}
 	
-	public static synchronized final void executeAutorunComponents() {
+	public static synchronized final void executeAutorunComponents(UUID sessionId) {
 		if ( executorService != null ) {
 			LoggerHelper.logWarn("BeansHelper::executeAutorunComponents", 
 					"Autorun execution still in progress. Skipping the autorun execution request!!",
@@ -196,9 +197,9 @@ public final class BeansHelper {
 					@Override
 					public void run() {
 						try {
-							provider.actuateInitializerForAutorun(autorun);
+							provider.actuateInitializerForAutorun(autorun, sessionId);
 							autorun.run(ArgumentsHelper.getArguments());
-							provider.actuateFinalizerForAutorun(autorun);
+							provider.actuateFinalizerForAutorun(autorun, sessionId);
 						} catch (Exception e) {
 							LoggerHelper.logError("BeansHelper::executeAutorunComponents", 
 									String.format("Unable to execute autrun for element %s sue to ERRORS!!", autorun != null ? autorun.getClass().getName() : "<NULL>"), 

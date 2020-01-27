@@ -9,16 +9,16 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import com.rcg.foundation.fondify.context.ApplicationManagerImpl;
 import com.rcg.foundation.fondify.core.properties.PropertyArchive;
 import com.rcg.foundation.fondify.core.typings.KeyPair;
 import com.rcg.foundation.fondify.core.typings.lifecycle.Session;
+import com.rcg.foundation.fondify.core.typings.lifecycle.SessionSetter;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */
-public class SessionImpl implements Session {
+public class SessionImpl implements Session, SessionSetter {
 	private UUID uuid;
 	private Map<String, Object> applicationProperties = new ConcurrentHashMap<String, Object>(0);
 	private Map<String, String> sessionProperties = new ConcurrentHashMap<String, String>(0);
@@ -28,7 +28,6 @@ public class SessionImpl implements Session {
 	 */
 	public SessionImpl() {
 		super();
-		uuid = ApplicationManagerImpl.getInstance().getCurrentSessionId();
 		applicationProperties.putAll(
 				PropertyArchive.getInstance()
 				.getAllProperties()
@@ -89,6 +88,11 @@ public class SessionImpl implements Session {
 	@Override
 	public UUID getSessionId() {
 		return uuid;
+	}
+
+	@Override
+	public void setSessionId(UUID uuid) {
+		this.uuid = uuid;
 	}
 
 }

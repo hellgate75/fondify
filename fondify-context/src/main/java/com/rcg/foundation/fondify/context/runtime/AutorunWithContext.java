@@ -3,6 +3,8 @@
  */
 package com.rcg.foundation.fondify.context.runtime;
 
+import java.util.UUID;
+
 import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationContext;
 import com.rcg.foundation.fondify.annotations.lifecycle.SessionContext;
 import com.rcg.foundation.fondify.core.typings.autorun.Autorun;
@@ -19,4 +21,6 @@ public interface AutorunWithContext extends Autorun {
 	void setApplicationContext(ApplicationContext context);
 	
 	void setSession(Session session);
+	
+	void setSessionId(UUID sessionId);
 }

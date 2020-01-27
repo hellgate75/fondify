@@ -21,12 +21,19 @@ public interface ApplicationManager {
 	ApplicationContext getApplicationContext();
 	
 	/**
-	 * Recover Session Context, from creation session {@link UUID}
+	 * Recover Session, from creation session {@link UUID}
 	 * 
 	 * @param sessionId required session {@link UUID}
-	 * @return Provided {@link SessionContext} or null, in case UUID is not part of registered session 
+	 * @return Provided {@link Session} or null, in case UUID is not part of registered session 
 	 */
-	public SessionContext getSession(UUID sessionId);
+	public Session getSession(UUID sessionId);
+	
+	/**
+	 * Recover Session Context, from creation session {@link UUID}
+	 * 
+	 * @return Provided {@link SessionContext} or null, in case thread is the ore registered the session 
+	 */
+	public SessionContext getSessionContext(UUID sessionId);
 
 	
 	/**
