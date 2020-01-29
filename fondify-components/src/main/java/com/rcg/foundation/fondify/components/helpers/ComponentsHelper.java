@@ -5,7 +5,10 @@ package com.rcg.foundation.fondify.components.helpers;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
@@ -18,10 +21,12 @@ import com.rcg.foundation.fondify.annotations.typings.BeanDefinition;
 import com.rcg.foundation.fondify.annotations.typings.MethodExecutor;
 import com.rcg.foundation.fondify.components.annotations.Autowired;
 import com.rcg.foundation.fondify.components.annotations.Inject;
-import com.rcg.foundation.fondify.components.annotations.executors.InjectableExecutor;
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.exceptions.InitializationException;
 import com.rcg.foundation.fondify.core.functions.Transformer;
+import com.rcg.foundation.fondify.core.helpers.ArgumentsHelper;
+import com.rcg.foundation.fondify.core.helpers.BeansHelper;
+import com.rcg.foundation.fondify.core.helpers.GenericHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.properties.PropertyArchive;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
@@ -40,7 +45,7 @@ public final class ComponentsHelper {
 	 * 
 	 */
 	private ComponentsHelper() {
-		throw new IllegalStateException("Unable to instatiatio helper class");
+		throw new IllegalStateException("ComponentsHelper::constructor -> Unable to instatiatio helper class");
 	}
 
 	/**
@@ -63,7 +68,7 @@ public final class ComponentsHelper {
 						.forEach( propertyRef -> {
 							String propertyName = propertyRef.getPropertyDescr();
 							try {
-								Field fld = objectClass.getField(propertyRef.getElemRef());
+								Field fld = objectClass.getDeclaredField(propertyRef.getElemRef());
 								fld.set(t, PropertyArchive.getInstance().getProperty(propertyName));
 							} catch (Exception ex) {
 								String message = String.format("Error creating property for bean definition : %s, property ref: %s", 
@@ -77,7 +82,7 @@ public final class ComponentsHelper {
 						.forEach( componentRef -> {
 							String beanNameRef = componentRef.getElemDescriptor();
 							try {
-								Field fld = objectClass.getField(componentRef.getElemRef());
+								Field fld = objectClass.getDeclaredField(componentRef.getElemRef());
 								fld.set(t, ComponentsRegistry.getInstance().seek(beanNameRef));
 							} catch (Exception ex) {
 								String message = String.format("Error creating property for bean definition : %s, component ref: %s", 
@@ -112,7 +117,7 @@ public final class ComponentsHelper {
 		if ( arguments.length > 0 && Scope.class.isAssignableFrom(arguments[0].getClass())) {
 			scope = (Scope) arguments[0];
 		}
-		Optional<ApplicationManagerProvider> providerOpt = AnnotationHelper.getImplementedType(ApplicationManagerProvider.class);
+		Optional<ApplicationManagerProvider> providerOpt =  BeansHelper.getImplementedType(ApplicationManagerProvider.class);
 		if ( providerOpt.isPresent() ) {
 			provider = providerOpt.get();
 		}
@@ -124,7 +129,7 @@ public final class ComponentsHelper {
 			throw new InitializationException(message);
 		}
 		ComponentManagerProvider componentProvider = null;
-		Optional<ComponentManagerProvider> componentProviderOpt = AnnotationHelper.getImplementedType(ComponentManagerProvider.class);
+		Optional<ComponentManagerProvider> componentProviderOpt =  BeansHelper.getImplementedType(ComponentManagerProvider.class);
 		if ( componentProviderOpt.isPresent() ) {
 			componentProvider = componentProviderOpt.get();
 		}
@@ -137,7 +142,9 @@ public final class ComponentsHelper {
 		}
 		if ( name.startsWith("?") && name.endsWith("?") ) {
 			name = name.substring(1, name.length() - 1);
-			if ( name.equalsIgnoreCase("sessioncontext") ) {
+			if ( name.equalsIgnoreCase("arguments") ) {
+				return ArgumentsHelper.getArguments();
+			} else if ( name.equalsIgnoreCase("sessioncontext") ) {
 				return provider.getApplicationManager().getSessionContext();
 			} else if ( name.equalsIgnoreCase("applicationcontext") ) {
 				return provider.getApplicationManager().getApplicationContext();
@@ -167,22 +174,32 @@ public final class ComponentsHelper {
 	public static final <T> T createNewBean(String beanName, MethodExecutor executor) {
 		try {
 			String beanNameRef = executor.getBeanName();
-			executor.execute(ComponentsRegistry.getInstance().seek(beanNameRef),
+			T instance = ComponentsRegistry.getInstance().seek(beanNameRef);
+			if ( instance != null ) {
+				AnnotationHelper.scanAndProcessEntity(instance, instance.getClass());
+			}
+			executor.execute(instance,
 					getValueExtractor(), getAutowiredTransformer(), getInjectTransformer(),
 					(in, out) -> {
-						String beanNameStr = executor.getBeanName();
-						BeanDefinition definition = new BeanDefinition(executor.getDescriptor());
-						Class<?> elementClass = executor.getDescriptor().getAnnotatedClass();
-						beanNameStr = AnnotationHelper.getClassBeanName(elementClass, beanNameStr);
-						definition.setScope(executor.getScope());
-	
-						AnnotationHelper.processFieldsAnnotations(elementClass, definition, beanNameStr, InjectableExecutor::filterComponentFieldAnnotation);
-	
-						AnnotationHelper.processFieldsPropertyAnnotations(elementClass, definition, beanNameStr, InjectableExecutor::filterComponentFieldValueAnnotation);
-						
-						AnnotationHelper.processMethodInitializationFinalizationAnnotations(beanName, elementClass, definition, InjectableExecutor::filterComponentMethodAnnotation);
-						
-						return definition.execute(in, (name, params) -> tranformNameToBeanInstance(name, params));
+						if ( in == null ) {
+							return null;
+						}
+						return AnnotationHelper.scanAndProcessEntity(in, in.getClass());
+//						String beanNameStr = executor.getBeanName();
+//						BeanDefinition definition = new BeanDefinition(executor.getDescriptor());
+//						Class<?> elementClass = executor.getDescriptor().getAnnotatedClass();
+//						beanNameStr = AnnotationHelper.getClassBeanName(elementClass, beanNameStr);
+//						definition.setScope(executor.getScope());
+//	
+//						AnnotationHelper.processFieldsAnnotations(elementClass, definition, beanNameStr, InjectableExecutor::filterComponentFieldAnnotation);
+//	
+//						AnnotationHelper.processFieldsPropertyAnnotations(elementClass, definition, beanNameStr, InjectableExecutor::filterComponentFieldValueAnnotation);
+//						
+//						AnnotationHelper.processMethodInitializationFinalizationAnnotations(beanName, elementClass, definition, InjectableExecutor::filterComponentMethodAnnotation);
+//						
+//						Object entity = definition.execute(in, (name, params) -> tranformNameToBeanInstance(name, params));
+//						//AnnotationHelper.scanAndProcessEntity(entity, entity!=null ? entity.getClass(): null);
+//						return entity;
 					});
 		} catch (Exception ex) {
 			String message = String.format("Error creating bean for bean definition : %s", ""+executor);
@@ -258,6 +275,38 @@ public final class ComponentsHelper {
 				.collect(Collectors.toList())
 		);
 		return list;
+	}
+	
+	public static final Object executeMethodOfBean(Class<?> cls, Object instance, Method m) {
+		Object response = null;
+		String threadName = Thread.currentThread().getName();
+		m.setAccessible(true);
+		List<Object> args = Arrays.asList(m.getParameters())
+			.stream()
+			.map( parameter -> {
+				GenericHelper.fixCurrentThreadStandardName(threadName);
+				return com.rcg.foundation.fondify.annotations.helpers.AnnotationHelper
+						.valueOfInjectedParameter(parameter);
+			})
+			
+			.collect(Collectors.toList());
+		try {
+			if ( args.contains( null ) ) {
+				LoggerHelper.logError("ComponentsHelper::executeMethodOfBean", 
+						String.format("Some parameters in method %s are not injected, so not invocation is available!!", m.getName()), 
+						null);
+			} else {
+				if ( args.size() == 0  )
+					response = m.invoke(instance);
+				else
+					response = m.invoke(instance, args.toArray());
+			}
+		} catch (Exception e) {
+			LoggerHelper.logError("ComponentsHelper::executeMethodOfBean", 
+					String.format("Unable to execute method %s due to ERRORS!!", m.getName()), 
+					e);
+		}
+		return response;
 	}
 
 }

@@ -28,8 +28,6 @@ public final class AnnotationConstants {
 
 	public static final String REGISTRY_INJECTABLE_BEAN_DEFINITIONS="InjectableBeanDefinitions";
 
-	public static final String REGISTRY_INJECTABLE_METHODD_REFERENCES="InjectablesMethodsReferences";
-
 	public static final String REGISTRY_INJECTABLE_METHODD_DEFINITIONS="InjectablesMethodsDefinitions";
 
 	public static final String REGISTRY_BEAN_INSTANCE_APPLICATION_SCOPE="BeanInstanceApplicatioScope";

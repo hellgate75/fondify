@@ -5,7 +5,6 @@ package com.rcg.foundation.fondify.core.typings.autorun;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
@@ -35,14 +34,14 @@ public final class AutorunPhasesActuatorProvider {
 		);
 	}
 	
-	public void actuateInitializerForAutorun(Autorun autorun, UUID sessionId) {
+	public void actuateInitializerForAutorun(Autorun autorun) {
 		if ( autorun != null ) {
 			initializers
 				.stream()
 				.filter( initializer -> initializer.getInitializerSuperClass().isAssignableFrom(autorun.getClass()) )
 				.forEach( initializer -> { 
 					try {
-						initializer.initAutorun(autorun, sessionId);
+						initializer.initAutorun(autorun);
 					} catch (Exception e) {
 						LoggerHelper.logError("AutorunPhasesActuatorProvider::actuatePhasesForAutorunComponent", 
 								String.format("Unable to actuate autrun %s with the initializer : %s due to ERRORS!!!", autorun.getClass().getName(), initializer.getClass().getName()), 
@@ -52,14 +51,14 @@ public final class AutorunPhasesActuatorProvider {
 		}
 	}
 
-	public void actuateFinalizerForAutorun(Autorun autorun, UUID sessionId) {
+	public void actuateFinalizerForAutorun(Autorun autorun) {
 		if ( autorun != null ) {
 			finalizers
 				.stream()
 				.filter( finalizer -> finalizer.getFinalizerSuperClass().isAssignableFrom(autorun.getClass()) )
 				.forEach( finalizer -> { 
 					try {
-						finalizer.finalizeAutorun(autorun, sessionId);
+						finalizer.finalizeAutorun(autorun);
 					} catch (Exception e) {
 						LoggerHelper.logError("AutorunPhasesActuatorProvider::actuatePhasesForAutorunComponent", 
 								String.format("Unable to actuate autrun %s with the finalizer : %s due to ERRORS!!!", autorun.getClass().getName(), finalizer.getClass().getName()), 

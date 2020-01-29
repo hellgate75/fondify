@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 
 import com.rcg.foundation.fondify.annotations.annotations.methods.Finalization;
 import com.rcg.foundation.fondify.annotations.annotations.methods.Initialization;
+import com.rcg.foundation.fondify.annotations.contants.AnnotationConstants;
 import com.rcg.foundation.fondify.annotations.typings.BeanDefinition;
 import com.rcg.foundation.fondify.annotations.typings.MethodExecutor;
 import com.rcg.foundation.fondify.components.annotations.Autowired;
@@ -16,7 +17,9 @@ import com.rcg.foundation.fondify.components.annotations.Injectable;
 import com.rcg.foundation.fondify.components.helpers.AnnotationHelper;
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
+import com.rcg.foundation.fondify.core.helpers.BeansHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
+import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclarationType;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
@@ -45,7 +48,7 @@ public class InjectableExecutor implements AnnotationExecutor<Injectable> {
 
 	@Override
 	public boolean containsResults() {
-		return true;
+		return false;
 	}
 
 	@Override
@@ -77,15 +80,10 @@ public class InjectableExecutor implements AnnotationExecutor<Injectable> {
 		Injectable injectable = (Injectable)t.getAnnotation();
 		Scope scope = injectable.scope();
 		beanName = t.getAnnotationDeclarationClass().getSimpleName();
-		if ( injectable.component() != null &&
-				injectable.component().value() != null &&
-				! injectable.component().value().isEmpty()) {
-			beanName = injectable.component().value();
-		} else  {
-			beanName = t.getAnnotatedClass().getSimpleName();
-			beanName = ("" + beanName.charAt(0)).toLowerCase() + beanName.substring(1);
-		}
+		String regName = AnnotationConstants.REGISTRY_INJECTABLE_BEAN_DEFINITIONS;
+		Object injectableDefinition = null;
 		if ( t.getAnnotationDeclarationType() == AnnotationDeclarationType.TYPE ) {
+			beanName = AnnotationHelper.getClassBeanName(t.getAnnotationDeclarationClass(), beanName);
 			BeanDefinition definition = new BeanDefinition(t);
 			Class<?> elementClass = t.getAnnotatedClass();
 			beanName = AnnotationHelper.getClassBeanName(elementClass, elementClass.getSimpleName());
@@ -96,27 +94,43 @@ public class InjectableExecutor implements AnnotationExecutor<Injectable> {
 			AnnotationHelper.processFieldsPropertyAnnotations(elementClass, definition, beanName, InjectableExecutor::filterComponentFieldValueAnnotation);
 			
 			AnnotationHelper.processMethodInitializationFinalizationAnnotations(beanName, elementClass, definition, InjectableExecutor::filterComponentMethodAnnotation);
-			
-			answer.addResult(definition);
+			injectableDefinition = definition;
 		} else if ( t.getAnnotationDeclarationType() == AnnotationDeclarationType.METHOD ) {
-			
+			regName = AnnotationConstants.REGISTRY_INJECTABLE_METHODD_DEFINITIONS;
 			Method method = t.getAnnotationMethod();
+			beanName = AnnotationHelper.getClassMethodBeanName(method, method.getName());
 			Class<?> annotatedClass = t.getAnnotatedClass();
 			String proposed = annotatedClass.getSimpleName();
-			Initialization initializationAnnotation = method.getAnnotation(Initialization.class);
-			Finalization finalizationAnnotation = method.getAnnotation(Finalization.class);
+			Initialization initializationAnnotation = BeansHelper.getMethodAnnotation(method, Initialization.class);
+			Finalization finalizationAnnotation = BeansHelper.getMethodAnnotation(method, Finalization.class);
 			beanName = AnnotationHelper.getClassMethodBeanName(method, method.getName());
 			MethodExecutor executor = new MethodExecutor(t, beanName, method, initializationAnnotation, finalizationAnnotation);
 			AnnotationHelper
 				.getParametersRefFor(method, annotatedClass, AnnotationHelper.getClassBeanName(annotatedClass, proposed))
 				.forEach(executor::addParameter);		
-			answer.addResult(executor);
+			injectableDefinition = executor;
 		} else {
 			LoggerHelper.logWarn("InjectableExecutor::executeAnnotation", 
 								String.format("Unable to instantiate Bean (name: %s) for Injectable with scope: %s", 
 												beanName, 
 												t.getAnnotationDeclarationType().name()),
 								null);
+		}
+		if ( injectableDefinition != null ) {
+			LoggerHelper.logTrace("InjectableExecutor::executeAnnotation", 
+					String.format("Registration od Bean names: %s for Injectable with scope: %s, of type: %s, in registry: %s", 
+									beanName, 
+									t.getAnnotationDeclarationType().name(),
+									injectableDefinition != null ? injectableDefinition.getClass().getName(): "<NULL>",
+									regName) );
+			ComponentsRegistry.getInstance().add(regName, beanName, injectableDefinition);
+		} else {
+			LoggerHelper.logWarn("InjectableExecutor::executeAnnotation", 
+					String.format("Unable to register Null Bean names: %s for Injectable with scope: %s, in registry: %s", 
+									beanName, 
+									t.getAnnotationDeclarationType().name(),
+									regName),
+					null);
 		}
 		return answer;
 	}

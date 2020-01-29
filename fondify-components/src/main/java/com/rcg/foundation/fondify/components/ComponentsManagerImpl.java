@@ -4,16 +4,18 @@
 package com.rcg.foundation.fondify.components;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Optional;
 
 import com.rcg.foundation.fondify.annotations.contants.AnnotationConstants;
 import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationManagerProvider;
 import com.rcg.foundation.fondify.annotations.typings.BeanDefinition;
 import com.rcg.foundation.fondify.annotations.typings.MethodExecutor;
-import com.rcg.foundation.fondify.components.annotations.executors.InjectableExecutor;
 import com.rcg.foundation.fondify.components.helpers.AnnotationHelper;
 import com.rcg.foundation.fondify.components.helpers.ComponentsHelper;
 import com.rcg.foundation.fondify.core.domain.Scope;
+import com.rcg.foundation.fondify.core.helpers.ArgumentsHelper;
+import com.rcg.foundation.fondify.core.helpers.BeansHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.properties.PropertyArchive;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
@@ -38,88 +40,149 @@ public class ComponentsManagerImpl implements ComponentsManager, ComponentsDisco
 
 	@Override
 	public <T> T getInjectableOrComponentByName(String name, Object baseInstance, Scope... scope) throws Exception {
-		T t = getInjectableByName(name, baseInstance, scope);
+		T t = getInjectableByName(true, name, baseInstance, scope);
 		if ( t == null ) {
-			t = getComponentByName(name, baseInstance, scope);
+			t = getComponentByName(true, name, baseInstance, scope);
+		}
+		if ( t == null ) {
+			LoggerHelper.logWarn("ComponentsManagerImpl::getComponentByName", String.format("Unable to discover required component / injectable bean named: %s", name), null);
 		}
 		return t;
 	}
 	
-	private BeanDefinition getInjectableBeanDefinition(String name) {
+	@Override
+	public <T> void registerComponent(String name, T component) {
+		registry.add(AnnotationConstants.REGISTRY_COMPONENT_REFERENCES, name, component);
+	}
+	
+	@Override
+	public <T extends Injectable> void registerInjectable(String name, T component) {
+		registry.add(AnnotationConstants.REGISTRY_INJECTABLE_REFERENCES, name, component);
+	}
+	
+	public BeanDefinition getInjectableBeanDefinition(String name) {
 		return (BeanDefinition) registry.get(AnnotationConstants.REGISTRY_INJECTABLE_BEAN_DEFINITIONS, name);
 	}
 	
-	private MethodExecutor getInjectableMethodDefinition(String name) {
+	public Collection<BeanDefinition> getInjectableBeanDefinitions() {
+		return registry.getAll(AnnotationConstants.REGISTRY_INJECTABLE_BEAN_DEFINITIONS);
+	}
+	
+	public MethodExecutor getInjectableMethodDefinition(String name) {
 		return (MethodExecutor) registry.get(AnnotationConstants.REGISTRY_INJECTABLE_METHODD_DEFINITIONS, name);
 	}
 	
-	private BeanDefinition getComponentBeanDefinition(String name) {
+	public Collection<? extends Injectable> getInjectableBeanReferences() {
+		return registry.getAll(AnnotationConstants.REGISTRY_INJECTABLE_REFERENCES);
+	}
+	
+	public Collection<?> getComponentsBeanReferences() {
+		return registry.getAll(AnnotationConstants.REGISTRY_COMPONENT_REFERENCES);
+	}
+	
+	public Collection<MethodExecutor> getInjectableMethodDefinitions() {
+		return registry.getAll(AnnotationConstants.REGISTRY_INJECTABLE_METHODD_DEFINITIONS);
+	}
+	
+	public BeanDefinition getComponentBeanDefinition(String name) {
 		return (BeanDefinition) registry.get(AnnotationConstants.REGISTRY_COMPONENT_BEAN_DEFINITIONS, name);
 	}
 
+	public Collection<BeanDefinition> getComponentBeanDefinitions() {
+		return registry.getAll(AnnotationConstants.REGISTRY_COMPONENT_BEAN_DEFINITIONS);
+	}
+
+
 	@Override
-	@SuppressWarnings("unchecked")
 	public <T extends Injectable> T getInjectableByName(String name, Object baseInstance, Scope... scope) throws Exception {
+		return getInjectableByName(false, name, baseInstance, scope);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T extends Injectable> T getInjectableByName(boolean supressWarnings, String name, Object baseInstance, Scope... scope) throws Exception {
 		boolean isLocalScope = scope != null && scope.length > 0 && Arrays.asList(scope)
 													.stream()
 													.filter(sc -> sc == Scope.INSTANCE || sc == Scope.SESSION)
 													.count() > 0;
 		T t = isLocalScope ? null : (T) registry.get(AnnotationConstants.REGISTRY_INJECTABLE_REFERENCES, name);
 		if ( t == null ) {
-			t = isLocalScope ? null : (T) registry.get(AnnotationConstants.REGISTRY_INJECTABLE_METHODD_REFERENCES, name);
-			if ( t == null ) {
-				//Create new Injectable
-				BeanDefinition definition = getInjectableBeanDefinition(name);
-				if ( definition == null ) {
-					MethodExecutor executor = getInjectableMethodDefinition(name);
-					if ( executor == null ) {
+			//Create new Injectable
+			BeanDefinition definition = getInjectableBeanDefinition(name);
+			if ( definition == null ) {
+				MethodExecutor executor = getInjectableMethodDefinition(name);
+				if ( executor == null ) {
+					if (! supressWarnings )
 						LoggerHelper.logWarn("ComponentsManagerImpl::getInjectableByName", String.format("Unable to discover required injectable bean named: %s", name), null);
-						return null;
-					} else {
-						if ( scope != null && scope.length > 0 && ! Arrays.asList(scope).contains(executor.getScope()) ) {
+					return null;
+				} else {
+					if ( scope != null && scope.length > 0 && ! Arrays.asList(scope).contains(executor.getScope()) ) {
+						if ( ! supressWarnings )
 							LoggerHelper.logWarn("ComponentsManagerImpl::getInjectableByName", String.format("Found component named %s but scope %s is not in availability list: %s!!", name, executor.getScope().name(), Arrays.toString(scope)), null);
+						return null;
+					}
+					if ( baseInstance == null ) {
+						try {
+							baseInstance = executor.getDescriptor().getAnnotatedClass().newInstance();
+						} catch (Exception e) {
+							String message = "";
+							LoggerHelper.logError("ComponentsManager::getInjectableByName", message, e);
 							return null;
 						}
-						t = (T) executor.execute(baseInstance, 
-													ComponentsHelper.getValueExtractor(), 
-													ComponentsHelper.getAutowiredTransformer(), 
-													ComponentsHelper.getInjectTransformer(),
-													(in, out) -> {
-														String beanNameStr = "";
-														try {
-															beanNameStr = executor.getBeanName();
-															BeanDefinition beanDefinition = new BeanDefinition(executor.getDescriptor());
-															Class<?> elementClass = executor.getDescriptor().getAnnotatedClass();
-															beanNameStr = AnnotationHelper.getClassBeanName(elementClass, beanNameStr);
-															beanDefinition.setScope(executor.getScope());
-								
-															AnnotationHelper.processFieldsAnnotations(elementClass, definition, beanNameStr, InjectableExecutor::filterComponentFieldAnnotation);
-								
-															AnnotationHelper.processFieldsPropertyAnnotations(elementClass, definition, beanNameStr, InjectableExecutor::filterComponentFieldValueAnnotation);
-															
-															AnnotationHelper.processMethodInitializationFinalizationAnnotations(beanNameStr, elementClass, definition, InjectableExecutor::filterComponentMethodAnnotation);
-															
-															return beanDefinition.execute(in, (beanName, params) -> ComponentsHelper.tranformNameToBeanInstance(beanName, params));
-														} catch (Exception e) {
-															LoggerHelper.logError("ComponentsManagerImpl::getInjectableByName", String.format("Unable to tranform method outcome bean named: %s!!", beanNameStr), e);
+					}
+					t = (T) executor.execute(baseInstance, 
+												ComponentsHelper.getValueExtractor(), 
+												ComponentsHelper.getAutowiredTransformer(), 
+												ComponentsHelper.getInjectTransformer(),
+												(in, out) -> {
+													String beanNameStr = "";
+													try {
+														if ( in == null ) {
+															return null;
 														}
-														return null;
-													});
-						if ( ! isLocalScope )
-							registry.add(AnnotationConstants.REGISTRY_INJECTABLE_METHODD_REFERENCES, name, t);
-						return t;
-					}
-				} else {
-					if ( scope != null && scope.length > 0 && ! Arrays.asList(scope).contains(definition.getScope()) ) {
-						LoggerHelper.logWarn("ComponentsManagerImpl::getInjectableByName", String.format("Found component named %s but scope %s is not in availability list: %s!!", name, definition.getScope().name(), Arrays.toString(scope)), null);
-						return null;
-					}
-					t = (T) definition.execute(baseInstance, (beanName, arguments) -> ComponentsHelper.tranformNameToBeanInstance(beanName, arguments));
+														return AnnotationHelper.scanAndProcessEntity(in, in.getClass());
+//														beanNameStr = executor.getBeanName();
+//														BeanDefinition beanDefinition = new BeanDefinition(executor.getDescriptor());
+//														Class<?> elementClass = executor.getDescriptor().getAnnotatedClass();
+//														beanNameStr = AnnotationHelper.getClassBeanName(elementClass, beanNameStr);
+//														beanDefinition.setScope(executor.getScope());
+//							
+//														AnnotationHelper.processFieldsAnnotations(elementClass, definition, beanNameStr, InjectableExecutor::filterComponentFieldAnnotation);
+//							
+//														AnnotationHelper.processFieldsPropertyAnnotations(elementClass, definition, beanNameStr, InjectableExecutor::filterComponentFieldValueAnnotation);
+//														
+//														AnnotationHelper.processMethodInitializationFinalizationAnnotations(beanNameStr, elementClass, definition, InjectableExecutor::filterComponentMethodAnnotation);
+//														Object entity = beanDefinition.execute(in, (beanName, params) -> ComponentsHelper.tranformNameToBeanInstance(beanName, params));
+//														//AnnotationHelper.scanAndProcessEntity(entity, entity!=null ? entity.getClass(): null);
+//														return entity;
+													} catch (Exception e) {
+														LoggerHelper.logError("ComponentsManagerImpl::getInjectableByName", String.format("Unable to tranform method outcome bean named: %s!!", beanNameStr), e);
+													}
+													return null;
+												});
 					if ( ! isLocalScope )
 						registry.add(AnnotationConstants.REGISTRY_INJECTABLE_REFERENCES, name, t);
 					return t;
 				}
 			} else {
+				if ( scope != null && scope.length > 0 && ! Arrays.asList(scope).contains(definition.getScope()) ) {
+					if ( ! supressWarnings )
+						LoggerHelper.logWarn("ComponentsManagerImpl::getInjectableByName", String.format("Found component named %s but scope %s is not in availability list: %s!!", name, definition.getScope().name(), Arrays.toString(scope)), null);
+					return null;
+				}
+				try {
+					baseInstance = definition.getDeclaration().getAnnotatedClass().newInstance();
+				} catch (Exception e) {
+					LoggerHelper.logWarn("ComponentsManagerImpl::getInjectableByName", 
+								String.format("Found component named %s but errors occured during preliminary instance!!", name), e);
+				}
+				try {
+					t = (T) definition.execute(baseInstance, (beanName, arguments) -> ComponentsHelper.tranformNameToBeanInstance(beanName, arguments));
+					if ( ! isLocalScope )
+						registry.add(AnnotationConstants.REGISTRY_INJECTABLE_REFERENCES, name, t);
+				} catch (Exception e) {
+					LoggerHelper.logError("ComponentsManagerImpl::getInjectableByName", 
+							String.format("Found component named %s but errors occured during BeanDefinition execution!!", name), e);
+				}
 				return t;
 			}
 		} else {
@@ -128,8 +191,11 @@ public class ComponentsManagerImpl implements ComponentsManager, ComponentsDisco
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public <T> T getComponentByName(String name, Object baseInstance, Scope... scope) throws Exception {
+		return getComponentByName(false, name, baseInstance, scope);
+	}
+	@SuppressWarnings("unchecked")
+	public <T> T getComponentByName(boolean supressWarnings, String name, Object baseInstance, Scope... scope) throws Exception {
 		boolean isLocalScope = scope != null && scope.length > 0 && Arrays.asList(scope)
 				.stream()
 				.filter(sc -> sc == Scope.INSTANCE || sc == Scope.SESSION)
@@ -139,9 +205,15 @@ public class ComponentsManagerImpl implements ComponentsManager, ComponentsDisco
 			//Create new Injectable
 			BeanDefinition definition = getComponentBeanDefinition(name);
 			if ( definition == null ) {
-				LoggerHelper.logWarn("ComponentsManagerImpl::getComponentByName", String.format("Unable to discover required component bean named: %s", name), null);
+				if ( ! supressWarnings )
+					LoggerHelper.logWarn("ComponentsManagerImpl::getComponentByName", String.format("Unable to discover required component bean named: %s", name), null);
 				return null;
 			} else {
+				if ( scope != null && scope.length > 0 && ! Arrays.asList(scope).contains(definition.getScope()) ) {
+					if ( ! supressWarnings )
+						LoggerHelper.logWarn("ComponentsManagerImpl::getInjectableByName", String.format("Found component named %s but scope %s is not in availability list: %s!!", name, definition.getScope().name(), Arrays.toString(scope)), null);
+					return null;
+				}
 				t = (T) definition.execute(baseInstance, (beanName, arguments) -> ComponentsHelper.tranformNameToBeanInstance(beanName, arguments));
 				if ( ! isLocalScope )
 					registry.add(AnnotationConstants.REGISTRY_COMPONENT_REFERENCES, name, t);
@@ -161,7 +233,7 @@ public class ComponentsManagerImpl implements ComponentsManager, ComponentsDisco
 	@Override
 	public <T> T getSystemObjectByName(String name) throws Exception {
 		ApplicationManagerProvider provider = null;
-		Optional<ApplicationManagerProvider> providerOpt = AnnotationHelper.getImplementedType(ApplicationManagerProvider.class);
+		Optional<ApplicationManagerProvider> providerOpt =  BeansHelper.getImplementedType(ApplicationManagerProvider.class);
 		if ( providerOpt.isPresent() ) {
 			provider = providerOpt.get();
 		}
@@ -174,7 +246,9 @@ public class ComponentsManagerImpl implements ComponentsManager, ComponentsDisco
 		}
 		if ( name.startsWith("?") && name.endsWith("?") ) {
 			name = name.substring(1, name.length() - 1);
-			if ( name.equalsIgnoreCase("sessioncontext") ) {
+			if ( name.equalsIgnoreCase("arguments") ) {
+				return (T) ArgumentsHelper.getArguments();
+			} else if ( name.equalsIgnoreCase("sessioncontext") ) {
 				return (T) provider.getApplicationManager().getSessionContext();
 			} else if ( name.equalsIgnoreCase("applicationcontext") ) {
 				return (T) provider.getApplicationManager().getApplicationContext();

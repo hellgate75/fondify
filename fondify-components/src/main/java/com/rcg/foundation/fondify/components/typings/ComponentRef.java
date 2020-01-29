@@ -10,7 +10,7 @@ import java.util.List;
 
 import com.rcg.foundation.fondify.components.annotations.Autowired;
 import com.rcg.foundation.fondify.components.annotations.Component;
-import com.rcg.foundation.fondify.components.annotations.Inject;
+import com.rcg.foundation.fondify.components.annotations.Injectable;
 import com.rcg.foundation.fondify.core.typings.fields.ComponentReference;
 import com.rcg.foundation.fondify.core.typings.methods.ParameterRef;
 
@@ -42,7 +42,7 @@ public class ComponentRef implements Serializable, ComponentReference {
 	
 	private Autowired autowiredAnnotation = null;
 
-	private Inject injectAnnotation = null;
+	private Injectable injectAnnotation = null;
 	
 	private List<ParameterRef> parameters = new ArrayList<ParameterRef>(0);
 
@@ -201,14 +201,14 @@ public class ComponentRef implements Serializable, ComponentReference {
 	/**
 	 * @return the injectAnnotation
 	 */
-	public Inject getInjectAnnotation() {
+	public Injectable getInjectAnnotation() {
 		return injectAnnotation;
 	}
 
 	/**
 	 * @param injectAnnotation the injectAnnotation to set
 	 */
-	public void setInjectAnnotation(Inject injectAnnotation) {
+	public void setInjectAnnotation(Injectable injectAnnotation) {
 		this.injectAnnotation = injectAnnotation;
 	}
 

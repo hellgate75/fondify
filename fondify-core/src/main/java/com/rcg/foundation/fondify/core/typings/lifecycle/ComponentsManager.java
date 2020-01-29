@@ -13,6 +13,22 @@ import com.rcg.foundation.fondify.core.typings.Injectable;
 public interface ComponentsManager {
 
 	/**
+	 * Register a new Custom Component manually in the registry at runtime
+	 * @param <T>
+	 * @param name
+	 * @param component
+	 */
+	<T> void registerComponent(String name, T component);
+
+	/**
+	 * Register a new Custom Injectable manually in the registry at runtime
+	 * @param <T>
+	 * @param name
+	 * @param component
+	 */
+	<T extends Injectable> void registerInjectable(String name, T component);
+
+	/**
 	 * Generate / Return an injectable/bean by name and scope, passing eventually a base version 
 	 * of the injectable/bean object
 	 * 

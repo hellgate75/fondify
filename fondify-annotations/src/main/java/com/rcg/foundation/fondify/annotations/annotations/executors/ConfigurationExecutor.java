@@ -14,6 +14,7 @@ import com.rcg.foundation.fondify.annotations.helpers.AnnotationHelper;
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
 import com.rcg.foundation.fondify.core.functions.BiProcessor;
+import com.rcg.foundation.fondify.core.helpers.BeansHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
@@ -66,7 +67,7 @@ public class ConfigurationExecutor implements AnnotationExecutor<Configuration> 
 		BeanDefinition definition = new BeanDefinition(t);
 		Class<?> elementClass = t.getAnnotatedClass();
 		beanName = elementClass.getSimpleName();
-		TransformCase caseTransformer = elementClass.getAnnotation(TransformCase.class);
+		TransformCase caseTransformer = BeansHelper.getClassAnnotation(elementClass, TransformCase.class);
 		if ( caseTransformer != null ) {
 			beanName = AnnotationHelper.transformBeanName(beanName, caseTransformer);
 		}

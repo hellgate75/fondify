@@ -45,6 +45,7 @@ import com.rcg.foundation.fondify.core.functions.Matcher;
 import com.rcg.foundation.fondify.core.functions.Processor;
 import com.rcg.foundation.fondify.core.helpers.ArgumentsHelper;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
+import com.rcg.foundation.fondify.core.helpers.GenericHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
 import com.rcg.foundation.fondify.core.registry.typings.ComponentRegistryItem;
@@ -110,7 +111,7 @@ public class ScannerHelper {
 		if (mainClass == null) {
 			return false;
 		}
-		return mainClass.getAnnotation(Application.class) != null;
+		return BeansHelper.getClassAnnotation(mainClass, Application.class) != null;
 	}
 
 	public static final List<? extends Annotation> getApplicationClassAnnotations(Class<?> mainClass) {
@@ -118,7 +119,7 @@ public class ScannerHelper {
 		if (mainClass == null) {
 			return list;
 		}
-		list.addAll(Arrays.asList(mainClass.getAnnotations()));
+		list.addAll(Arrays.asList(mainClass.getDeclaredAnnotations()));
 		return list;
 	}
 	
@@ -369,27 +370,37 @@ public class ScannerHelper {
 
 	/**
 	 * Collect all subTypes of provided interface or class one.
+	 * It very slows down performances of any implementation
 	 * 
 	 * @param <T>
 	 * @param builder    Base package scanner builder
 	 * @param superClass implemented class or interface
 	 * @return list if sub types of provided one
 	 */
-	public static final <T> List<Class<? extends T>> collectSubTypesOf(ConfigurationBuilder builder,
+	protected static final <T> List<Class<? extends T>> collectSubTypesOf(ConfigurationBuilder builder,
 			Class<T> superClass) {
-		return BeansHelper.collectSubTypesOf(builder, superClass);
+		List<Class<? extends T>> classes = new ArrayList<Class<? extends T>>(0);
+		Reflections r = new Reflections(builder.addScanners(new SubTypesScanner()));
+		classes.addAll(r.getSubTypesOf(superClass));
+		return classes;
 	}
 
 	/**
 	 * Collect all subTypes of provided interface or class one.
+	 * It very slows down performances of any implementation
 	 * 
 	 * @param <T>
 	 * @param builder    Base package scanner builder
 	 * @param superClass implemented class or interface
 	 * @return list if sub types of provided one
 	 */
-	public static final List<Class<?>> collectSubTypesOf(ConfigurationBuilder builder, List<Class<?>> superClassList) {
-		return BeansHelper.collectSubTypesOf(builder, superClassList);
+	protected static final List<Class<?>> collectSubTypesOf(ConfigurationBuilder builder, Collection<Class<?>> superClassList) {
+		List<Class<?>> classes = new ArrayList<>(0);
+		Reflections r = new Reflections(builder.addScanners(new SubTypesScanner()));
+		superClassList.forEach(superClass -> {
+			classes.addAll(r.getSubTypesOf(superClass));
+		});
+		return classes;
 	}
 
 	/**
@@ -407,31 +418,31 @@ public class ScannerHelper {
 			// try in types
 			Reflections r = new Reflections(builder.addScanners(new SubTypesScanner()));
 			List<AnnotationDeclaration> annotationsDeclarationsList = new ArrayList<>(0);
-			Set<Class<?>> annTypes = r.getTypesAnnotatedWith(annotation);
-			annTypes.forEach(clz -> {
+			Set<Class<?>> annElemTypes = r.getTypesAnnotatedWith(annotation);
+			annElemTypes.forEach(clz -> {
 				AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, clz, null, null, null);
 				if (validateAnnotationDeclaration(declaration))
 					annotationsDeclarationsList.add(declaration);
 			});
 			r = new Reflections(builder.addScanners(new FieldAnnotationsScanner()));
-			Set<Field> fields = r.getFieldsAnnotatedWith(annotation);
-			fields.forEach(fld -> {
+			Set<Field> annElemFields = r.getFieldsAnnotatedWith(annotation);
+			annElemFields.forEach(fld -> {
 				AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, fld.getDeclaringClass(), fld,
 						null, null);
 				if (validateAnnotationDeclaration(declaration))
 					annotationsDeclarationsList.add(declaration);
 			});
 			r = new Reflections(builder.addScanners(new MethodAnnotationsScanner()));
-			Set<Method> methods = r.getMethodsAnnotatedWith(annotation);
-			methods.forEach(m -> {
+			Set<Method> annElemMethods = r.getMethodsAnnotatedWith(annotation);
+			annElemMethods.forEach(m -> {
 				AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, m.getDeclaringClass(), null,
 						m, null);
 				if (validateAnnotationDeclaration(declaration))
 					annotationsDeclarationsList.add(declaration);
 			});
 			r = new Reflections(builder.addScanners(new MethodParameterScanner()));
-			Set<Method> methodsOfParameters = r.getMethodsWithAnyParamAnnotated(annotation);
-			methodsOfParameters.forEach(m -> {
+			Set<Method> annElemMethodsOfParams = r.getMethodsWithAnyParamAnnotated(annotation);
+			annElemMethodsOfParams.forEach(m -> {
 				List<Parameter> params = Arrays.asList(m.getParameters()).stream()
 						.filter(p -> p.getAnnotationsByType(annotation).length > 0).collect(Collectors.toList());
 				params.forEach(p -> {
@@ -458,7 +469,7 @@ public class ScannerHelper {
 		Annotation annotation = declaration.getAnnotation();
 		if (annotation.annotationType().isAnnotationPresent(DependsOn.class)) {
 			// Annotation has dependencies!!
-			DependsOn dependsOn = annotation.annotationType().getAnnotation(DependsOn.class);
+			DependsOn dependsOn = BeansHelper.getClassAnnotation(annotation.annotationType(), DependsOn.class);
 			Class<?>[] annotationClasses = dependsOn.value();
 			List<Class<? extends Annotation>> requiredAnnotations = new ArrayList<>(0);
 			for (Class<?> clz : annotationClasses) {
@@ -467,7 +478,7 @@ public class ScannerHelper {
 				}
 			}
 			List<Class<? extends Annotation>> presentAnnotations = Arrays
-					.asList(annotation.annotationType().getAnnotations()).stream().map(a -> a.annotationType())
+					.asList(annotation.annotationType().getDeclaredAnnotations()).stream().map(a -> a.annotationType())
 					.collect(Collectors.toList());
 			long missingAnnotations = requiredAnnotations.stream().filter(ra -> !presentAnnotations.contains(ra))
 					.count();
@@ -580,9 +591,10 @@ public class ScannerHelper {
 	 * 
 	 * @param classes
 	 */
-	protected static final void executeModuleMainClasses(Class<? extends ModuleMain>[] classes) {
+	protected static final void executeModuleMainClasses(Class<? extends ModuleMain>[] classes, String threadName) {
 		if (classes != null && classes.length > 0) {
 			Arrays.asList(classes).forEach(cls -> {
+				GenericHelper.fixCurrentThreadStandardName(threadName);
 				try {
 					ModuleMain main = cls.newInstance();
 					Collection<AnnotationDeclaration> annotations = ComponentsRegistry.getInstance()
@@ -646,33 +658,32 @@ public class ScannerHelper {
 	/**
 	 * 
 	 */
-	public static final void executeScannerMainClasses() {
+	public static final void executeScannerMainClasses(String threadName) {
 		if (executorService != null) {
 			LoggerHelper.logWarn("ScannerHelper::executeScannerMainClasses", "Main Class Execution in progress...",
 					null);
 		}
 		Set<ModuleScanner> scanners = moduleRegistry.getEntitiesMap().values().stream().filter(scanner -> {
-			if (scanner.getClass().getAnnotation(ModuleScannerConfig.class) == null)
+			ModuleScannerConfig scannerAnn = BeansHelper.getClassAnnotation(scanner.getClass(), ModuleScannerConfig.class);
+			if (scannerAnn == null)
 				return false;
-			com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig scannerAnn = scanner.getClass()
-					.getAnnotation(ModuleScannerConfig.class);
 			if (scannerAnn.mainClasses() == null || scannerAnn.mainClasses().length == 0)
 				return false;
 			return true;
 		}).collect(Collectors.toSet());
 		long mainClassesCount = scanners.stream().map(scanner -> {
-			return Arrays.asList(scanner.getClass().getAnnotation(ModuleScannerConfig.class).mainClasses());
+			return Arrays.asList(BeansHelper.getClassAnnotation(scanner.getClass(), ModuleScannerConfig.class).mainClasses());
 		}).flatMap(List::stream).count();
 		executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		scanners.stream().forEach(scc -> {
 			try {
-				com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig scannerAnn = scc.getClass()
-						.getAnnotation(com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig.class);
+				GenericHelper.fixCurrentThreadStandardName(threadName);
+				ModuleScannerConfig scannerAnn = BeansHelper.getClassAnnotation(scc.getClass(), ModuleScannerConfig.class);
 				if (ArgumentsHelper.debug) {
 					LoggerHelper.logTrace("ScannerHelper::executeScannerMainClasses",
 							String.format("Executing main classes for Module Scanner : %s", scc.getClass().getName()));
 				}
-				executeModuleMainClasses(scannerAnn.mainClasses());
+				executeModuleMainClasses(scannerAnn.mainClasses(), threadName);
 			} catch (Exception e) {
 				String message = String.format("Unable to execute ModuleScanner main classes related to : %s",
 						scc.getClass().getName());
@@ -757,8 +768,8 @@ public class ScannerHelper {
 				.getTypesAnnotatedWith(com.rcg.foundation.fondify.annotations.annotations.ModulesScan.class);
 		annScanTypes.forEach(cls -> {
 			try {
-				com.rcg.foundation.fondify.annotations.annotations.ModulesScan ann = (com.rcg.foundation.fondify.annotations.annotations.ModulesScan) cls
-						.getAnnotation(com.rcg.foundation.fondify.annotations.annotations.ModulesScan.class);
+				com.rcg.foundation.fondify.annotations.annotations.ModulesScan ann = (com.rcg.foundation.fondify.annotations.annotations.ModulesScan) 
+						BeansHelper.getClassAnnotation(cls, com.rcg.foundation.fondify.annotations.annotations.ModulesScan.class);
 				if (ann.value()) {
 					Arrays.asList(ann.includes()).stream().filter(clsX -> {
 						String name = clsX.getCanonicalName();
@@ -832,11 +843,12 @@ public class ScannerHelper {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static final void scanBaseElementsAndStoreData() {
+	public static final void scanBaseElementsAndStoreData(String threadName) {
 		ScannerHelper
 				.collectSubTypesOf(ScannerHelper.getRefletionsByPackages(new String[0]), Arrays.asList(new Class<?>[] {
 						AnnotationEngineInitializer.class, AnnotationExecutor.class, AnnotationTypesCollector.class }))
 				.forEach(elementClass -> {
+					GenericHelper.fixCurrentThreadStandardName(threadName);
 					if (AnnotationEngineInitializer.class.isAssignableFrom(elementClass)) {
 						try {
 							LoggerHelper.logTrace("ScannerHelper::scanBaseElementsAndStoreData",
@@ -880,8 +892,12 @@ public class ScannerHelper {
 	}
 	
 	public static final boolean isInjectable(Object obj) {
-		return obj != null && 
-				com.rcg.foundation.fondify.core.typings.Injectable.class.isAssignableFrom(obj.getClass());
+		if ( obj == null )
+			return false;
+		Class<?> cls = isBeanDefinition(obj) ? ((BeanDefinition)obj).getDeclaration().getAnnotatedClass() : 
+			(isMethodExecutor(obj) ? ((MethodExecutor)obj).getTargetClass() :  null);
+		return cls != null && 
+				com.rcg.foundation.fondify.core.typings.Injectable.class.isAssignableFrom(cls);
 	}
 	
 	public static final boolean isBeanDefinition(Object obj) {
@@ -914,13 +930,18 @@ public class ScannerHelper {
 							List<Object> results = new ArrayList<>(test);
 							Object obj = test.iterator().next();
 							boolean isComponent = isBeanDefinition(obj) || isMethodExecutor(obj);
-							boolean isInjectable = obj!= null && isComponent && isInjectable(obj.getClass());
 							if ( isComponent ) {
-								String regName = isInjectable ? (
-										MethodExecutor.class.isAssignableFrom(obj.getClass()) ? 
-												AnnotationConstants.REGISTRY_INJECTABLE_METHODD_DEFINITIONS : 
-												AnnotationConstants.REGISTRY_INJECTABLE_BEAN_DEFINITIONS ) :
-													AnnotationConstants.REGISTRY_COMPONENT_BEAN_DEFINITIONS;
+								String regName = "";
+								if ( isMethodExecutor(obj) ) {
+									LoggerHelper.logTrace("ScannerHelperHelper::executeAnnotationExecutor", 
+											String.format("Injectable method executor bean name : %s and bean's type %s!!", executor.getComponentName(), obj!= null ? obj.getClass().getName():"<NULL>") );
+									regName = AnnotationConstants.REGISTRY_INJECTABLE_METHODD_DEFINITIONS;
+								} else {
+									LoggerHelper.logTrace("ScannerHelperHelper::executeAnnotationExecutor", 
+											String.format("Component type bean name : %s and bean's type %s!!", executor.getComponentName(), obj!= null ? obj.getClass().getName():"<NULL>") );
+									regName = AnnotationConstants.REGISTRY_COMPONENT_BEAN_DEFINITIONS;
+								}
+
 								if ( results.size() == 1 ) {
 									ComponentsRegistry.getInstance().add(regName, executor.getComponentName(), results.get(0));
 								} else if ( results.size() > 1 ) {
@@ -951,7 +972,7 @@ public class ScannerHelper {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static final void executeProvidedBaseAnnotationExecutors() {
+	public static final void executeProvidedBaseAnnotationExecutors(String threadName) {
 		ConfigurationBuilder builder = ScannerHelper.getRefletionsByPackages(ScannerHelper.collectScanningPackages());
 		annotationsDeclarationMaps.putAll(ScannerHelper.collectAnnotations(builder, baseAnnotationTypes
 																						.stream()
@@ -963,6 +984,7 @@ public class ScannerHelper {
 		annotationsDeclarationMaps.entrySet().forEach(entry -> {
 			String className = entry.getKey().getName();
 			entry.getValue().forEach(ad -> {
+				GenericHelper.fixCurrentThreadStandardName(threadName);
 				LoggerHelper.logTrace("ScannerHelper::executeProvidedBaseAnnotationExecutors [stream cycle]", 
 						String.format("Scanning executors for annotation class name: %s...", className));
 				AnnotationExecutor<? extends Annotation> executor = ComponentsRegistry.getInstance()

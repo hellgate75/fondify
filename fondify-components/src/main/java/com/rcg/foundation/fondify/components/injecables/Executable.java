@@ -14,7 +14,7 @@ import com.rcg.foundation.fondify.core.typings.Injectable;
 public interface Executable<T, K> extends Injectable {
 	/**
 	 * Execute Action described in the input data
-	 * @param request action request data
+	 * @param request action request data (Injected parameter)
 	 * @return <K> response
 	 */
 	K doAction(T request);

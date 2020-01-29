@@ -70,7 +70,7 @@ public final class LoggerHelper {
 			if ( ! ArgumentsHelper.useLogger ) {
 				System.out.print(ColorConstants.ANSI_RED);
 			}
-			LOGGER.error(String.format("%s::warn >> %s -> %s", place, ex.getMessage(), GenericHelper.convertStackTrace(ex.getStackTrace())));
+			LOGGER.error(String.format("%s::warn >> %s <%s> -> %s", place, ex.getClass().getName(), ex.getMessage(), GenericHelper.convertStackTrace(ex.getStackTrace())));
 			if ( ! ArgumentsHelper.useLogger ) {
 				System.out.print(ColorConstants.ANSI_RESET);
 			}
@@ -91,14 +91,14 @@ public final class LoggerHelper {
 			if ( ! ArgumentsHelper.useLogger ) {
 				System.out.print(ColorConstants.ANSI_RED);
 			}
-			LOGGER.error(String.format("%s::error >> %s -> %s", place, ex.getMessage(), GenericHelper.convertStackTrace(ex.getStackTrace())));
+			LOGGER.error(String.format("%s::error >> %s <%s> -> %s", place, ex.getClass().getName(), ex.getMessage(), GenericHelper.convertStackTrace(ex.getStackTrace())));
 			if ( ! ArgumentsHelper.useLogger ) {
 				System.out.print(ColorConstants.ANSI_RESET);
 			}
 		}
 	}
 	
-	protected static synchronized void logText(String text) {
+	public static synchronized void logText(String text) {
 		if ( ! ArgumentsHelper.useLogger ) {
 			System.out.print(ColorConstants.ANSI_GREEN);
 		}

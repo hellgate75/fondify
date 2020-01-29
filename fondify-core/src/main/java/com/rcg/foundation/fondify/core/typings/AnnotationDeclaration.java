@@ -15,6 +15,7 @@ public class AnnotationDeclaration {
 	private Method annotationMethod;
 	private Parameter annotationParameter;
 	private Field annotationField;
+	private AnnotationDeclarationType declarationType = AnnotationDeclarationType.NONE; 
 	/**
 	 * @param annotatedClass
 	 * @param annotationMethod
@@ -30,33 +31,37 @@ public class AnnotationDeclaration {
 		this.annotationParameter = annotationParameter;
 		this.annotationField = annotationField;
 		if (annotationParameter != null) {
-			List<Annotation> aList = Arrays.asList(annotationParameter.getAnnotations()).stream()
+			List<Annotation> aList = Arrays.asList(annotationParameter.getDeclaredAnnotations()).stream()
 					.filter( an -> annotationDeclarationClass.isAssignableFrom(an.getClass()) )
 					.collect(Collectors.toList());
 			if ( aList.size() > 0 ) {
 				this.annotation = aList.get(0);
 			}
+			declarationType = AnnotationDeclarationType.PARAMETER;
 		} else if (annotationMethod != null) {
-			List<Annotation> aList = Arrays.asList(annotationMethod.getAnnotations()).stream()
+			List<Annotation> aList = Arrays.asList(annotationMethod.getDeclaredAnnotations()).stream()
 					.filter( an -> annotationDeclarationClass.isAssignableFrom(an.getClass()) )
 					.collect(Collectors.toList());
 			if ( aList.size() > 0 ) {
 				this.annotation = aList.get(0);
 			}
+			declarationType = AnnotationDeclarationType.METHOD;
 		} else if (annotationField != null) {
-			List<Annotation> aList = Arrays.asList(annotationField.getAnnotations()).stream()
+			List<Annotation> aList = Arrays.asList(annotationField.getDeclaredAnnotations()).stream()
 					.filter( an -> annotationDeclarationClass.isAssignableFrom(an.getClass()) )
 					.collect(Collectors.toList());
 			if ( aList.size() > 0 ) {
 				this.annotation = aList.get(0);
 			}
+			declarationType = AnnotationDeclarationType.FIELD;
 		} else if (annotatedClass != null) {
-			List<Annotation> aList = Arrays.asList(annotatedClass.getAnnotations()).stream()
+			List<Annotation> aList = Arrays.asList(annotatedClass.getDeclaredAnnotations()).stream()
 					.filter( an -> annotationDeclarationClass.isAssignableFrom(an.getClass()) )
 					.collect(Collectors.toList());
 			if ( aList.size() > 0 ) {
 				this.annotation = aList.get(0);
 			}
+			declarationType = AnnotationDeclarationType.TYPE;
 		}
 	}
 	/**
@@ -99,24 +104,6 @@ public class AnnotationDeclaration {
 	}
 	
 	public AnnotationDeclarationType getAnnotationDeclarationType() {
-		if (annotatedClass == null) {
-			return AnnotationDeclarationType.NONE;
-		}
-		if ( annotationField == null && annotationMethod == null &&
-				annotationParameter == null ) {
-				return AnnotationDeclarationType.TYPE;
-		}
-		if ( annotationField != null && annotationMethod == null &&
-			annotationParameter == null ) {
-			return AnnotationDeclarationType.FIELD;
-		}
-		if ( annotationMethod != null &&
-				annotationParameter == null ) {
-				return AnnotationDeclarationType.METHOD;
-		}
-		if ( annotationParameter != null ) {
-				return AnnotationDeclarationType.PARAMETER;
-		}
-		return AnnotationDeclarationType.NONE;
+		return declarationType;
 	}
 }

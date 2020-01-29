@@ -3,7 +3,7 @@
  */
 package com.rcg.foundation.fondify.properties.annotations;
 
-import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Documented;
@@ -17,16 +17,18 @@ import com.rcg.foundation.fondify.core.domain.PropertiesFormat;
 
 @Documented
 @Retention(RUNTIME)
-@Target(TYPE)
+@Target({FIELD})
 @DependsOn({Application.class, Configuration.class})
 /**
  * Annotation that activate custom properties file load from different sources.
  * It allows load from file, url, classpath or spring cloud config server and loads 
  * configurations in Properties, Yaml and Spring Cloud REST JSON answer protocols.  
  * It works in presence of {@link StreamIOApplication} or {@link StreamIOConfiguration} annotations, 
- * and it's cumulable in multiple presences with different files. Redeclare a duplicate source
+ * and it's accumulable in multiple presences with different files. Redeclare a duplicate source
  * import will slow down execution without any benefit. No duplicates check will be performed,
  * due to performance reasons.
+ * This annotation can be applied to a field and it will save all properties in the field value when it
+ * is made of type Map<Object, Object> or of type {@link java.util.Properties}.
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */

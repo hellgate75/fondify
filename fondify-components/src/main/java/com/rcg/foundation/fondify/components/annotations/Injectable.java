@@ -14,7 +14,7 @@ import java.util.Properties;
 
 import com.ctc.wstx.shaded.msv_core.reader.Controller;
 import com.rcg.foundation.fondify.components.annotations.typings.InjectableType;
-import com.rcg.foundation.fondify.components.injecables.InjectableExecutor;
+import com.rcg.foundation.fondify.components.injecables.ActivableExecutor;
 import com.rcg.foundation.fondify.components.injecables.Service;
 import com.rcg.foundation.fondify.core.domain.Scope;
 
@@ -40,7 +40,7 @@ public @interface Injectable {
 	/**
 	 * Defines and {@link Injectable} executable type.
 	 * 
-	 * @see InjectableExecutor
+	 * @see ActivableExecutor
 	 * @see Controller
 	 * @see Service
 	 * @see Properties

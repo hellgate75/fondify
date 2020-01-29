@@ -26,7 +26,9 @@ import com.rcg.foundation.fondify.core.functions.Matcher;
 import com.rcg.foundation.fondify.core.functions.Processor;
 import com.rcg.foundation.fondify.core.functions.SimpleEntryPredicate;
 import com.rcg.foundation.fondify.core.functions.SimplePredicate;
-import com.rcg.foundation.fondify.core.helpers.BeansHelper;
+import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
+import com.rcg.foundation.fondify.core.typings.fields.FieldValueActuatorProvider;
+import com.rcg.foundation.fondify.core.typings.parameters.ParameterValueActuatorProvider;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
@@ -47,7 +49,7 @@ public class AnnotationHelper {
 		Map<Field, List<Annotation>> fields = new ConcurrentHashMap<>(0);
 		Arrays.asList(type.getDeclaredFields())
 			.stream()
-			.filter( field -> field.getAnnotations().length > 0 )
+			.filter( field -> field.getDeclaredAnnotations().length > 0 )
 			.forEach( field -> predicate.test(field, fields));
 		return fields;
 	}
@@ -56,10 +58,10 @@ public class AnnotationHelper {
 		Map<Method, List<Annotation>> methods = new ConcurrentHashMap<>(0);
 		Arrays.asList(type.getDeclaredMethods())
 			.stream()
-			.filter( method -> method.getAnnotations().length > 0 )
+			.filter( method -> method.getDeclaredAnnotations().length > 0 )
 			.forEach( method -> {
 				List<Annotation> annotations = new ArrayList<>(0);
-				annotations.addAll(Arrays.asList(method.getAnnotations())
+				annotations.addAll(Arrays.asList(method.getDeclaredAnnotations())
 						.stream()
 						.filter(ann -> matcher.match( ann.getClass() ) )
 						.collect(Collectors.toList()));
@@ -70,7 +72,7 @@ public class AnnotationHelper {
 	
 	public static final List<Annotation> selectMethodAnnotations(Method method) {
 		List<Annotation> annotations = new ArrayList<>(0);
-		Arrays.asList(method.getAnnotations())
+		Arrays.asList(method.getDeclaredAnnotations())
 			.forEach( annotations::add );
 		return annotations;
 	}
@@ -79,10 +81,10 @@ public class AnnotationHelper {
 		Map<Parameter, List<Annotation>> parameters = new ConcurrentHashMap<>(0);
 		Arrays.asList(method.getParameters())
 			.stream()
-			.filter( parameter -> parameter.getAnnotations().length > 0 )
+			.filter( parameter -> parameter.getDeclaredAnnotations().length > 0 )
 			.forEach( parameter -> {
 				List<Annotation> annotations = new ArrayList<>(0);
-				annotations.addAll(Arrays.asList(parameter.getAnnotations())
+				annotations.addAll(Arrays.asList(parameter.getDeclaredAnnotations())
 						.stream()
 						.filter(ann -> matcher.match( ann.getClass() ) )
 						.collect(Collectors.toList()));
@@ -220,13 +222,38 @@ public class AnnotationHelper {
 		}
 		return name;
 	}
-
-	public static final <T> List<T> getImplementedTypes(Class<T> cls) {
-		return BeansHelper.getImplementedTypes(cls);
-			
+	
+	public static final Object valueOfInjectedField(Field field) {
+		if ( field != null ) {
+			try {
+				Optional<Object> valueOpt = FieldValueActuatorProvider.getInstance().tranlateFieldValue(field);
+				if ( valueOpt.isPresent() ) {
+					return valueOpt.get();
+				}
+			} catch (Exception e) {
+				LoggerHelper.logError("AnnotationHelper::valueOfInjectedField", 
+						String.format("Errors recovering injected value of %s field", field != null ? field.getName() : "<NULL>"), 
+						e);
+			}
+		}
+		return null;
+	}
+	
+	
+	public static final Object valueOfInjectedParameter(Parameter parameter) {
+		if ( parameter != null ) {
+			try {
+				Optional<Object> valueOpt = ParameterValueActuatorProvider.getInstance().tranlateParameterValue(parameter);
+				if ( valueOpt.isPresent() ) {
+					return valueOpt.get();
+				}
+			} catch (Exception e) {
+				LoggerHelper.logError("AnnotationHelper::valueOfInjectedParameter", 
+						String.format("Errors recovering injected value of %s parameter", parameter != null ? parameter.getName() : "<NULL>"), 
+						e);
+			}
+		}
+		return null;
 	}
 
-	public static final <T> Optional<T> getImplementedType(Class<T> cls) {
-		return BeansHelper.getImplementedType(cls);
-	}
 }

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 import com.rcg.foundation.fondify.annotations.lifecycle.SessionContext;
 import com.rcg.foundation.fondify.core.domain.Scope;
@@ -206,7 +207,7 @@ public class BeanDefinition {
 		propertiesReference.forEach(property ->{
 			String ref = property.getTypeRef();
 			try {
-				Field f = instanceFinal.getClass().getField(ref);
+				Field f = instanceFinal.getClass().getDeclaredField(ref);
 				if ( f != null ) {
 					
 				}
@@ -214,7 +215,10 @@ public class BeanDefinition {
 				Object value = null;
 				if ( property.isValueProperty() ) {
 					value = PropertyArchive.getInstance().getProperty(element);
-				} else if (ref.equals("applicationContext") ||
+				} else if (ref.equals("arguments") &&
+						Properties.class.isAssignableFrom(f.getType())) {
+					value = nametoBeanTranformer.tranform("?arguments?");
+				}  else if (ref.equals("applicationContext") ||
 						Session.class.isAssignableFrom(f.getType())) {
 					value = nametoBeanTranformer.tranform("?applicationContext?");
 				} else if (ref.equals("sessionContext") ||
@@ -237,7 +241,7 @@ public class BeanDefinition {
 				throw new IllegalArgumentException(message, ex);
 			}
 		});
-		return null;
+		return instanceFinal;
 	}
 
 	@Override

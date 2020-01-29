@@ -9,11 +9,11 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.rcg.foundation.fondify.annotations.helpers.AnnotationHelper;
 import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationContext;
 import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationManager;
 import com.rcg.foundation.fondify.annotations.lifecycle.SessionContext;
 import com.rcg.foundation.fondify.context.lifecycle.impl.ApplicationContextImpl;
+import com.rcg.foundation.fondify.core.helpers.BeansHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.lifecycle.Session;
 import com.rcg.foundation.fondify.core.typings.lifecycle.SessionSetter;
@@ -31,7 +31,7 @@ public class ApplicationManagerImpl implements ApplicationManager {
 	
 	private Map<UUID, Session> sessionMap = null;
 
-	private Map<Long, UUID> threadSessionMap = null;
+	private Map<String, UUID> threadSessionMap = null;
 	
 	/**
 	 * Create New Application Manager
@@ -89,7 +89,7 @@ public class ApplicationManagerImpl implements ApplicationManager {
 	 */
 	@Override
 	public SessionContext getSessionContext() {
-		UUID sessionId = threadSessionMap.get(Thread.currentThread().getId());
+		UUID sessionId = threadSessionMap.get(Thread.currentThread().getName());
 		if ( sessionId == null ) {
 			return null;
 		}
@@ -103,7 +103,7 @@ public class ApplicationManagerImpl implements ApplicationManager {
 	 */
 	@Override
 	public Session getSession() {
-		UUID sessionId = threadSessionMap.get(Thread.currentThread().getId());
+		UUID sessionId = threadSessionMap.get(Thread.currentThread().getName());
 		if ( sessionId == null ) {
 			return null;
 		}
@@ -117,7 +117,7 @@ public class ApplicationManagerImpl implements ApplicationManager {
 	 */
 	@Override
 	public UUID createNewSession() {
-		Optional<SessionContext> contextOpt = AnnotationHelper.getImplementedType(SessionContext.class);
+		Optional<SessionContext> contextOpt =  BeansHelper.getImplementedType(SessionContext.class);
 		SessionContext context = null;
 		if ( contextOpt.isPresent()) {
 			context = contextOpt.get();
@@ -126,7 +126,7 @@ public class ApplicationManagerImpl implements ApplicationManager {
 			LoggerHelper.logError("ApplicationManager::createSession", message, null);
 			throw new IllegalStateException(message);
 		}
-		Optional<Session> sessionOpt = AnnotationHelper.getImplementedType(Session.class);;
+		Optional<Session> sessionOpt =  BeansHelper.getImplementedType(Session.class);
 		Session session = null;
 		if ( sessionOpt.isPresent()) {
 			session = sessionOpt.get();
@@ -146,7 +146,7 @@ public class ApplicationManagerImpl implements ApplicationManager {
 		}
 		contextMap.put(uuid, context);
 		sessionMap.put(uuid, session);
-		threadSessionMap.put(Thread.currentThread().getId(), uuid);
+		threadSessionMap.put(Thread.currentThread().getName(), uuid);
 		return uuid;
 	}
 	
@@ -157,7 +157,7 @@ public class ApplicationManagerImpl implements ApplicationManager {
 	 */
 	@Override
 	public UUID getCurrentSessionId() {
-		return threadSessionMap.get(Thread.currentThread().getId());
+		return threadSessionMap.get(Thread.currentThread().getName());
 	}
 
 	/**

@@ -44,7 +44,7 @@ public final class Foundation {
 		System.out.println("framework. The author is not resposible for any");
 		System.out.println("damage for the free use of the product. For any ");
 		System.out.println("further information please contact the author");
-		System.out.print("at the following address:");
+		System.out.print("at the following address: ");
 		if ( ! ArgumentsHelper.useLogger ) {
 			System.out.print(ColorConstants.ANSI_RESET);
 			System.out.print(ColorConstants.ANSI_YELLOW);

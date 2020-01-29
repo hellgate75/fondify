@@ -26,6 +26,7 @@ import com.rcg.foundation.fondify.core.domain.ApplicationType;
 import com.rcg.foundation.fondify.core.exceptions.InitializationException;
 import com.rcg.foundation.fondify.core.helpers.ArgumentsHelper;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
+import com.rcg.foundation.fondify.core.helpers.GenericHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.runtime.ProcessStateTracker;
 
@@ -47,6 +48,8 @@ public final class AnnotationEngine {
 	
 	public static UUID defaultSessionUUID = null;
 	
+	public static String defaultSessionThreadName = "";
+	
 	/**
 	 * Private blocked constructor
 	 */
@@ -59,16 +62,18 @@ public final class AnnotationEngine {
 	 * Run annotation engine
 	 * @param mainClass Main Class
 	 */
+	@SuppressWarnings("unchecked")
 	public static void run(Class<?> mainClass, Runnable disclaimerTask, Runnable tasks, String[] arguments) throws Exception {
 		ArgumentsHelper.storeArguments(arguments);
-
+		BeansHelper.loadAllInterfacesImplementations();
 		startTime = System.nanoTime();
 		completed = false;
 		Foundation.credits();
 
+
 		if ( disclaimerTask != null )
 			disclaimerTask.run();
-		
+
 		//Start New Session on this thread.
 		Optional<ApplicationManagerProvider> appManProviderOpt =  BeansHelper.getImplementedType(ApplicationManagerProvider.class);
 		if ( appManProviderOpt.isPresent() ) {
@@ -79,8 +84,9 @@ public final class AnnotationEngine {
 			LoggerHelper.logError("AnnatationEngine::run", message, null);
 			throw new IllegalStateException(message);
 		}
+
+		defaultSessionThreadName = GenericHelper.fixCurrentThreadStandardName(null);
 		defaultSessionUUID = applicationManager.createNewSession();
-		
 		if ( defaultSessionUUID == null ) {
 			String message = "Unable to create new session with current version of ApplicationManagerProvider, please load a more specific modules, such as Fondify Context or similar";
 			LoggerHelper.logError("AnnatationEngine::run", message, null);
@@ -89,19 +95,20 @@ public final class AnnotationEngine {
 		
 		LoggerHelper.logInfo("AnnatationEngine::run", String.format("Create new main session -> id: %s!!", defaultSessionUUID.toString()));
 		
+		
 		if ( ! ScannerHelper.isApplicationClass(mainClass) ) {
 			String message = String.format("Null or not 'Application' class for bootstrap: %s!!", mainClass);
 			LoggerHelper.logError("AnnotationEngineAnnotationEngine::run", message, null);
 			throw new InitializationException(message);
 		}
 		
-		scanBaseElementsAndStoreData();
+		scanBaseElementsAndStoreData(defaultSessionThreadName);
 		
-		executeProvidedBaseAnnotationExecutors();
+		executeProvidedBaseAnnotationExecutors(defaultSessionThreadName);
 
 		ScannerHelper.collectModuleScanners();
 
-		ScannerHelper.executeScannerMainClasses();
+		ScannerHelper.executeScannerMainClasses(defaultSessionThreadName);
 		
 		if ( tasks != null ) {
 			//Running extra annotation seek tasks
@@ -124,7 +131,7 @@ public final class AnnotationEngine {
 		if ( ArgumentsHelper.hasArgument(ArgumentsConstants.ENABLE_AUTORUN_EXECUTION) &&
 			  ArgumentsHelper.getArgument(ArgumentsConstants.ENABLE_AUTORUN_EXECUTION).equalsIgnoreCase("true")) {
 			LoggerHelper.logInfo("AnnotationEngine::run", "Enabled Autorun feature!!");
-			BeansHelper.executeAutorunComponents(defaultSessionUUID);
+			BeansHelper.executeAutorunComponents(defaultSessionThreadName);
 			ProcessStateTracker.getInstance().registerNewProcessStateReference(() -> BeansHelper.executorService != null 
 					  && ! BeansHelper.executorService.isShutdown() );
 		}
@@ -138,10 +145,13 @@ public final class AnnotationEngine {
 				.map(ann -> {
 					Application app = (Application)ann;
 					ApplicationType appType = app.scope();
-					List<Class<? extends ApplicationConsole>> listofConsoles = new ArrayList<>(0);
+					List<Class<ApplicationConsole>> listofConsoles = new ArrayList<>(0);
 					if ( appType == ApplicationType.CONSOLE && app.hasCommandShell()) {
 						listofConsoles.addAll(
-								ScannerHelper.collectSubTypesOf(ScannerHelper.getRefletionsByPackages(new String[0]), ApplicationConsole.class)
+								BeansHelper.getImplementatedSubtypesOf(ApplicationConsole.class)
+								.stream()
+								.map(cls -> (Class<ApplicationConsole>)cls)
+								.collect(Collectors.toList())
 						);
 					}
 					return listofConsoles;
@@ -151,7 +161,9 @@ public final class AnnotationEngine {
 				.collect(Collectors.toList())
 		);
 
-		if ( applicationConsoles.size() > 0 ) {
+		if ( applicationConsoles.size() > 0 &&
+				ArgumentsHelper.hasArgument(ArgumentsConstants.ENABLE_CONSOLE_EXECUTION) &&
+				ArgumentsHelper.getArgument(ArgumentsConstants.ENABLE_CONSOLE_EXECUTION).equalsIgnoreCase("true") ) {
 			LoggerHelper.logInfo("AnnotationEngine::run", "Found Application Console features!!");
 			
 			AnnotationEngine.executorService = Executors.newFixedThreadPool(applicationConsoles.size());
@@ -163,6 +175,7 @@ public final class AnnotationEngine {
 						@Override
 						public void run() {
 							try {
+								GenericHelper.fixCurrentThreadStandardName(defaultSessionThreadName);
 								ApplicationConsole console = consoleClass.newInstance();
 								LoggerHelper.logInfo("AnnotationEngine::run", String.format("Executing Application Console feature: %s", consoleClass.getName()));
 								console.run(arguments);
@@ -182,12 +195,7 @@ public final class AnnotationEngine {
 				public void run() {
 					while ( AnnotationEngine.executorService != null && 
 							! AnnotationEngine.executorService.isShutdown() ) {
-						try {
-							Thread.sleep(2500l);
-						} catch (InterruptedException e) {
-							//NOTHING TO DO HERE
-							;
-						}
+						GenericHelper.sleepThread(2500L);
 					}
 					AnnotationEngine.executorService = null;
 				}
@@ -202,12 +210,7 @@ public final class AnnotationEngine {
 
 		// Wait for Autorun executions to be completed!!
 		while ( ProcessStateTracker.getInstance().isInWaitState() ) {
-			try {
-				Thread.sleep(2500l);
-			} catch (InterruptedException e) {
-				//NOTHING TO DO HERE
-				;
-			}
+			GenericHelper.sleepThread(2500L);
 		}
 		waiting = false;
 		elapsedTimeSeconds = Math.ceil((System.nanoTime() - startTime) / 1000000000);

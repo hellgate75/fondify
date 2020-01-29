@@ -14,5 +14,6 @@ public interface ArgumentsConstants {
 	public static String MAX_AUTORUN_THREADS = "max.autorun.threads";
 	public static String UNLIMITED_AUTORUN_THREADS = "unlimited.autorun.threads";
 	public static String ENABLE_AUTORUN_EXECUTION = "enable.autorun";
-	public static String COMPONENTS_RUN_SERVICE = "run.as.service";
+	public static String ENABLE_CONSOLE_EXECUTION = "enable.console";
+	public static String COMPONENTS_RUN_SERVICE = "run.services";
 }

@@ -11,17 +11,16 @@ import com.rcg.foundation.fondify.core.typings.Injectable;
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */
-public interface Activation<T, K> extends Injectable {
+public interface Activable<T> extends Injectable {
 	/**
 	 * Request activation of sleeping action
-	 * @param request for activation
+	 * @param request for activation (Injected parameter)
 	 */
 	void activate(T request);
-	
 	/**
-	 * Add a new async activation execution listener
-	 * @param listener Requested {@link AsyncExecutionListener} tracking element
+	 * Request start up and passing to idle state of activable component
+	 * @param request for activation
 	 */
-	void addActivationListener(AsyncExecutionListener<T, K> listener);
+	void startAndIdle();
 
 }

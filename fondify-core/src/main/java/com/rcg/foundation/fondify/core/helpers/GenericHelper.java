@@ -232,6 +232,10 @@ public class GenericHelper {
 		return "" + new Date(System.nanoTime()).getTime();
 	}
 
+	/**
+	 * Sleep current Thread for a certain number of milliseconds
+	 * @param milliseconds number of milliseconds of sleep clock
+	 */
 	public static final void sleepThread(long milliseconds) {
 		try {
 			Thread.sleep(milliseconds);
@@ -240,10 +244,49 @@ public class GenericHelper {
 		}
 	}
 	
+	/**
+	 * Determine a n decimal double string representations
+	 * @param d decimal value
+	 * @param precision number of decimal approximation
+	 * @return (String) representing the double in the required number of decimals format
+	 */
 	public static final String doubleStringPrecision(double d, int precision) {
 		if ( precision < 1 ) {
 			precision = 2;
 		}
 		return String.format("%."+precision+"f", d);
+	}
+	
+	/**
+	 * Creates a custom thread name, based on annotation engine standards,
+	 * unique and compliant to AE rules, as any other thread. 
+	 * @return
+	 */
+	public static final String getCurrentThreadStandardName() {
+		return "ANNOTATION-ENGINE-SESSION-THREAD-" + Thread.currentThread().getId();
+	}
+	
+	/**
+	 * Report the base name into the current thread, or in case of null name
+	 * collects current thread standard name and associate to current thread,
+	 * useful before start up a new session. It's kindly required to execute
+	 * this command on the standard name or current thread name on any sub
+	 * threads (eg. lambda, new threads, thread pools / executors) or in case
+	 * of an overlapping of session, creating a new instance. Thread name makes  
+	 * difference in order to create a new thread session bucket or in case to
+	 * recover from the ApplicationManager the session Id or session objects.
+	 * New sub threads, threads or daemons will report null session objects,
+	 * without prior use of this method to change the own thread name with the
+	 * main process one.
+	 * @param baseName New Thread name or null in case of first thread name generation
+	 * @return (String) passed or new generated thread name, assigned to current thread.
+	 */
+	public static final String fixCurrentThreadStandardName(String baseName) {
+		String threadName = baseName;
+		if ( threadName == null ) {
+			threadName = getCurrentThreadStandardName();
+		}
+		Thread.currentThread().setName(threadName);
+		return threadName;
 	}
 }

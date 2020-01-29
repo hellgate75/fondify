@@ -40,9 +40,9 @@ public class SessionContextImpl implements SessionContext, SessionSetter {
 	 */
 	public SessionContextImpl() {
 		ComponentsRegistry registry = ComponentsRegistry.getInstance();
-		components.putAll(registry.getAllAsMap(AnnotationConstants.REGISTRY_COMPONENT_REFERENCES));
-		injectables.putAll(registry.getAllAsMap(AnnotationConstants.REGISTRY_INJECTABLE_REFERENCES));
-		injectablesMethod.putAll(registry.getAllAsMap(AnnotationConstants.REGISTRY_INJECTABLE_METHODD_REFERENCES));
+		components.putAll(registry.getAllAsMap(AnnotationConstants.REGISTRY_COMPONENT_BEAN_DEFINITIONS));
+		injectables.putAll(registry.getAllAsMap(AnnotationConstants.REGISTRY_INJECTABLE_BEAN_DEFINITIONS));
+		injectablesMethod.putAll(registry.getAllAsMap(AnnotationConstants.REGISTRY_INJECTABLE_METHODD_DEFINITIONS));
 		sessionRegistry.putAll(
 				components
 				.entrySet()

@@ -16,6 +16,8 @@ import com.rcg.foundation.fondify.annotations.annotations.methods.Finalization;
 import com.rcg.foundation.fondify.annotations.annotations.methods.Initialization;
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.functions.Transformer;
+import com.rcg.foundation.fondify.core.helpers.BeansHelper;
+import com.rcg.foundation.fondify.core.helpers.GenericHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.methods.ParameterRef;
@@ -50,7 +52,7 @@ public class MethodExecutor implements Comparable<MethodExecutor> {
 		this.initializationAnnotation = initializationAnnotation;
 		this.finalizationAnnotation = finalizationAnnotation;
 		com.rcg.foundation.fondify.annotations.annotations.Scope scopeAnn = 
-					method.getAnnotation(com.rcg.foundation.fondify.annotations.annotations.Scope.class);
+				BeansHelper.getMethodAnnotation(method, com.rcg.foundation.fondify.annotations.annotations.Scope.class);
 		if ( scopeAnn != null ) {
 			this.scope = scopeAnn.value();
 		}
@@ -106,6 +108,13 @@ public class MethodExecutor implements Comparable<MethodExecutor> {
 	}
 
 	/**
+	 * @return the descriptor
+	 */
+	public Class<?> getTargetClass() {
+		return method != null ? method.getReturnType() : null;
+	}
+
+	/**
 	 * @param parameters the parameters collection to add
 	 */
 	public void addAllParameters(Collection<ParameterRef> parameters) {
@@ -154,14 +163,16 @@ public class MethodExecutor implements Comparable<MethodExecutor> {
 		return 0;
 	}
 
-	public Object execute(Object instance, Transformer<Annotation, String> valueExtractor, 
+	public Object execute(Object methodReferenceObject, Transformer<Annotation, String> valueExtractor, 
 						Transformer<Annotation, Object> autowiredTransformer, Transformer<Annotation, Object> injectTransformer,
 						Transformer<Object, Object> typeFunction) throws Exception {
 		
 		try {
+			String threadName = Thread.currentThread().getName();
 			Object[] args = new Object[method.getParameterCount()];
 			AtomicInteger counter = new AtomicInteger(0);
 			Arrays.asList(method.getParameters()).forEach( param -> {
+				GenericHelper.fixCurrentThreadStandardName(threadName);
 				int index = counter.get();
 				List<ParameterRef> list = parameters
 					.stream()
@@ -173,15 +184,24 @@ public class MethodExecutor implements Comparable<MethodExecutor> {
 				args[index] = list.get(0).execute(valueExtractor, autowiredTransformer, injectTransformer);
 				counter.incrementAndGet();
 			} );
-			if ( ( initializationAnnotation != null && 
-				 finalizationAnnotation != null ) || 
+			Object answer = null;
+			if ( initializationAnnotation != null ||
+				 finalizationAnnotation != null || 
 				 typeFunction == null ) {
-				return method.invoke(instance, args);
+				answer = method.invoke(methodReferenceObject, args);
 			}
 			else {
-				Object obj = method.invoke(instance, args);
-				return typeFunction.tranform(obj);
+				method.setAccessible(true);
+				Object obj = method.invoke(methodReferenceObject, args);
+				if ( obj != null && ! Void.class.isAssignableFrom(obj.getClass()) ) {
+					answer = typeFunction.tranform(obj);
+				}
 			}
+			if ( Void.class.isAssignableFrom(answer.getClass()) ) {
+				answer = null;
+			}
+
+			return answer;
 		} catch (Exception e) {
 			String message = "Unable to execute method as follow: " + this;
 			LoggerHelper.logError("MethodExecutor::execute", message, e);

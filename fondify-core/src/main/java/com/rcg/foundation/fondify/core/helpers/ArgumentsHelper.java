@@ -143,10 +143,9 @@ public class ArgumentsHelper {
 				String currentArgument = argument.substring(1);
 				if (currentArgument.contains("=")) {
 					// Argument with value
-					String key = currentArgument.substring(0, currentArgument.indexOf("="));
-					String value = currentArgument.indexOf("=") < currentArgument.length() - 1
-							? currentArgument.substring(currentArgument.indexOf("=") + 1)
-							: "";
+					String[] keyVal =  currentArgument.split("=");
+					String key = keyVal[0];
+					String value = keyVal[1];
 					arguments.put(key, value);
 				} else {
 					// Argument without value

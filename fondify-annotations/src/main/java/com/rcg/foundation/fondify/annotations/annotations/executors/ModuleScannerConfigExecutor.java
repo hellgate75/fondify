@@ -9,6 +9,7 @@ import com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig;
 import com.rcg.foundation.fondify.annotations.annotations.TransformCase;
 import com.rcg.foundation.fondify.annotations.helpers.AnnotationHelper;
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
+import com.rcg.foundation.fondify.core.helpers.BeansHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
@@ -56,7 +57,7 @@ public class ModuleScannerConfigExecutor implements AnnotationExecutor<ModuleSca
 			name = t.getAnnotatedClass().getName();
 		}
 		Class<?> clazz = t.getAnnotatedClass();
-		TransformCase tc = clazz.getAnnotation(TransformCase.class);
+		TransformCase tc = BeansHelper.getClassAnnotation(clazz, TransformCase.class);
 		if ( tc != null ) {
 			name = AnnotationHelper.transformBeanName(name, tc);
 		}

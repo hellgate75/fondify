@@ -3,8 +3,8 @@
  */
 package com.rcg.foundation.fondify.components.annotations.typings;
 
+import com.rcg.foundation.fondify.components.annotations.executors.InjectableExecutor;
 import com.rcg.foundation.fondify.components.injecables.Controller;
-import com.rcg.foundation.fondify.components.injecables.InjectableExecutor;
 import com.rcg.foundation.fondify.components.injecables.Properties;
 import com.rcg.foundation.fondify.components.injecables.Service;
 
