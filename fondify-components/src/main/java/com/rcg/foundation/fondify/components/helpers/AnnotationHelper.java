@@ -358,7 +358,7 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 					.filter(entry -> entry.getValue().stream().filter(ann -> filterBeanField(ann.getClass())).count() > 0)
 					.forEach(entry -> {
 						Field field = entry.getKey();
-						LoggerHelper.logTrace("AnnotationHelper::processFieldsAnnotations", String.format("Processing Bean FIELD annotations for class: %s at field: %s", elementClass.getName(), field.getName()));
+						LoggerHelper.logTrace("AnnotationHelper::processFieldsAnnotations(Class<?>, Object)", String.format("Processing Bean FIELD annotations for class: %s at field: %s", elementClass.getName(), field.getName()));
 						String name = getClassFieldBeanName(field, field.getName());
 						try {
 							Optional<Object> value = FieldValueActuatorProvider.getInstance().tranlateFieldValue(field);
@@ -366,7 +366,7 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 							if (value.isPresent())
 								field.set(instance, value.get());
 						} catch (Exception e) {
-							LoggerHelper.logError("AnnotationHelper::processFieldsAnnotations",
+							LoggerHelper.logError("AnnotationHelper::processFieldsAnnotations(Class<?>, Object)",
 									String.format("Unable to fill field %s (bean: %s), due to ERRORS!!",
 											field != null ? field.getName() : "<NULL>", name),
 									e);
