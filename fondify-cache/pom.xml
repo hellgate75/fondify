@@ -1,7 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>fondify-components</artifactId>
-  <name>Fondify Components/Injectables Module</name>
+  <artifactId>fondify-cache</artifactId>
 
   <parent>
     <groupId>com.trcg.fondify</groupId>
@@ -17,20 +16,20 @@
   </properties>
 
   <dependencies>
-  	<dependency>
-  		<groupId>com.trcg.fondify</groupId>
-  		<artifactId>fondify-core</artifactId>
-  		<version>${com.rcg.fondify.version}</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.trcg.fondify</groupId>
-  		<artifactId>fondify-annotations</artifactId>
-  		<version>${com.rcg.fondify.version}</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.trcg.fondify</groupId>
-  		<artifactId>fondify-properties</artifactId>
-  		<version>${com.rcg.fondify.version}</version>
-  	</dependency>
-  </dependencies>
+	  	<dependency>
+	  		<groupId>com.trcg.fondify</groupId>
+	  		<artifactId>fondify-core</artifactId>
+	  		<version>${com.rcg.fondify.version}</version>
+	  	</dependency>
+	  	<dependency>
+	  		<groupId>com.trcg.fondify</groupId>
+	  		<artifactId>fondify-annotations</artifactId>
+	  		<version>${com.rcg.fondify.version}</version>
+	  	</dependency>
+	  	<dependency>
+	  		<groupId>com.trcg.fondify</groupId>
+	  		<artifactId>fondify-components</artifactId>
+	  		<version>${com.rcg.fondify.version}</version>
+	  	</dependency>
+  	</dependencies>
 </project>

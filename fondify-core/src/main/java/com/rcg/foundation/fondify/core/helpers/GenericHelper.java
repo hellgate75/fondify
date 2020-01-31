@@ -31,6 +31,14 @@ public class GenericHelper {
 		}
 		return out;
 	}
+	
+	public static final String initCapBeanName(String name) {
+		if (name == null || name.isEmpty())
+			return name;
+		if (name.length() <= 1)
+			return name.toLowerCase();
+		return name.charAt(0) + name.substring(1);
+	}
 
 	/**
 	 * Convert a stack trace to representing string listing all stack of exceptions

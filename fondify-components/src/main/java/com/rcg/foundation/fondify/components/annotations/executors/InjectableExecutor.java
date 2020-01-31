@@ -18,6 +18,7 @@ import com.rcg.foundation.fondify.components.helpers.AnnotationHelper;
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
+import com.rcg.foundation.fondify.core.helpers.GenericHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
@@ -79,14 +80,14 @@ public class InjectableExecutor implements AnnotationExecutor<Injectable> {
 		ExecutionAnswer<Injectable> answer = new ExecutionAnswer<>(getAnnotationClass(), message, warnings, errors);
 		Injectable injectable = (Injectable)t.getAnnotation();
 		Scope scope = injectable.scope();
-		beanName = t.getAnnotationDeclarationClass().getSimpleName();
+		beanName = GenericHelper.initCapBeanName(t.getAnnotationDeclarationClass().getSimpleName());
 		String regName = AnnotationConstants.REGISTRY_INJECTABLE_BEAN_DEFINITIONS;
 		Object injectableDefinition = null;
 		if ( t.getAnnotationDeclarationType() == AnnotationDeclarationType.TYPE ) {
 			beanName = AnnotationHelper.getClassBeanName(t.getAnnotationDeclarationClass(), beanName);
 			BeanDefinition definition = new BeanDefinition(t);
 			Class<?> elementClass = t.getAnnotatedClass();
-			beanName = AnnotationHelper.getClassBeanName(elementClass, elementClass.getSimpleName());
+			beanName = AnnotationHelper.getClassBeanName(elementClass, GenericHelper.initCapBeanName(elementClass.getSimpleName()));
 			definition.setScope(scope);
 
 			AnnotationHelper.processFieldsAnnotations(elementClass, definition, beanName, InjectableExecutor::filterComponentFieldAnnotation);
@@ -100,7 +101,7 @@ public class InjectableExecutor implements AnnotationExecutor<Injectable> {
 			Method method = t.getAnnotationMethod();
 			beanName = AnnotationHelper.getClassMethodBeanName(method, method.getName());
 			Class<?> annotatedClass = t.getAnnotatedClass();
-			String proposed = annotatedClass.getSimpleName();
+			String proposed = GenericHelper.initCapBeanName(annotatedClass.getSimpleName());
 			Initialization initializationAnnotation = BeansHelper.getMethodAnnotation(method, Initialization.class);
 			Finalization finalizationAnnotation = BeansHelper.getMethodAnnotation(method, Finalization.class);
 			beanName = AnnotationHelper.getClassMethodBeanName(method, method.getName());
@@ -118,7 +119,7 @@ public class InjectableExecutor implements AnnotationExecutor<Injectable> {
 		}
 		if ( injectableDefinition != null ) {
 			LoggerHelper.logTrace("InjectableExecutor::executeAnnotation", 
-					String.format("Registration od Bean names: %s for Injectable with scope: %s, of type: %s, in registry: %s", 
+					String.format("Registration of Bean names: %s for Injectable with scope: %s, of type: %s, in registry: %s", 
 									beanName, 
 									t.getAnnotationDeclarationType().name(),
 									injectableDefinition != null ? injectableDefinition.getClass().getName(): "<NULL>",

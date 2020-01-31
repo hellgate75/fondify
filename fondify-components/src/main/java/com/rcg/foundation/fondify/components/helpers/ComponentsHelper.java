@@ -19,6 +19,7 @@ import com.rcg.foundation.fondify.annotations.contants.AnnotationConstants;
 import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationManagerProvider;
 import com.rcg.foundation.fondify.annotations.typings.BeanDefinition;
 import com.rcg.foundation.fondify.annotations.typings.MethodExecutor;
+import com.rcg.foundation.fondify.components.ComponentsManagerImpl;
 import com.rcg.foundation.fondify.components.annotations.Autowired;
 import com.rcg.foundation.fondify.components.annotations.Inject;
 import com.rcg.foundation.fondify.core.domain.Scope;
@@ -295,18 +296,91 @@ public final class ComponentsHelper {
 				LoggerHelper.logError("ComponentsHelper::executeMethodOfBean", 
 						String.format("Some parameters in method %s are not injected, so not invocation is available!!", m.getName()), 
 						null);
-			} else {
-				if ( args.size() == 0  )
-					response = m.invoke(instance);
-				else
-					response = m.invoke(instance, args.toArray());
 			}
+			args.forEach(val -> LoggerHelper.logTrace("ComponentsHelper::executeMethodOfBean", String.format("Method named %s has parameter value : %s", m.getName(), val)));
+			if ( args.size() == 0  )
+				response = m.invoke(instance);
+			else
+				response = m.invoke(instance, args.toArray());
 		} catch (Exception e) {
 			LoggerHelper.logError("ComponentsHelper::executeMethodOfBean", 
 					String.format("Unable to execute method %s due to ERRORS!!", m.getName()), 
 					e);
 		}
 		return response;
+	}
+
+	
+	public static final void traceBeanDefinitions() {
+		ComponentsManagerImpl componentsManager = new ComponentsManagerImpl();
+
+		LoggerHelper.logText("------------");
+		LoggerHelper.logText("B E A N S : ");
+		LoggerHelper.logText("------------");
+		LoggerHelper.logText("");
+		LoggerHelper.logText("");
+		LoggerHelper.logText("-------------------------");
+		LoggerHelper.logText("D E C L A R A T I O N S :");
+		LoggerHelper.logText("-------------------------");
+		LoggerHelper.logText("");
+		LoggerHelper.logText("-------------------");
+		LoggerHelper.logText("INJECTABLE BEANS : ");
+		LoggerHelper.logText("-------------------");
+		componentsManager
+			.getInjectableBeanDefinitions()
+			.forEach( beanDef -> {
+				AnnotationDeclaration ad = beanDef.getDeclaration();
+				LoggerHelper.logText("INJECTABLE BEAN NAME : " + AnnotationHelper.getClassBeanName(ad.getAnnotatedClass(), GenericHelper.initCapBeanName(ad.getAnnotatedClass().getSimpleName())));
+				LoggerHelper.logText("INJECTABLE BEAN CLASS : " + ad.getAnnotatedClass().getName());
+			});
+		componentsManager
+		.getInjectableMethodDefinitions()
+		.forEach( methodExec -> {
+			AnnotationDeclaration ad = methodExec.getDescriptor();
+			LoggerHelper.logText("INJECTABLE METHOD BEAN NAME : " + AnnotationHelper.getClassMethodBeanName(ad.getAnnotationMethod(), ad.getAnnotationMethod().getName()));
+			LoggerHelper.logText("INJECTABLE METHOD BEAN CLASS : " + methodExec.getTargetClass().getName());
+		});
+		LoggerHelper.logText("");
+		LoggerHelper.logText("------------------");
+		LoggerHelper.logText("COMPONENT BEANS : ");
+		LoggerHelper.logText("------------------");
+		componentsManager
+				.getComponentBeanDefinitions()
+				.forEach( beanDef -> {
+					AnnotationDeclaration ad = beanDef.getDeclaration();
+					LoggerHelper.logText("COMPONENT BEAN NAME : " + AnnotationHelper.getClassBeanName(ad.getAnnotatedClass(), GenericHelper.initCapBeanName(ad.getAnnotatedClass().getSimpleName())));
+					LoggerHelper.logText("COMPONENT BEAN CLASS : " + ad.getAnnotatedClass().getName());
+			});
+		
+		LoggerHelper.logText("");
+		LoggerHelper.logText("");
+		LoggerHelper.logText("-------------------");
+		LoggerHelper.logText("I N S T A N C E S :");
+		LoggerHelper.logText("-------------------");
+		LoggerHelper.logText("");
+		LoggerHelper.logText("-------------------");
+		LoggerHelper.logText("INJECTABLE BEANS : ");
+		LoggerHelper.logText("-------------------");
+		componentsManager
+		.getInjectableBeanReferences()
+		.forEach( instance -> {
+			Class<?> cls = instance.getClass();
+			LoggerHelper.logText("INJECTABLE BEAN NAME : " + AnnotationHelper.getClassBeanName(cls, GenericHelper.initCapBeanName(cls.getSimpleName())));
+			LoggerHelper.logText("INJECTABLE BEAN CLASS : " + cls.getName());
+			LoggerHelper.logText("INJECTABLE BEAN STRING IMAGE : " + instance);
+		});
+		LoggerHelper.logText("");
+		LoggerHelper.logText("------------------");
+		LoggerHelper.logText("COMPONENT BEANS : ");
+		LoggerHelper.logText("------------------");
+		componentsManager
+		.getComponentsBeanReferences()
+		.forEach( instance -> {
+			Class<?> cls = instance.getClass();
+			LoggerHelper.logText("COMPONENT BEAN NAME : " + AnnotationHelper.getClassBeanName(cls, GenericHelper.initCapBeanName(cls.getSimpleName())));
+			LoggerHelper.logText("COMPONENT BEAN CLASS : " + cls.getName());
+			LoggerHelper.logText("COMPONENT BEAN STRING IMAGE : " + instance);
+		});
 	}
 
 }

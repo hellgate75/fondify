@@ -14,6 +14,7 @@ import com.rcg.foundation.fondify.components.annotations.Inject;
 import com.rcg.foundation.fondify.components.helpers.AnnotationHelper;
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
+import com.rcg.foundation.fondify.core.helpers.GenericHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
@@ -75,7 +76,7 @@ public class ComponentExecutor implements AnnotationExecutor<Component> {
 		Scope scope = component.scope();
 		BeanDefinition definition = new BeanDefinition(t);
 		Class<?> elementClass = t.getAnnotatedClass();
-		beanName = AnnotationHelper.getClassBeanName(elementClass, elementClass.getSimpleName());
+		beanName = AnnotationHelper.getClassBeanName(elementClass, GenericHelper.initCapBeanName(elementClass.getSimpleName()));
 		definition.setScope(scope);
 
 		AnnotationHelper.processFieldsAnnotations(elementClass, definition, beanName, ComponentExecutor::filterComponentFieldAnnotation);

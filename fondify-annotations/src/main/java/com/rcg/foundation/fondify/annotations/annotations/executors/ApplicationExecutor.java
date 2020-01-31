@@ -6,6 +6,7 @@ package com.rcg.foundation.fondify.annotations.annotations.executors;
 import com.rcg.foundation.fondify.annotations.annotations.Application;
 import com.rcg.foundation.fondify.core.domain.ApplicationType;
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
+import com.rcg.foundation.fondify.core.helpers.GenericHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
@@ -47,7 +48,7 @@ public class ApplicationExecutor implements AnnotationExecutor<Application> {
 		name = "Application";
 		Application application = (Application)t.getAnnotation();
 		ApplicationType type = application.scope();
-		name = t.getAnnotatedClass().getName();
+		name = GenericHelper.initCapBeanName(t.getAnnotatedClass().getName());
 		String message = "";
 		ExecutionAnswer<Application> answer = new ExecutionAnswer<>(Application.class, message, false, false);
 		answer.addResult(type);

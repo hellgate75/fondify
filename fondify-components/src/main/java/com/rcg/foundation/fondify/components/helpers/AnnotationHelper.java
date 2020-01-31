@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,7 @@ import com.rcg.foundation.fondify.core.functions.Processor;
 import com.rcg.foundation.fondify.core.functions.SimpleEntryPredicate;
 import com.rcg.foundation.fondify.core.functions.SimplePredicate;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
+import com.rcg.foundation.fondify.core.helpers.GenericHelper;
 import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
@@ -71,7 +73,13 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 	}
 	
 	public static final String getClassBeanName(Class<?> beanClass, String proposed) {
-		String name = proposed != null && ! proposed.isEmpty() ? proposed :  beanClass.getSimpleName();
+		String defaultName = "Bean-" + UUID.randomUUID().toString();
+		if (beanClass == null) {
+			return defaultName;
+		}
+		defaultName = beanClass.getSimpleName();
+		defaultName = "" + defaultName.toLowerCase().charAt(0) + defaultName.substring(1);
+		String name = proposed != null && ! proposed.isEmpty() ? proposed :  defaultName;
 		Injectable injAnn = BeansHelper.getClassAnnotation(beanClass, Injectable.class); 
 		if ( injAnn != null && injAnn.component().value() != null && ! injAnn.component().value().isEmpty() ) {
 			name = injAnn.component().value();
@@ -279,20 +287,29 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 				.findFirst();
 		if ( annotationName.isPresent() ) {
 			return getClassBeanName(beanClass, annotationName.get());
+		} else {
+			getClassBeanName(beanClass, GenericHelper.initCapBeanName(beanClass.getSimpleName()));
 		}
 		return null;
 	}
 	
 	public static final Object scanAndProcessEntity(Object entity, Class<?> entityClass) {
-		String beanName = entityClass == null ? null : AnnotationHelper.getClassBeanName(entityClass, entityClass.getSimpleName());
+		return scanAndProcessEntity(entity, entityClass, null);
+	}
+	
+	public static final Object scanAndProcessEntity(Object entity, Class<?> entityClass, String wantedBeanName) {
+		if ( entityClass == null && entity != null ) {
+			entityClass = entity.getClass();
+		}
+		String beanName = wantedBeanName;
+		if ( beanName == null || beanName.isEmpty()  ) {
+			if (entityClass != null)
+				beanName = entityClass == null ? null : AnnotationHelper.getClassBeanName(entityClass, GenericHelper.initCapBeanName(entityClass.getSimpleName()));
+		}
 		ComponentsManagerImpl componentsManager = new ComponentsManagerImpl();
 		if ( entity == null ) {
-			if ( entityClass == null ) {
-				LoggerHelper.logWarn("AnnotationHelper::scanAndProcessEntity", "Null entity and class, so no processing...", null);
-				return null;
-			}
 			
-			if ( beanName != null && ! beanName.isEmpty() ) {
+			if ( entity == null && beanName != null && ! beanName.isEmpty() ) {
 				try {
 					entity = componentsManager.getInjectableOrComponentByName(beanName, null);
 					return entity;
@@ -301,10 +318,11 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 							String.format("Error recovering instance of bean names %s, so trying new instance...", beanName), 
 							e);
 				}
-			} else {
-				beanName = null;
 			}
-			if ( entity == null ) {
+			if ( entityClass == null ) {
+				LoggerHelper.logWarn("AnnotationHelper::scanAndProcessEntity", "Null entity and class, so no processing...", null);
+				return null;
+			} else {
 				try {
 					entity = entityClass.newInstance();
 				} catch (Exception e) {
@@ -319,34 +337,14 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 				return null;
 			}
 		}
-		if ( entityClass == null ) {
-			entityClass = entity.getClass();
-		}
 
 		if ( beanName == null ) {
-			beanName = AnnotationHelper.getClassBeanName(entityClass, entityClass.getSimpleName());
+			beanName = AnnotationHelper.getClassBeanName(entityClass, GenericHelper.initCapBeanName(entityClass.getSimpleName()));
 		}
 		
 		processFieldsAnnotations(entityClass, entity);
 
 		return entity;
-		
-//		BeanDefinition definition = componentsManager.getComponentBeanDefinition(beanName);
-//		if ( definition == null ) {
-//			definition = componentsManager.getInjectableBeanDefinition(beanName);
-//		}
-//		if ( definition == null ) {
-//			//TODO Complete bean definition
-////			AnnotationDeclaration declaration = null;
-////			definition = new BeanDefinition(declaration);
-//		}
-//		if ( definition == null ) {
-//			LoggerHelper.logWarn("AnnotationHelper::scanAndProcessEntity", 
-//									String.format("Unable to parse bean %s of type %s!!", beanName, entity.getClass().getName()), 
-//									null);
-//			return null;
-//		}
-//		return (T) definition.execute(entity, (localBeanName, params) -> ComponentsHelper.tranformNameToBeanInstance(localBeanName, params) );
 	}
 	
 	protected static final void processFieldsAnnotations(Class<?> elementClass, Object instance) {
@@ -362,7 +360,6 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 						String name = getClassFieldBeanName(field, field.getName());
 						try {
 							Optional<Object> value = FieldValueActuatorProvider.getInstance().tranlateFieldValue(field);
-//								Optional<Object> value = provider.tranlateFieldValue(field);
 							if (value.isPresent())
 								field.set(instance, value.get());
 						} catch (Exception e) {
@@ -380,34 +377,18 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 			entry.getValue()
 			.stream()
 			.map( ann -> {
-				String name = field.getType().getClass().getName();
-				if ( Autowired.class.isAssignableFrom(ann.getClass()) ) {
-					Autowired autowired = (Autowired) ann;
-					name = name.substring(0,1).toLowerCase() + name.substring(1);
-					if ( autowired.name() != null && 
-							! autowired.name().isEmpty()) {
-						name = autowired.name();
-					}
-				} else {
-					Inject inject = (Inject)ann;
-					name = name.substring(0,1).toLowerCase() + name.substring(1);
-					if ( inject.name() != null && 
-							! inject.name().isEmpty()) {
-						name = inject.name();
-					}
-				}
-				TransformCase fieldCaseTransformer = BeansHelper.getFieldAnnotation(field, TransformCase.class);
-				if ( fieldCaseTransformer != null ) {
-					name = AnnotationHelper.transformBeanName(name, fieldCaseTransformer);
-				}
+				String name = getClassFieldBeanName(field, field.getName());
 				ComponentRef ref = new ComponentRef(typeRef, field.getName(), name, true, false, false);
 				if ( Autowired.class.isAssignableFrom(ann.getClass()) ) {
 					ref.setAutowiredAnnotation((Autowired) ann);
-				} else {
+				} else if ( Injectable.class.isAssignableFrom(ann.getClass()) ) {
 					ref.setInjectAnnotation((Injectable) ann);
+				} else {
+					return null;
 				}
 				return ref;
 			} )
+			.filter( cr -> cr != null )
 			.forEach( definition::addComponentsReference );
 		};
 		SimplePredicate<Field, Map<Field, List<Annotation>>> predicate = (field, fields) -> {
