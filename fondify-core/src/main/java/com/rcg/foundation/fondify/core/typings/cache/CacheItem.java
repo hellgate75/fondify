@@ -11,7 +11,7 @@ import java.util.Map;
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */
-public interface CacheItem<T> {
+public interface CacheItem<T extends CacheSerializable> {
 
 	/**
 	 * Gets the cached elements map

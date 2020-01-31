@@ -14,6 +14,7 @@ import com.rcg.foundation.fondify.core.typings.autorun.AutoFullScanTypesDescript
 import com.rcg.foundation.fondify.core.typings.autorun.Autorun;
 import com.rcg.foundation.fondify.core.typings.autorun.AutorunFinalizerActuator;
 import com.rcg.foundation.fondify.core.typings.autorun.AutorunInitializerActuator;
+import com.rcg.foundation.fondify.core.typings.cache.CacheProvider;
 import com.rcg.foundation.fondify.core.typings.fields.FieldValueActuator;
 import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentsDiscoveryManager;
 import com.rcg.foundation.fondify.core.typings.parameters.ParameterValueActuator;
@@ -42,6 +43,7 @@ public class CoreAutoFullScanTypesDescriptor implements AutoFullScanTypesDescrip
 								Autorun.class,
 								AutorunInitializerActuator.class,
 								AutorunFinalizerActuator.class,
+								CacheProvider.class,
 								ComponentsDiscoveryManager.class,
 								FieldValueActuator.class,
 								ModuleScanner.class,

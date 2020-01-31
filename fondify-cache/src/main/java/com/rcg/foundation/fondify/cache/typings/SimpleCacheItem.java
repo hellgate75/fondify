@@ -8,12 +8,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.rcg.foundation.fondify.core.typings.cache.CacheItem;
+import com.rcg.foundation.fondify.core.typings.cache.CacheSerializable;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */
-public class SimpleCacheItem<T> implements CacheItem<T> {
+public class SimpleCacheItem<T extends CacheSerializable> implements CacheItem<T> {
 	private Map<String, T> cacheElementsMap = new ConcurrentHashMap<>();
 
 	/**

@@ -3,7 +3,11 @@ package com.rcg.foundation.fondify.core.helpers;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -296,5 +300,21 @@ public class GenericHelper {
 		}
 		Thread.currentThread().setName(threadName);
 		return threadName;
+	}
+	
+	public static final <K extends Comparable<K>, V> Map<K, V> sortedMapByKey(Map<K,V> inputMap) {
+		return inputMap
+				.entrySet()
+				.stream()
+				.sorted(Map.Entry.comparingByKey())
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
+	}
+	
+	public static final <K extends Comparable<K>, V> Map<K, V> rverseSortedMapByKey(Map<K,V> inputMap) {
+		return inputMap
+				.entrySet()
+				.stream()
+				.sorted(Collections.reverseOrder(Map.Entry.comparingByKey()))
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
 	}
 }
