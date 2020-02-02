@@ -21,6 +21,11 @@
 		  	</dependency>
 		  	<dependency>
 		  		<groupId>com.trcg.fondify</groupId>
+		  		<artifactId>fondify-reflections</artifactId>
+		  		<version>${com.rcg.fondify.version}</version>
+		  	</dependency>
+		  	<dependency>
+		  		<groupId>com.trcg.fondify</groupId>
 		  		<artifactId>fondify-core</artifactId>
 		  		<version>${com.rcg.fondify.version}</version>
 		  	</dependency>
@@ -44,6 +49,11 @@
 		  		<artifactId>fondify-context</artifactId>
 		  		<version>${com.rcg.fondify.version}</version>
 		  	</dependency>
+		  	<dependency>
+		  		<groupId>com.trcg.fondify</groupId>
+		  		<artifactId>fondify-cache</artifactId>
+		  		<version>${com.rcg.fondify.version}</version>
+		  	</dependency>
 		</dependencies>
 	</dependencyManagement>
 
@@ -54,6 +64,11 @@
 			<version>${com.rcg.fondify.version}</version><!--$NO-MVN-MAN-VER$-->
 		  	<type>pom</type>
 		</dependency>
+		  	<dependency>
+		  		<groupId>com.trcg.fondify</groupId>
+		  		<artifactId>fondify-reflections</artifactId>
+			<version>${com.rcg.fondify.version}</version><!--$NO-MVN-MAN-VER$-->
+		  	</dependency>
 		<dependency>
 			<groupId>com.trcg.fondify</groupId>
 			<artifactId>fondify-core</artifactId>
@@ -79,6 +94,11 @@
 			<artifactId>fondify-context</artifactId>
 			<version>${com.rcg.fondify.version}</version><!--$NO-MVN-MAN-VER$-->
 		</dependency>
+		  	<dependency>
+		  		<groupId>com.trcg.fondify</groupId>
+		  		<artifactId>fondify-cache</artifactId>
+			<version>${com.rcg.fondify.version}</version><!--$NO-MVN-MAN-VER$-->
+		  	</dependency>
 	</dependencies>
 
 </project>

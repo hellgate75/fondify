@@ -97,4 +97,10 @@ public interface CacheProvider {
 	 */
 	<T extends CacheSerializable> void addAll(String cacheBucketName, CacheItem<T> item);
 
+	/**
+	 * Provides the {@link CachePersistence} provider, to persist on an external
+	 * source / target device or URL the data. 
+	 * @return ({@link CachePersistence}) the cache persistence provider
+	 */
+	CachePersistence getCachePersistenceProvider();
 }

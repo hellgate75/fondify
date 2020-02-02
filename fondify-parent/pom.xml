@@ -33,7 +33,10 @@
   	<parser.jackson-databind.version>2.10.1</parser.jackson-databind.version>
   	<snakeyaml.version>1.25</snakeyaml.version>
   	<tools.hezelcast.version>4.0-BETA-1</tools.hezelcast.version>
-
+	<lombok.version>1.18.10</lombok.version>
+	
+	<!-- Java Decompiler -->
+	<procyon.version>0.5.36</procyon.version>
 
   	<tests.junit.version>4.13-rc-1</tests.junit.version>
   	<tests.mockito.version>2.0.2-beta</tests.mockito.version>
@@ -45,12 +48,6 @@
 
   <dependencies>
  	<!-- Common Libraries -->
- 	<!-- <dependency>
-	    <groupId>org.xeustechnologies</groupId>
-	    <artifactId>jcl</artifactId>
-	    <version>${jcl.version}</version>
-	    <type>pom</type>
-	</dependency> -->
   	<dependency>
 	    <groupId>commons-validator</groupId>
 	    <artifactId>commons-validator</artifactId>
@@ -82,8 +79,28 @@
 	    <version>${guava.version}</version>
 	</dependency>
 
-	
-	
+	<!-- Java decompiler -->
+	<dependency>
+	    <groupId>org.bitbucket.mstrobel</groupId>
+	    <artifactId>procyon-compilertools</artifactId>
+	    <version>${procyon.version}</version>
+	</dependency>
+	<dependency>
+	    <groupId>org.bitbucket.mstrobel</groupId>
+	    <artifactId>procyon-core</artifactId>
+	    <version>${procyon.version}</version>
+	</dependency>
+	<dependency>
+	    <groupId>org.bitbucket.mstrobel</groupId>
+	    <artifactId>procyon-reflection</artifactId>
+	    <version>${procyon.version}</version>
+	</dependency>
+	<dependency>
+	    <groupId>org.bitbucket.mstrobel</groupId>
+	    <artifactId>procyon-expressions</artifactId>
+	    <version>${procyon.version}</version>
+	</dependency>
+
 	<!-- data bind/formats -->
 	<dependency>
 	    <groupId>com.fasterxml.jackson.core</groupId>
@@ -125,6 +142,13 @@
 	    <artifactId>jackson-core</artifactId>
 	    <version>${parser.jackson-databind.version}</version>
 	</dependency>
+	<dependency>
+		<groupId>org.projectlombok</groupId>
+		<artifactId>lombok</artifactId>
+		<version>${lombok.version}</version>
+		<scope>provided</scope>
+    </dependency>
+	
  	<dependency>
 	    <groupId>org.yaml</groupId>
 	    <artifactId>snakeyaml</artifactId>

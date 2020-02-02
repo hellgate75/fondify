@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.rcg.foundation.fondify.cache;
+package com.rcg.foundation.fondify.cache.providers;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -10,8 +10,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import com.rcg.foundation.fondify.cache.typings.SimpleCacheItem;
+import com.rcg.foundation.fondify.cache.persistence.NoCachePersistenceProvider;
+import com.rcg.foundation.fondify.cache.typings.InMemoryCacheItem;
 import com.rcg.foundation.fondify.core.typings.cache.CacheItem;
+import com.rcg.foundation.fondify.core.typings.cache.CachePersistence;
 import com.rcg.foundation.fondify.core.typings.cache.CacheProvider;
 import com.rcg.foundation.fondify.core.typings.cache.CacheSerializable;
 
@@ -23,15 +25,16 @@ import com.rcg.foundation.fondify.core.typings.cache.CacheSerializable;
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  * @see CacheItem
  */
-public class SimpleCacheProvider implements CacheProvider{
+public class InMemoryCacheProvider implements CacheProvider{
 	
 	Map<String, CacheItem<?>> cacheItemsMap = new ConcurrentHashMap<>(0);
+	CachePersistence persistenceProvider = new NoCachePersistenceProvider();
 	
 	@SuppressWarnings("unchecked")
 	private <T extends CacheSerializable> CacheItem<T> getCacheItem(String cacheBucketName) {
 		CacheItem<T> mapX = null;
 		if ( ! cacheItemsMap.containsKey(cacheBucketName) ) {
-			mapX = new SimpleCacheItem<T>();
+			mapX = new InMemoryCacheItem<T>();
 		} else {
 			mapX = (CacheItem<T>)cacheItemsMap.get(cacheBucketName);
 		}
@@ -119,6 +122,11 @@ public class SimpleCacheProvider implements CacheProvider{
 		final CacheItem<T> compMap = getCacheItem(cacheBucketName);
 		item.getElementsMap().forEach(compMap::registerElement);
 		cacheItemsMap.put(cacheBucketName, compMap);
+	}
+
+	@Override
+	public CachePersistence getCachePersistenceProvider() {
+		return persistenceProvider;
 	}
 	
 }

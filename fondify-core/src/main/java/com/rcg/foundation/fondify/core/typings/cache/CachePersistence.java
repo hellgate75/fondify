@@ -17,6 +17,12 @@ import com.rcg.foundation.fondify.core.exceptions.IOException;
  *
  */
 public interface CachePersistence {
+	
+	/**
+	 * Provides a change persistence scoped cache change listener
+	 * @return ({@link CacheChangeListener}) the provided cache change listener  
+	 */
+	CacheChangeListener getCacheEventListener();
 
 	/**
 	 * Perform full cache save to given stream.
@@ -29,13 +35,13 @@ public interface CachePersistence {
 	 * Retrieve new cache changes since latest data request
 	 * @return map of changes
 	 */
-	Map<String, Map<String, Object>> getCacheUpdate();
+	Map<String, Map<String, Object>> getCacheUpdatedItems();
 	
 	/**
 	 * Retrieve new cache deletions since latest data request
 	 * @return map of changes
 	 */
-	Map<String, String> getCacheDelete();
+	Map<String, String> getCacheDeletedItems();
 
 	/**
 	 * Update elements from the given input stream
@@ -53,12 +59,12 @@ public interface CachePersistence {
 	/**
 	 * @param updateMap
 	 */
-	void updateCacheItems(Map<String, Map<String, Object>> updateMap);
+	void updatedCacheItems(Map<String, Map<String, Object>> updateMap);
 	
 	/**
 	 * @param deletionMap
 	 */
-	void deleteCacheItems(Map<String, String> deletionMap);
+	void deletedCacheItems(Map<String, String> deletionMap);
 	
 	/**
 	 * @return

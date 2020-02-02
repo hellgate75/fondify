@@ -14,13 +14,13 @@ import com.rcg.foundation.fondify.core.typings.cache.CacheSerializable;
  * @author Fabrizio Torelli (hellgate75@gmail.com)
  *
  */
-public class SimpleCacheItem<T extends CacheSerializable> implements CacheItem<T> {
+public class InMemoryCacheItem<T extends CacheSerializable> implements CacheItem<T> {
 	private Map<String, T> cacheElementsMap = new ConcurrentHashMap<>();
 
 	/**
 	 * 
 	 */
-	public SimpleCacheItem() {
+	public InMemoryCacheItem() {
 		super();
 	}
 
