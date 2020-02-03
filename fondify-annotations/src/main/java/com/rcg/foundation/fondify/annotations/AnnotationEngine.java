@@ -65,6 +65,7 @@ public final class AnnotationEngine {
 	@SuppressWarnings("unchecked")
 	public static void run(Class<?> mainClass, Runnable disclaimerTask, Runnable tasks, String[] arguments) throws Exception {
 		ArgumentsHelper.storeArguments(arguments);
+		ScannerHelper.initializeScanningPackagesFilter(mainClass);
 		BeansHelper.loadAllInterfacesImplementations();
 		startTime = System.nanoTime();
 		completed = false;

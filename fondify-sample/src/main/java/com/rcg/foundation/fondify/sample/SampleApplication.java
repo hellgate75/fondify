@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import com.rcg.foundation.fondify.annotations.AnnotationEngine;
 import com.rcg.foundation.fondify.annotations.annotations.Application;
+import com.rcg.foundation.fondify.annotations.annotations.ComponentsScan;
 import com.rcg.foundation.fondify.annotations.annotations.Configuration;
 import com.rcg.foundation.fondify.annotations.annotations.TransformCase;
 import com.rcg.foundation.fondify.components.annotations.Component;
@@ -16,7 +17,7 @@ import com.rcg.foundation.fondify.components.helpers.ComponentsHelper;
 import com.rcg.foundation.fondify.core.domain.ApplicationType;
 import com.rcg.foundation.fondify.core.domain.KeyCase;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
-import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentManagerProvider;
+import com.rcg.foundation.fondify.core.typings.components.ComponentManagerProvider;
 import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentsManager;
 import com.rcg.foundation.fondify.sample.components.MyUnsignedInjectable;
 import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
@@ -28,7 +29,8 @@ import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
  *
  */
 @Application(scope = ApplicationType.CONSOLE, hasCommandShell = true)
-@Configuration(packages = {"com.rcg.foundation.fondify.sample.*", "com.rcg.foundation.fondify.sample.components.*"})
+@Configuration()
+@ComponentsScan(includes = {"com.rcg.foundation.fondify.sample.*", "com.rcg.foundation.fondify.sample.components.*"})
 public class SampleApplication {
 
 	public static final void main(String[] arguments) throws Exception {

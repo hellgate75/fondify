@@ -8,7 +8,7 @@ import java.util.Collection;
 
 import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationManagerProvider;
 import com.rcg.foundation.fondify.core.typings.autorun.AutoFullScanTypesDescriptor;
-import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentManagerProvider;
+import com.rcg.foundation.fondify.core.typings.components.ComponentManagerProvider;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

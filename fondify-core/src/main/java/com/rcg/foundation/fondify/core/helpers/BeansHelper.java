@@ -80,9 +80,11 @@ public final class BeansHelper {
 		}
 	}
 	
+	public static ClassPathConfigBuilder DEFAULT_BUILDER = null;
+	
 	public static final void loadAllInterfacesImplementations() {
 		globalTypesInterfaces.addAll(
-			collectSubTypesOf(getRefletionsByPackages(new String[0]), Arrays.asList(new Class<?>[] {AutoFullScanTypesDescriptor.class}))
+			collectSubTypesOf(DEFAULT_BUILDER != null ? DEFAULT_BUILDER : ClassPathConfigBuilder.start().disablePersistenceOfData(), Arrays.asList(new Class<?>[] {AutoFullScanTypesDescriptor.class}))
 			.parallelStream()
 			.map( descriptorClass -> {
 				try {
@@ -97,7 +99,7 @@ public final class BeansHelper {
 			.distinct()
 			.collect(Collectors.toList())
 		);
-		List<Class<?>> listOfElementClasses = collectSubTypesOf(getRefletionsByPackages(new String[0]), globalTypesInterfaces);
+		List<Class<?>> listOfElementClasses = collectSubTypesOf(DEFAULT_BUILDER != null ? DEFAULT_BUILDER : ClassPathConfigBuilder.start().disablePersistenceOfData(), globalTypesInterfaces);
 		globalTypesInterfaces
 		.parallelStream()
 		.forEach( iface -> {
@@ -159,18 +161,6 @@ public final class BeansHelper {
 	}
 
 	/**
-	 * Create a Reflections bases on input packages
-	 * 
-	 * @param packages
-	 * @return
-	 */
-	public static final ClassPathConfigBuilder getRefletionsByPackages(String[] packages) {
-		List<String> list = new ArrayList<>(0);
-		list.addAll(Arrays.asList(packages));
-		return getRefletionsByPackages(list);
-	}
-
-	/**
 	 * Collect all subTypes of provided interface or class one.
 	 * 
 	 * @param <T>
@@ -222,36 +212,6 @@ public final class BeansHelper {
 		return classes;
 	}
 
-	/**
-	 * Create a Reflections bases on input packages
-	 * 
-	 * @param packages
-	 * @return
-	 */
-	public static final ClassPathConfigBuilder getRefletionsByPackages(Collection<String> packages) {
-		final ClassPathConfigBuilder builder = ClassPathConfigBuilder.start();
-		if (packages != null && packages.size() > 0) {
-			packages
-			.stream()
-			.filter(pkg -> pkg != null && !pkg.isEmpty())
-			.forEach(pkg -> builder.includePackageByName(pkg));
-			if ( packages.size() > 0 ) {
-				LIST_OF_SYSTEM_PACKAGES
-					.forEach(pkg -> builder.includePackageByName(pkg));
-			} else {
-				LoggerHelper.logWarn("ScannerHelper::getRefletionsByPackages", 
-						String.format("Unable to discover classpath packages: %s, then loading full classpath urls", Arrays.toString(packages.toArray())), 
-						null);
-			}
-	
-		}  else {
-			LoggerHelper.logWarn("ScannerHelper::getRefletionsByPackages", 
-					"No packages reuired: so loading full classpath urls", 
-					null);
-		}
-		return builder;
-	}
-	
 	public static synchronized final void executeAutorunComponents(String threadName) {
 		if ( executorService != null ) {
 			LoggerHelper.logWarn("BeansHelper::executeAutorunComponents", 

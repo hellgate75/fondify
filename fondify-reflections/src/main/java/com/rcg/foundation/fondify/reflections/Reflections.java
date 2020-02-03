@@ -20,6 +20,9 @@ import com.rcg.foundation.fondify.reflections.typings.ClassPathConfig;
 import com.rcg.foundation.fondify.reflections.typings.ClassPathConfigBuilder;
 import com.rcg.foundation.fondify.reflections.typings.JavaClassEntity;
 import com.rcg.foundation.fondify.reflections.typings.MatchDescriptor;
+import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
+import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
@@ -27,42 +30,86 @@ import com.rcg.foundation.fondify.reflections.typings.MatchDescriptor;
  */
 public final class Reflections {
 
+	/**
+	 * This Library contains list of string that defines exclusion from
+	 * JVM Class-Path entries. 
+	 */
 	public static List<String> SYSTEM_LIBRARIES_EXCLUSIONS = new ArrayList<>(0); 
-		static {
-			SYSTEM_LIBRARIES_EXCLUSIONS.addAll(
-					Arrays.asList("asm-tree", "j2objc-annotations", "aether-",
-							"jackson-", "maven-", "slf4j-", "log4j-", "plexus-", "hazelcast-", "commons-beanutils-", 
-							"guava-","common-codec-", "stax2-api-", "jakarta.", "commons-digester-", "woodstox-core-",
-							"jdom2", "asm-", "commons-collections-", "commons-logging-", "commons-lang3-",
-							"snakeyaml-", "sisu-", "commons-validator-", "rror_prone_annotations-",
-							"procyon-", "jdependency-", "jsr305-", "animal-sniffer-", "commons-io-", "commons-codec-",
-							"powermock-", "mockito-", "junit-")
-			);
-		}
+	static {
+		SYSTEM_LIBRARIES_EXCLUSIONS.addAll(
+				Arrays.asList("asm-tree", "j2objc-annotations", "aether-",
+						"jackson-", "maven-", "slf4j-", "log4j-", "plexus-", "hazelcast-", "commons-beanutils-", 
+						"guava-","common-codec-", "stax2-api-", "jakarta.", "commons-digester-", "woodstox-core-",
+						"jdom2", "asm-", "commons-collections-", "commons-logging-", "commons-lang3-",
+						"snakeyaml-", "sisu-", "commons-validator-", "rror_prone_annotations-",
+						"procyon-", "jdependency-", "jsr305-", "animal-sniffer-", "commons-io-", "commons-codec-",
+						"powermock-", "mockito-", "junit-")
+		);
+	}
+	/**
+	 * This Library contains list of string that defines forced inclusion of
+	 * JVM Class-Path entries. 
+	 */
+	public static List<String> SYSTEM_LIBRARIES_FORCED_INCLUSIONS = new ArrayList<>(0); 
+	static {
+		SYSTEM_LIBRARIES_FORCED_INCLUSIONS.addAll(
+				Arrays.asList("fondify-")
+		);
+	}
+
+	/**
+	 * This Library contains list of string that defines forced inclusion of
+	 * JVM Class-Path entries packages.
+	 */
+	public static List<String> SYSTEM_PACKAGES_FORCED_INCLUSIONS = new ArrayList<>(0); 
+	static {
+		SYSTEM_PACKAGES_FORCED_INCLUSIONS.addAll(
+				Arrays.asList("com.rcg.foundation.fondify")
+		);
+	}
 	
 	private static final Map<String, List<JavaClassEntity>> SAVED_MAP_ENTRIES = new ConcurrentHashMap<String, List<JavaClassEntity>>(0);
-	private static boolean loadedMap = false;
+	private static ClassPathConfig savedMapConfiguration = null;
 	private static Reflections instance = null;
 	
 	private boolean sessionEnabled = false;
+	private boolean loadingSession = false;
 	private final Map<String, List<JavaClassEntity>> entriesMap = new ConcurrentHashMap<String, List<JavaClassEntity>>(0);
+	private ClassPathConfig localConfiguration = null;
+	
+	private List<String> availablePackageNames = new ArrayList<String>(0);
 	
 	/**
 	 * Default protected constructor
 	 */
 	private Reflections(ClassPathConfig configuration) {
 		sessionEnabled = configuration.enablePersistenceOfData();
-		if ( sessionEnabled && ! loadedMap ) {
-			SAVED_MAP_ENTRIES.putAll(
-				compileClassPathEntries(
-					loadClassPathEntries(
-							createExecutableConfig(configuration)
-					),
-				configuration
-				)
-			);
-			loadedMap = SAVED_MAP_ENTRIES.size() > 0;
+		while ( sessionEnabled && loadingSession ) {
+			GenericHelper.sleepThread(1200);
+		}
+		if ( sessionEnabled && configuration != null ) {
+			configuration = savedMapConfiguration;
+		} else if ( sessionEnabled ) {
+			try {
+				loadingSession = true;
+				SAVED_MAP_ENTRIES.putAll(
+					compileClassPathEntries(
+						loadClassPathEntries(
+								createExecutableConfig(configuration)
+						),
+					configuration
+					)
+				);
+				if ( SAVED_MAP_ENTRIES.size() > 0 ) {
+					savedMapConfiguration = configuration;
+				}
+			} catch (Exception e) {
+				LoggerHelper.logError("Reflections::contructor", "Error occured during load of persistent Reflections version", e);
+			} finally {
+				loadingSession = false;
+			}
 		} else if ( ! sessionEnabled ) {
+			localConfiguration = configuration;
 			entriesMap.putAll(
 					compileClassPathEntries(
 							loadClassPathEntries(
@@ -72,8 +119,40 @@ public final class Reflections {
 						)
 			);
 		}
+		seekForPackages();
 	}
 	
+	private void seekForPackages() {
+		availablePackageNames.addAll(
+			getCurrentMapInUse()
+				.values()
+				.stream()
+				.flatMap(List::stream)
+				.map(jce -> jce.getPackageName())
+				.distinct()
+				.collect(Collectors.toList())
+		);
+	}
+	
+	
+	
+	/**
+	 * Returns the {@link ClassPathConfig} used with for filtering 
+	 * the current {@link Reflections}. 
+	 * @return the localConfiguration Current {@link ClassPathConfig} configuration
+	 */
+	public ClassPathConfig getClassPathConfiguration() {
+		return localConfiguration;
+	}
+
+	/**
+	 * Returns all available package names in the current {@link Reflections} instance.
+	 * @return the availablePackageNames List of available package neames 
+	 */
+	public List<String> getAvailablePackageNames() {
+		return availablePackageNames;
+	}
+
 	private Map<String, List<JavaClassEntity>> getCurrentMapInUse() {
 		return sessionEnabled ? SAVED_MAP_ENTRIES : entriesMap;  
 	}
@@ -570,6 +649,8 @@ public final class Reflections {
 			if ( configuration.enablePersistenceOfData() ) {
 				// Copy package / class-path inclusions/exclusions and
 				// disable persistence of data storage. A Singleton is a 
+				if ( ArgumentsHelper.traceLow )
+					LoggerHelper.logTrace("Reflections::getSigletonInstance", "Correcting a persistence enable ClassPath Configuration to non persisnt!!");
 				final ClassPathConfigBuilder builder = ClassPathConfigBuilder.start();
 				builder.disablePersistenceOfData();
 				configuration.getClassPathExclusionList()
@@ -587,4 +668,46 @@ public final class Reflections {
 		return instance;
 	}
 
+	/**
+	 * It will reset the Persistence of the Reflection Scanning responses,
+	 * from latest scan. It will cause a full JVM entries reload on the next
+	 * session request. It's useful if you add dynamically elements to the JVM
+	 * Class-Path at runtime.
+	 */
+	public static final void resetPersistenceStorage() {
+		SAVED_MAP_ENTRIES.clear();
+		savedMapConfiguration = null;
+		if ( ArgumentsHelper.traceLow )
+			LoggerHelper.logTrace("Reflections::resetPersistenceStorage", "Persistent Reflections data just clean!!");
+	}
+
+	/**
+	 * It will reset the Persistence of the Reflection Scanning responses,
+	 * as described in method {@link Reflections#resetPersistenceStorage()}.
+	 * Then it will reload immediately the fresh Class-Path Java Entities from the 
+	 * JVM Entries (accordingly to the {@link ClassPathConfig} specifications.
+	 * @param config The {@link ClassPathConfig} JVM and Java Entries filtering configuration element.
+	 * @return The new just loaded {@link Reflections} version. 
+	 */
+	public static final Reflections resetPersistenceStorageAndReload(ClassPathConfig config) {
+		if ( ! config.enablePersistenceOfData() ) {
+			if ( ArgumentsHelper.traceLow )
+				LoggerHelper.logTrace("Reflections::resetPersistenceStorageAndReload", "Correcting a no-persistence enable ClassPath Configuration to persisnt!!");
+			final ClassPathConfigBuilder builder = ClassPathConfigBuilder.start();
+			config.getClassPathExclusionList()
+						.forEach(eclusion -> builder.excludeClassPathEntryByName(eclusion));
+			config.getClassPathInclusionList()
+						.forEach(eclusion -> builder.includeClassPathEntryByName(eclusion));
+			config.getPackageExclusionList()
+						.forEach(eclusion -> builder.excludePackageByName(eclusion));
+			config.getPackageInclusionList()
+						.forEach(eclusion -> builder.includePackageByName(eclusion));
+			config = builder.build();
+			
+		}
+		resetPersistenceStorage();
+		if ( ArgumentsHelper.traceLow )
+			LoggerHelper.logTrace("Reflections::resetPersistenceStorageAndReload", "Persistent Reflections load in progress!!");
+		return new Reflections(config);
+	}
 }

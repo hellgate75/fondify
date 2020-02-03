@@ -32,7 +32,7 @@ public @interface ComponentsScan {
 	 * Path work as the initial point, and format should be as follow:
 	 * 
 	 * {@code
-	 * @StreamIOConfiguration(packages={"com.my.package.to.configuration.items.*"})
+	 * @StreamIOConfiguration(includes={"com.my.package.to.configuration.items.*"})
 	 * }
 	 * 
 	 * Application will scan only in the package com.my.package.to.configuration.items and
@@ -40,6 +40,23 @@ public @interface ComponentsScan {
 	 * 
 	 * @return (String[]) list of packages to be scanned
 	 */
-	String[] value() default {};
+	String[] includes() default {};
+
+	/**
+	 * Array of strings that declares packages to be avoid from scanned, and import all others. 
+	 * By default scan is on none imported artifacts.
+	 * 
+	 * Path work as the initial point, and format should be as follow:
+	 * 
+	 * {@code
+	 * @StreamIOConfiguration(includes={"com.my.package.to.configuration.items.*"})
+	 * }
+	 * 
+	 * Application will scan only in the package com.my.package.to.configuration.items and
+	 * all sub packages, for configuration items
+	 * 
+	 * @return (String[]) list of packages to be scanned
+	 */
+	String[] excludes() default {};
 
 }

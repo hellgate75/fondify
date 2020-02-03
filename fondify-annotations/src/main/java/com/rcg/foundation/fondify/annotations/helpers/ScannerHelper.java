@@ -24,6 +24,7 @@ import com.rcg.foundation.fondify.annotations.annotations.Application;
 import com.rcg.foundation.fondify.annotations.annotations.ComponentsScan;
 import com.rcg.foundation.fondify.annotations.annotations.Configuration;
 import com.rcg.foundation.fondify.annotations.annotations.DependsOn;
+import com.rcg.foundation.fondify.annotations.annotations.FastBoot;
 import com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig;
 import com.rcg.foundation.fondify.annotations.contants.AnnotationConstants;
 import com.rcg.foundation.fondify.annotations.typings.BeanDefinition;
@@ -46,6 +47,7 @@ import com.rcg.foundation.fondify.core.typings.ModuleScanner;
 import com.rcg.foundation.fondify.core.typings.registry.AnnotationBeanActuatorProvider;
 import com.rcg.foundation.fondify.reflections.Reflections;
 import com.rcg.foundation.fondify.reflections.typings.ClassPathConfigBuilder;
+import com.rcg.foundation.fondify.reflections.typings.MatchDescriptor;
 import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
 import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
 import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
@@ -89,16 +91,6 @@ public class ScannerHelper {
 				.collect(Collectors.toList());
 	}
 
-	/**
-	 * Create a Reflections bases on input packages
-	 * 
-	 * @param packages
-	 * @return
-	 */
-	public static final ClassPathConfigBuilder getRefletionsByPackages(String[] packages) {
-		return BeansHelper.getRefletionsByPackages(packages);
-	}
-
 	public static final boolean isApplicationClass(Class<?> mainClass) {
 		if (mainClass == null) {
 			return false;
@@ -117,16 +109,6 @@ public class ScannerHelper {
 	
 	protected static final boolean isRunningFromJar() {
 		return (""+ScannerHelper.class.getResource("ScannerHelper.class")).toLowerCase().startsWith("jar");
-	}
-
-	/**
-	 * Create a Reflections bases on input packages
-	 * 
-	 * @param packages
-	 * @return
-	 */
-	public static final ClassPathConfigBuilder getRefletionsByPackages(Collection<String> packages) {
-		return BeansHelper.getRefletionsByPackages(packages);
 	}
 
 	protected static List<String> DEFAULT_SCANNERS = new ArrayList<>(0);
@@ -455,66 +437,109 @@ public class ScannerHelper {
 				.collect(Collectors.toList());
 		return moduleScanners.stream().filter(ms -> getPackageName(ms.getClass()).contains(basePackage)).findFirst();
 	}
-
-	public static final List<String> collectScanningPackagesFilter(String basePackage) {
-		ClassPathConfigBuilder builder = getRefletionsByPackages(new String[] {});
+	
+	private static final List<Annotation> discoverAnnotationsInPackage(Class<?> referenceClass, List<Class<? extends Annotation>> typeAnnotationClasses) {
+		List<Annotation> annotations = new ArrayList<Annotation>(0);
+		
+		typeAnnotationClasses.forEach( annCls -> {
+			if ( referenceClass.getDeclaredAnnotation(annCls) != null ) { 
+				annotations.addAll(Arrays.asList(referenceClass.getDeclaredAnnotationsByType(annCls)));
+			}
+		});
+		return annotations;
+	}
+	
+	private static final List<Annotation> loadBaseAnnotations(Class<?> applicationClass) {
+		if ( ArgumentsHelper.traceLow ) {
+			LoggerHelper.logTrace("ScannerHelper::initializeScanningPackagesFilter", "Loading  Configuration and ComponentsScan annotations ...");
+		}
+		List<Annotation> results = new ArrayList<>(0);
+		if ( applicationClass != null && applicationClass.getDeclaredAnnotation(FastBoot.class) != null ) {
+			if ( applicationClass.getDeclaredAnnotation(Application.class) == null ) {
+				LoggerHelper.logWarn("ScannerHelper::loadBaseAnnotations", "Found FastBoot in Main Class but no Application annotation is present. Fast Boot process will be skipped.", null);
+			} else {
+				FastBoot fastBoot = applicationClass.getAnnotation(FastBoot.class);
+				Class<?>[] importPaths = fastBoot.value();
+				if ( importPaths == null || importPaths.length == 0 ) {
+					LoggerHelper.logWarn("ScannerHelper::loadBaseAnnotations", "Found FastBoot in Main Class but IMPORT PATH is not present, no package declared. Fast Boot process will be skipped.", null);
+				} else {
+					List<Class<? extends Annotation>> annotations = new ArrayList<>(0);
+					annotations.add(ComponentsScan.class);
+					annotations.add(Configuration.class);
+					results.addAll(
+							Arrays.asList(importPaths)
+							.stream()
+							.map( referenceClass -> discoverAnnotationsInPackage(referenceClass, annotations) )
+							.flatMap(List::stream)
+							.collect(Collectors.toList())
+					);
+					if ( ArgumentsHelper.traceLow ) {
+						LoggerHelper.logTrace("ScannerHelper::initializeScanningPackagesFilter", "Found (from application definition) Configuration and ComponentsScan annotations: " + results.size());
+					}
+					return results;
+				}
+				
+			}
+			
+		}
 		List<Class<? extends Annotation>> annotations = new ArrayList<>(0);
 		annotations.add(ComponentsScan.class);
 		annotations.add(Configuration.class);
-		@SuppressWarnings("unchecked")
-		Map<Class<Annotation>, List<AnnotationDeclaration>> scanMap = collectAnnotations(builder,
-				annotations
+		
+		Reflections r = Reflections.newReflections(ClassPathConfigBuilder.start().disablePersistenceOfData().build());
+		List<MatchDescriptor> typesList = r.getTypesAnnotatedWith(annotations);
+		results.addAll(
+				typesList
 				.stream()
-				.map(ann -> (Class<Annotation>)ann)
-				.collect(Collectors.toList()));
-		return scanMap.entrySet().stream().filter(i -> getPackageName(i.getKey()).contains(basePackage))
-				.map(a -> a.getValue()).flatMap(List::stream).map(ad -> {
-					if (ComponentsScan.class.isAssignableFrom(ad.getAnnotation().getClass()))
-						return (ComponentsScan) ad.getAnnotation();
-					else
-						return (Configuration) ad.getAnnotation();
-				}).map(a -> {
-					if (ComponentsScan.class.isAssignableFrom(a.getClass()))
-						return Arrays.asList(((ComponentsScan) a).value());
-					else
-						return Arrays.asList(((Configuration) a).packages());
-				}).flatMap(List::stream).distinct().collect(Collectors.toList());
+				.map( jce -> jce.getMatchClass() )
+				.distinct()
+				.map( referenceClass -> discoverAnnotationsInPackage(referenceClass, annotations) )
+				.flatMap(List::stream)
+				.collect(Collectors.toList())
+		);
+		if ( ArgumentsHelper.traceLow ) {
+			LoggerHelper.logTrace("ScannerHelper::initializeScanningPackagesFilter", "Found (from JVM ClassPath Scan) ->  Configuration and ComponentsScan annotations: " + results.size());
+		}
+		return results;
+	}
+	
+	public static ClassPathConfigBuilder DEFAULT_APP_BUILDER = null; 
+
+	public static final void initializeScanningPackagesFilter(Class<?> applicationClass) {
+		ClassPathConfigBuilder builder = ClassPathConfigBuilder.start();
+		if ( ArgumentsHelper.traceLow ) {
+			LoggerHelper.logTrace("ScannerHelper::initializeScanningPackagesFilter", "Initializing default scanner configuration...");
+		}
+		loadBaseAnnotations(applicationClass)
+			.forEach(ann -> {
+				if (  Configuration.class.isAssignableFrom(ann.getClass()) ) {
+					Configuration configurationAnnotation = (Configuration)ann;
+					Arrays.asList(configurationAnnotation.includeJvmEntries())
+						.forEach(entry -> builder.includeClassPathEntryByName(entry));
+					Arrays.asList(configurationAnnotation.excludesJvmEntries())
+					.forEach(entry -> builder.excludeClassPathEntryByName(entry));
+				} else if ( ComponentsScan.class.isAssignableFrom(ann.getClass()) ) {
+					ComponentsScan compScanAnnotation = (ComponentsScan)ann;
+					Arrays.asList(compScanAnnotation.includes())
+					.forEach(entry -> builder.includePackageByName(entry));
+					Arrays.asList(compScanAnnotation.excludes())
+					.forEach(entry -> builder.excludePackageByName(entry));
+					
+				}
+				
+			});
+		DEFAULT_APP_BUILDER = builder;
+		BeansHelper.DEFAULT_BUILDER = DEFAULT_APP_BUILDER;
+		if ( ArgumentsHelper.traceLow ) {
+			LoggerHelper.logTrace("ScannerHelper::initializeScanningPackagesFilter", String.format("Loaded new default classpath scanner configuration: %s", builder.toString()));
+		}
 	}
 
-	private static boolean scanningPackagesComplete = false;
-	private static List<String> scanningPackages = new ArrayList<>(0);
-
-	public static final List<String> collectScanningPackages() {
-		if (scanningPackagesComplete)
-			return scanningPackages;
-		ClassPathConfigBuilder builder = getRefletionsByPackages(new String[] {});
-		List<Class<? extends Annotation>> annotations = new ArrayList<>(0);
-		annotations.add(ComponentsScan.class);
-		annotations.add(Configuration.class);
-		@SuppressWarnings("unchecked")
-		Map<Class<Annotation>, List<AnnotationDeclaration>> scanMap = collectAnnotations(builder,
-				annotations
-				.stream()
-				.map(ann -> (Class<Annotation>)ann)
-				.collect(Collectors.toList()));
-		scanningPackages.addAll(scanMap.entrySet().stream().map(a -> a.getValue()).flatMap(List::stream)
-				.map(AnnotationDeclaration::getAnnotation).map(a -> {
-					if (ComponentsScan.class.isAssignableFrom(a.getClass()))
-						return Arrays.asList(((ComponentsScan) a).value());
-					else
-						return Arrays.asList(((Configuration) a).packages());
-				})
-				.flatMap(List::stream)
-				.distinct()
-				.map(packageName -> {
-					if ( packageName.contains(".*") ) {
-						packageName = packageName.substring(0, packageName.indexOf(".*"));
-					}
-					return packageName;
-				})
-				.collect(Collectors.toList()));
-		scanningPackagesComplete = true;
-		return scanningPackages;
+	public static final ClassPathConfigBuilder collectDefaultClassPathConfigBuilder() {
+		if ( DEFAULT_APP_BUILDER != null ) {
+			return DEFAULT_APP_BUILDER;
+		}
+		return ClassPathConfigBuilder.start();
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -816,7 +841,7 @@ public class ScannerHelper {
 	@SuppressWarnings("unchecked")
 	public static final void scanBaseElementsAndStoreData(String threadName) {
 		BeansHelper
-				.collectSubTypesOf(getRefletionsByPackages(new String[0]), Arrays.asList(new Class<?>[] {
+				.collectSubTypesOf(collectDefaultClassPathConfigBuilder(), Arrays.asList(new Class<?>[] {
 						AnnotationEngineInitializer.class, AnnotationExecutor.class, AnnotationTypesCollector.class }))
 				.forEach(elementClass -> {
 					GenericHelper.fixCurrentThreadStandardName(threadName);
@@ -944,8 +969,8 @@ public class ScannerHelper {
 
 	@SuppressWarnings("unchecked")
 	public static final void executeProvidedBaseAnnotationExecutors(String threadName) {
-		ClassPathConfigBuilder builder = ScannerHelper.getRefletionsByPackages(ScannerHelper.collectScanningPackages());
-		annotationsDeclarationMaps.putAll(ScannerHelper.collectAnnotations(builder, baseAnnotationTypes
+		ClassPathConfigBuilder builder = collectDefaultClassPathConfigBuilder();
+		annotationsDeclarationMaps.putAll(collectAnnotations(builder, baseAnnotationTypes
 																						.stream()
 																						.map( baseCls -> (Class<Annotation>) baseCls )
 																						.collect(Collectors.toList())));

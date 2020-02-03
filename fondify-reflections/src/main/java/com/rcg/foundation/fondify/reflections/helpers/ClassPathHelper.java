@@ -194,6 +194,12 @@ public final class ClassPathHelper {
     	entriesList.addAll(
     			Arrays.asList(classPath.split(File.pathSeparator))
     	);
+		if ( ArgumentsHelper.traceLow ) {
+			LoggerHelper.logTrace("ClassPathHelper::listJvmEntries", "Discovered JVM Class-Path Entrries : " + entriesList.size());
+			entriesList.forEach(jvmEntry -> {
+				LoggerHelper.logTrace("ClassPathHelper::listJvmEntries", "Discovered JVM Class-Path Entrry with path : " + jvmEntry);
+			});
+		}
 		return entriesList;
 	}
 	
@@ -223,39 +229,78 @@ public final class ClassPathHelper {
 	}
 
 	private static final List<String> filterPackagesEntries(List<String> entries, List<String> inclusions, List<String> exclusions) {
+		List<String> results = new ArrayList<>(0);
+		boolean anySelection = false;
+
 		if ( inclusions.size() > 0 ) {
-			return entries
+			results.addAll(
+					entries
 					.stream()
 					.filter(entry -> inclusions
 										.stream()
 										.filter(pkgFilter -> entry.startsWith(pkgFilter))
 										.count() > 0)
 					.filter( entry -> entry != null && ! entry.isEmpty() )
-					.collect(Collectors.toList());
+					.collect(Collectors.toList())
+			);
+			anySelection = true;
 		}
 		if ( exclusions.size() > 0 ) {
-			return entries
+			results.addAll(
+				entries
 					.stream()
 					.filter(entry -> exclusions
 										.stream()
 										.filter(pkgFilter -> entry.startsWith(pkgFilter))
 										.count() == 0)
 					.filter( entry -> entry != null && ! entry.isEmpty() )
-					.collect(Collectors.toList());
+					.collect(Collectors.toList())
+			);
+			anySelection = true;
 		}
-		return entries;
+		if ( ! anySelection ) {
+			results.addAll(entries);
+		} else {
+			List<String> systemSelectedItems = new ArrayList<>();
+			systemSelectedItems.addAll(results);
+			if ( ArgumentsHelper.traceLow ) {
+				LoggerHelper.logTrace("ClassPathHelper::createExecutableConfig", String.format("Adding Default System JVM Packages: %s", Arrays.asList(Reflections.SYSTEM_PACKAGES_FORCED_INCLUSIONS.toArray())));
+			}
+			if ( Reflections.SYSTEM_PACKAGES_FORCED_INCLUSIONS.size() > 0 ) {
+				systemSelectedItems.addAll(
+						entries
+						.stream()
+						.filter(entry -> Reflections.SYSTEM_PACKAGES_FORCED_INCLUSIONS
+											.stream()
+											.filter(pkgFilter -> entry.startsWith(pkgFilter))
+											.count() > 0)
+						.filter( entry -> entry != null && ! entry.isEmpty() )
+						.collect(Collectors.toList())
+				);
+			}
+			if ( ArgumentsHelper.traceLow ) {
+				LoggerHelper.logTrace("ClassPathHelper::createExecutableConfig", "Filtered JVM Packages: " + systemSelectedItems.size());
+			}
+			results.clear();
+			results.addAll(systemSelectedItems
+							.stream()
+							.distinct()
+							.collect(Collectors.toList()));
+		}
+		return results;
 		
 	}
 	
 	public static final ClassPathExecutableConfig createExecutableConfig(ClassPathConfig config) {
 		List<String> jvmClassPathEntries = listJvmEntries();
 		if ( config == null ) {
-			return new ClassPathExecutableConfig(jvmClassPathEntries, config.getPackageInclusionList(), config.getPackageExclusionList(), false);
+			return new ClassPathExecutableConfig(jvmClassPathEntries, new ArrayList<String>(), new ArrayList<String>(), false);
 		}
 		List<String> filteredClassPathEntries = new ArrayList<>(0);
 		filteredClassPathEntries.addAll(
 				filterClassPathEntries(jvmClassPathEntries, config.getClassPathInclusionList(), config.getClassPathExclusionList())
 		);
+		
 		if ( Reflections.SYSTEM_LIBRARIES_EXCLUSIONS.size() > 0 ) {
 			List<String> systemFilteredClassPathEntries = new ArrayList<>(0);
 			systemFilteredClassPathEntries.addAll(
@@ -263,6 +308,25 @@ public final class ClassPathHelper {
 			);
 			filteredClassPathEntries.clear();
 			filteredClassPathEntries.addAll(systemFilteredClassPathEntries);
+		}
+		if ( Reflections.SYSTEM_LIBRARIES_FORCED_INCLUSIONS.size() > 0 ) {
+			List<String> systemFilteredClassPathEntries = new ArrayList<>(0);
+			systemFilteredClassPathEntries.addAll(filteredClassPathEntries);
+			systemFilteredClassPathEntries.addAll(
+					filterClassPathEntries(filteredClassPathEntries, Reflections.SYSTEM_LIBRARIES_FORCED_INCLUSIONS, new ArrayList<String>(0))
+			);
+			filteredClassPathEntries.clear();
+			filteredClassPathEntries.addAll(
+					systemFilteredClassPathEntries
+						.stream()
+						.distinct()
+						.collect(Collectors.toList())
+			);
+			
+		}
+		if ( ArgumentsHelper.traceLow ) {
+			LoggerHelper.logTrace("ClassPathHelper::createExecutableConfig", "Filtered JVM Class-Path Enttries : " + filteredClassPathEntries.size());
+			filteredClassPathEntries.forEach(javaDescriptorEntry -> LoggerHelper.logTrace("ClassPathHelper::createExecutableConfig", String.format("Loaded JVM Class-Path Entry : %s", javaDescriptorEntry)) );
 		}
 		return new ClassPathExecutableConfig(filteredClassPathEntries, config.getPackageInclusionList(), config.getPackageExclusionList(), config.enablePersistenceOfData());
 	}
@@ -277,7 +341,8 @@ public final class ClassPathHelper {
         	pathEntries.addAll(
         			config.getJvmClassPathEntitiesList()
         	);
-        	pathEntries.forEach(entry -> LoggerHelper.logTrace("ClassPAthHelper::loadClassPathEntries", String.format("Using Class-Path Entry: %s", entry)));
+        	if ( ArgumentsHelper.traceLow )
+        		pathEntries.forEach(entry -> LoggerHelper.logTrace("ClassPathHelper::loadClassPathEntries", String.format("Using Class-Path Entry: %s", entry)));
         	classPathEntriesMap.putAll(
 	        	pathEntries
 	        	.stream()
@@ -308,6 +373,10 @@ public final class ClassPathHelper {
         } catch (Exception e) {
 			throw new RuntimeException("Error during decompose and load entries from classpath : " + System.getProperty("java.class.path"), e);
         }
+		if ( ArgumentsHelper.traceLow ) {
+			LoggerHelper.logTrace("ClassPathHelper::loadClassPathEntries", "Filtered JVM Class-Path Java Entry Descriptors : " + classPathEntriesMap.values().stream().flatMap(List::stream).count());
+			classPathEntriesMap.values().stream().flatMap(List::stream).forEach(javaDescriptorEntry -> LoggerHelper.logTrace("ClassPathHelper::loadClassPathEntries", String.format("Loaded JVM Class-Path Java Entry Descriptor with class : %s from orgin: %s in file : %s", javaDescriptorEntry.getClassName(),javaDescriptorEntry.getOrigin(), javaDescriptorEntry.getFileName())) );
+		}
         return classPathEntriesMap;
 	}
 	
@@ -341,8 +410,8 @@ public final class ClassPathHelper {
 															.collect(Collectors.toList())))
 	        	.collect(Collectors.toMap( entry -> entry.getKey(), entry->entry.getValue() ))
 	    );
-		if ( ArgumentsHelper.debug ) {
-			LoggerHelper.logTrace("ClassPathHelper::compileClassPathEntries", "Filtered JVM Class-Path Entries : " + compiledEntriesMap.size());
+		if ( ArgumentsHelper.traceLow ) {
+			LoggerHelper.logTrace("ClassPathHelper::compileClassPathEntries", "Loaded JVM Class-Path Entries : " + compiledEntriesMap.size());
 			compiledEntriesMap.keySet().forEach(classPathEntry -> LoggerHelper.logTrace("ClassPathHelper::compileClassPathEntries", String.format("Loaded JVM Class-Path Entry at : %s", classPathEntry)) );
 			LoggerHelper.logTrace("ClassPathHelper::compileClassPathEntries", "Total Compiled Java Data Entities : " + compiledEntriesMap.values().stream().flatMap(List::stream).count());
 			compiledEntriesMap.values().stream().flatMap(List::stream).forEach(entity -> LoggerHelper.logTrace("ClassPathHelper::compileClassPathEntries", String.format("Compiled Java Entity: %s -> super types: %s ", entity.getBaseClass().getName(), Arrays.toString(entity.getImplementingTypes().toArray()))));
@@ -448,7 +517,7 @@ public final class ClassPathHelper {
 		return t;
 	}
 	
-	@SuppressWarnings({ "static-access", "unchecked" })
+	@SuppressWarnings({ "unchecked" })
 	public static final <T> Class<T> loadClassFromName(String className, List<ClassLoader> classLoaders) throws Exception, Error {
 		if ( className == null || className.isEmpty() ) {
 			return null;

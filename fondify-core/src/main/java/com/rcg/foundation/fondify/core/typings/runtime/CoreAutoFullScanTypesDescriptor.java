@@ -15,9 +15,10 @@ import com.rcg.foundation.fondify.core.typings.autorun.Autorun;
 import com.rcg.foundation.fondify.core.typings.autorun.AutorunFinalizerActuator;
 import com.rcg.foundation.fondify.core.typings.autorun.AutorunInitializerActuator;
 import com.rcg.foundation.fondify.core.typings.cache.CacheProvider;
+import com.rcg.foundation.fondify.core.typings.components.ComponentsDiscoveryManager;
 import com.rcg.foundation.fondify.core.typings.fields.FieldValueActuator;
-import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentsDiscoveryManager;
 import com.rcg.foundation.fondify.core.typings.parameters.ParameterValueActuator;
+import com.rcg.foundation.fondify.core.typings.properties.NamingTrnslationActuator;
 import com.rcg.foundation.fondify.core.typings.registry.AnnotationBeanActuator;
 
 /**
@@ -47,6 +48,7 @@ public class CoreAutoFullScanTypesDescriptor implements AutoFullScanTypesDescrip
 								ComponentsDiscoveryManager.class,
 								FieldValueActuator.class,
 								ModuleScanner.class,
+								NamingTrnslationActuator.class,
 								ParameterValueActuator.class
 								});
 	}

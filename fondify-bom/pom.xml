@@ -72,7 +72,7 @@
 	  	<dependency>
 	  		<groupId>com.trcg.fondify</groupId>
 	  		<artifactId>fondify-utils</artifactId>
-	  		<version>${com.rcg.fondify.version}</version>
+	  		<version>${com.rcg.fondify.version}</version><!--$NO-MVN-MAN-VER$-->
 	  	</dependency>
 		<dependency>
 		  		<groupId>com.trcg.fondify</groupId>

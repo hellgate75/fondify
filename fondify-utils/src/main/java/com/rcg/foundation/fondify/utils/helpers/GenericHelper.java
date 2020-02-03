@@ -3,10 +3,15 @@ package com.rcg.foundation.fondify.utils.helpers;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -302,6 +307,12 @@ public class GenericHelper {
 		return threadName;
 	}
 	
+	/**
+	 * @param <K>
+	 * @param <V>
+	 * @param inputMap
+	 * @return
+	 */
 	public static final <K extends Comparable<K>, V> Map<K, V> sortedMapByKey(Map<K,V> inputMap) {
 		return inputMap
 				.entrySet()
@@ -310,11 +321,136 @@ public class GenericHelper {
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
 	}
 	
-	public static final <K extends Comparable<K>, V> Map<K, V> rverseSortedMapByKey(Map<K,V> inputMap) {
+	/**
+	 * @param <K>
+	 * @param <V>
+	 * @param inputMap
+	 * @return
+	 */
+	public static final <K extends Comparable<K>, V> Map<K, V> reverseSortedMapByKey(Map<K,V> inputMap) {
 		return inputMap
 				.entrySet()
 				.stream()
 				.sorted(Collections.reverseOrder(Map.Entry.comparingByKey()))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
 	}
+	
+	/**
+	 * Check grouping RegExp find groups for given text value 
+	 * @param pattern RegExp pattern with groups
+	 * @param value Given input value to test
+	 * @return state of find for groups in given sample text
+	 */
+	public static final boolean checkMatchIn(String pattern, String value) {
+		try {
+			Pattern compiledPattern = Pattern.compile(pattern, Pattern.UNICODE_CASE + Pattern.CASE_INSENSITIVE);
+			Matcher matcher = compiledPattern.matcher(value);
+			return matcher.find();
+		} catch (Exception e) {
+			LoggerHelper.logError("GenericHelper::checkMatchIn", 
+								String.format("Errors during finding groups for pattern %s, in value %s", pattern, value), e);
+		}
+		return false;
+	}
+
+	/**
+	 * Check grouping RegExp find groups for given text value 
+	 * @param pattern RegExp pattern with groups
+	 * @param value Given input value to test
+	 * @return state of find for groups in given sample text
+	 */
+	public static final int countMatchIn(String pattern, String value) {
+		try {
+			Pattern compiledPattern = Pattern.compile(pattern, Pattern.UNICODE_CASE + Pattern.CASE_INSENSITIVE);
+			Matcher matcher = compiledPattern.matcher(value);
+			if ( matcher.find() ) {
+				return matcher.groupCount();
+			}
+		} catch (Exception e) {
+			LoggerHelper.logError("GenericHelper::checkMatchIn", 
+								String.format("Errors during count groups found for pattern %s, in value %s", pattern, value), e);
+		}
+		return 0;
+	}
+
+	/**
+	 * Extract from grouping RegExp some given groups by number from given text value 
+	 * @param pattern RegExp pattern with groups
+	 * @param value Given input value to test
+	 * @param groups number of groups to extract if present during matcher find operations 
+	 * @return (List&lt;String&gt;) List of results (eventually empty)
+	 */
+	public static final List<String> findMatchIn(String pattern, String value, int... groups) {
+		List<String> response = new ArrayList<String>(0);
+		try {
+			Pattern compiledPattern = Pattern.compile(pattern, Pattern.UNICODE_CASE + Pattern.CASE_INSENSITIVE);
+			Matcher matcher = compiledPattern.matcher(value);
+			while ( matcher.find() ) {
+				int count = matcher.groupCount();
+				for ( int group: groups ) {
+					if ( group < count ) {
+						response.add(matcher.group(group));
+					}
+				}
+			}
+		} catch (Exception e) {
+			LoggerHelper.logError("GenericHelper::checkMatchIn", 
+								String.format("Errors during finding of groups for pattern %s, in value %s, requiring collection of groups: %s", pattern, value, Arrays.toString(groups)), e);
+		}
+		return response;
+	}
+	
+	/**
+	 * Replace values in groups based on the order of the passed list values.
+	 * Max replacements depends on the minimum between found groups and list size.
+	 * Any null value in the list will be considered as a skip case for the group
+	 * replacement and the original group value will be kept in the response.
+	 * @param pattern RegExp pattern with groups
+	 * @param value Given input value to test
+	 * @param replacementsList list of new values to be replaced instead of the found groups ones
+	 * @return Replacement string within new values instead of the found data.
+	 */
+	public static final String replaceAtGroupsIn(String pattern, String value, List<String> replacementsList) {
+		int replacements = 0;
+		StringBuffer sb = new StringBuffer();
+		try {
+			Pattern compiledPattern = Pattern.compile(pattern, Pattern.UNICODE_CASE + Pattern.CASE_INSENSITIVE);
+			Matcher matcher = compiledPattern.matcher(value);
+			while ( matcher.find() ) {
+				if ( ArgumentsHelper.traceLow )
+					LoggerHelper.logTrace("GenericHelper::replaceFouGroupsIn", "Found group ("+replacementsList.size()+") " + (replacements + 1));
+				if ( replacementsList.size() > replacements ) {
+					if ( ArgumentsHelper.traceLow )
+						LoggerHelper.logTrace("GenericHelper::replaceFouGroupsIn", "Try replace group " + (replacements + 1));
+					String newText = replacementsList.get(replacements);
+					if ( newText != null ) {
+						if ( ArgumentsHelper.traceLow )
+							LoggerHelper.logTrace("GenericHelper::replaceFouGroupsIn", "Replace group " + (replacements + 1) + " value: " + matcher.group(0) + " to value: " + newText);
+						matcher.appendReplacement(sb, newText);
+						
+					}
+					else {
+						if ( ArgumentsHelper.traceLow )
+							LoggerHelper.logTrace("GenericHelper::replaceFouGroupsIn", "Replace group " + (replacements + 1) + " NO CHANGES:  Missing data at the index");
+						matcher.appendReplacement(sb, matcher.group(0));
+					}
+				}
+				else {
+					if ( ArgumentsHelper.traceLow )
+						LoggerHelper.logTrace("GenericHelper::replaceFouGroupsIn", "Replace group " + (replacements + 1) + " NO CHANGES:  No more data");
+					matcher.appendReplacement(sb, matcher.group(0));
+				}
+				replacements++;
+			}
+			matcher.appendTail(sb);
+		} catch (Exception e) {
+			LoggerHelper.logError("GenericHelper::checkMatchIn", 
+								String.format("Errors during replacing of groups for pattern %s, in value %s, with replacements: %s", pattern, value, Arrays.toString(replacementsList.toArray())), e);
+		}
+		String outcome = sb.toString();
+		if ( outcome.length() > 0 )
+			return outcome;
+		return value;
+	}
+
 }

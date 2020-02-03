@@ -18,7 +18,7 @@ import com.rcg.foundation.fondify.core.helpers.BeansHelper;
 import com.rcg.foundation.fondify.core.properties.PropertyArchive;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
 import com.rcg.foundation.fondify.core.typings.Injectable;
-import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentsDiscoveryManager;
+import com.rcg.foundation.fondify.core.typings.components.ComponentsDiscoveryManager;
 import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentsManager;
 import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
 import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;

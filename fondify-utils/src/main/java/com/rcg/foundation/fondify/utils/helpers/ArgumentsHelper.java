@@ -24,6 +24,8 @@ public class ArgumentsHelper {
 	private static final Queue<Feature> features = new ConcurrentLinkedQueue<Feature>();
 	private static final Properties arguments = new Properties();
 
+	public static boolean traceLow = false;
+
 	public static boolean debug = false;
 
 	public static boolean useLogger = false;
@@ -182,20 +184,32 @@ public class ArgumentsHelper {
 			LoggerHelper.logTrace("ArgumentsHelper::storeArguments", "Disable Application using logger!!!");
 		}
 		
-		messages.forEach(message -> LoggerHelper.logWarn("AgumentsHelper::storeArguments", message, null) );
+		debugStr = System.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_LOW_LEVEL);
+		if (debugStr == null || debugStr.trim().isEmpty()) {
+			debugStr = arguments.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_LOW_LEVEL);
+		}
+		traceLow = false;
+		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
+			traceLow = true;
+			debug = true;
+			debugArguments = true;
+		}
+
 
 		if ( debugArguments ) {
 			LoggerHelper.logTrace("ArgumentsHelper::storeArguments", "Enabled Arguments Debug Mode!!!");
 		}
-		if ( debug ) {
+
+		messages.forEach(message -> LoggerHelper.logWarn("AgumentsHelper::storeArguments", message, null) );
+
+		if (debug || debugArguments) {
 			LoggerHelper.logTrace("ArgumentsHelper::storeArguments", "Enabled Application Debug Mode!!!");
+			checkFeatures();
 		}
 
 
-		if (debug || debugArguments)
-			checkFeatures();
 		
-		if (discarded.size() > 0) {
+		if (discarded.size() > 0 && (debugArguments || debug ) ) {
 			String message = String.format("Some arguments has been discarded : %s",
 					Arrays.toString(discarded.toArray()));
 			LoggerHelper.logWarn("StreamIOApplication::processArguments", message, null);

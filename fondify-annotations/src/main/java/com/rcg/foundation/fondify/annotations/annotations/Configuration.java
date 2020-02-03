@@ -21,21 +21,18 @@ import java.lang.annotation.Target;
  */
 public @interface Configuration {
 	/**
-	 * Array of strings that declares packages to be scanned. By default scan is 
-	 * on all imported artifacts.
+	 * Array of strings that declares filtering for the JVM Class-Path libraries.
 	 * 
-	 * Path work as the initial point, and format should be as follow:
-	 * 
-	 * {@code
-	 * @StreamIOConfiguration(packages={"com.my.package.to.configuration.items.*"})
-	 * }
-	 * 
-	 * Application will scan only in the package com.my.package.to.configuration.items and
-	 * all sub packages, for configuration items
-	 * 
-	 * @return (String[]) list of packages to be scanned
+	 * @return (String[]) list of JVM Class-Path libraries (fully or partially) to be scanned
 	 */
-	String[] packages() default {};
+	String[] includeJvmEntries() default {};
+
+	/**
+	 * Array of strings that declares skip filtering for the JVM Class-Path libraries.
+	 * 
+	 * @return (String[]) list of JVM Class-Path libraries (fully or partially) not to be scanned
+	 */
+	String[] excludesJvmEntries() default {};
 	
 	/**
 	 * Array of strings that declares files that contains configuration items,

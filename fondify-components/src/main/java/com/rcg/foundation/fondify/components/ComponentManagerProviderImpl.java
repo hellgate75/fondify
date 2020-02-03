@@ -3,8 +3,8 @@
  */
 package com.rcg.foundation.fondify.components;
 
+import com.rcg.foundation.fondify.core.typings.components.ComponentManagerProvider;
 import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentsManager;
-import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentManagerProvider;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

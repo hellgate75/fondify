@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.rcg.foundation.fondify.core.typings.lifecycle;
+package com.rcg.foundation.fondify.core.typings.components;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -30,7 +30,7 @@ import com.rcg.foundation.fondify.core.properties.PropertyArchive;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclarationType;
-import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentManagerProvider;
+import com.rcg.foundation.fondify.core.typings.components.ComponentManagerProvider;
 import com.rcg.foundation.fondify.properties.annotations.Value;
 import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
 import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
