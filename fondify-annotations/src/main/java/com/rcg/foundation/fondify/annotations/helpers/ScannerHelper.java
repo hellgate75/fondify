@@ -124,7 +124,7 @@ public class ScannerHelper {
 			Arrays.asList(classes).forEach(cls -> {
 				try {
 					ModuleMain main = cls.newInstance();
-					if (ArgumentsHelper.debug) {
+					if (ArgumentsHelper.debugApplication) {
 						LoggerHelper.logTrace("ScannerHelper::executeModuleMainClasses",
 								String.format("Executing main class : %s", main.getClass().getName()));
 					}
@@ -450,7 +450,7 @@ public class ScannerHelper {
 	}
 	
 	private static final List<Annotation> loadBaseAnnotations(Class<?> applicationClass) {
-		if ( ArgumentsHelper.traceLow ) {
+		if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceAnnotationsLevel ) {
 			LoggerHelper.logTrace("ScannerHelper::initializeScanningPackagesFilter", "Loading  Configuration and ComponentsScan annotations ...");
 		}
 		List<Annotation> results = new ArrayList<>(0);
@@ -473,7 +473,7 @@ public class ScannerHelper {
 							.flatMap(List::stream)
 							.collect(Collectors.toList())
 					);
-					if ( ArgumentsHelper.traceLow ) {
+					if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceAnnotationsLevel ) {
 						LoggerHelper.logTrace("ScannerHelper::initializeScanningPackagesFilter", "Found (from application definition) Configuration and ComponentsScan annotations: " + results.size());
 					}
 					return results;
@@ -497,7 +497,7 @@ public class ScannerHelper {
 				.flatMap(List::stream)
 				.collect(Collectors.toList())
 		);
-		if ( ArgumentsHelper.traceLow ) {
+		if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceAnnotationsLevel ) {
 			LoggerHelper.logTrace("ScannerHelper::initializeScanningPackagesFilter", "Found (from JVM ClassPath Scan) ->  Configuration and ComponentsScan annotations: " + results.size());
 		}
 		return results;
@@ -507,7 +507,7 @@ public class ScannerHelper {
 
 	public static final void initializeScanningPackagesFilter(Class<?> applicationClass) {
 		ClassPathConfigBuilder builder = ClassPathConfigBuilder.start();
-		if ( ArgumentsHelper.traceLow ) {
+		if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceAnnotationsLevel ) {
 			LoggerHelper.logTrace("ScannerHelper::initializeScanningPackagesFilter", "Initializing default scanner configuration...");
 		}
 		loadBaseAnnotations(applicationClass)
@@ -530,7 +530,7 @@ public class ScannerHelper {
 			});
 		DEFAULT_APP_BUILDER = builder;
 		BeansHelper.DEFAULT_BUILDER = DEFAULT_APP_BUILDER;
-		if ( ArgumentsHelper.traceLow ) {
+		if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceAnnotationsLevel ) {
 			LoggerHelper.logTrace("ScannerHelper::initializeScanningPackagesFilter", String.format("Loaded new default classpath scanner configuration: %s", builder.toString()));
 		}
 	}
@@ -585,7 +585,7 @@ public class ScannerHelper {
 					ModuleMain main = cls.newInstance();
 					Collection<AnnotationDeclaration> annotations = ComponentsRegistry.getInstance()
 							.getAll(annotationDescriptorsRegistryKey);
-					if (ArgumentsHelper.debug) {
+					if (ArgumentsHelper.debugApplication) {
 						LoggerHelper.logTrace("ScannerHelper::executeModuleMainClasses",
 								String.format("Executing main class : %s", main.getClass().getName()));
 					}
@@ -665,7 +665,7 @@ public class ScannerHelper {
 			try {
 				GenericHelper.fixCurrentThreadStandardName(threadName);
 				ModuleScannerConfig scannerAnn = BeansHelper.getClassAnnotation(scc.getClass(), ModuleScannerConfig.class);
-				if (ArgumentsHelper.debug) {
+				if (ArgumentsHelper.debugApplication) {
 					LoggerHelper.logTrace("ScannerHelper::executeScannerMainClasses",
 							String.format("Executing main classes for Module Scanner : %s", scc.getClass().getName()));
 				}

@@ -35,38 +35,18 @@ public final class Reflections {
 	 * JVM Class-Path entries. 
 	 */
 	public static List<String> SYSTEM_LIBRARIES_EXCLUSIONS = new ArrayList<>(0); 
-	static {
-		SYSTEM_LIBRARIES_EXCLUSIONS.addAll(
-				Arrays.asList("asm-tree", "j2objc-annotations", "aether-",
-						"jackson-", "maven-", "slf4j-", "log4j-", "plexus-", "hazelcast-", "commons-beanutils-", 
-						"guava-","common-codec-", "stax2-api-", "jakarta.", "commons-digester-", "woodstox-core-",
-						"jdom2", "asm-", "commons-collections-", "commons-logging-", "commons-lang3-",
-						"snakeyaml-", "sisu-", "commons-validator-", "rror_prone_annotations-",
-						"procyon-", "jdependency-", "jsr305-", "animal-sniffer-", "commons-io-", "commons-codec-",
-						"powermock-", "mockito-", "junit-")
-		);
-	}
+
 	/**
 	 * This Library contains list of string that defines forced inclusion of
 	 * JVM Class-Path entries. 
 	 */
 	public static List<String> SYSTEM_LIBRARIES_FORCED_INCLUSIONS = new ArrayList<>(0); 
-	static {
-		SYSTEM_LIBRARIES_FORCED_INCLUSIONS.addAll(
-				Arrays.asList("fondify-")
-		);
-	}
 
 	/**
 	 * This Library contains list of string that defines forced inclusion of
 	 * JVM Class-Path entries packages.
 	 */
 	public static List<String> SYSTEM_PACKAGES_FORCED_INCLUSIONS = new ArrayList<>(0); 
-	static {
-		SYSTEM_PACKAGES_FORCED_INCLUSIONS.addAll(
-				Arrays.asList("com.rcg.foundation.fondify")
-		);
-	}
 	
 	private static final Map<String, List<JavaClassEntity>> SAVED_MAP_ENTRIES = new ConcurrentHashMap<String, List<JavaClassEntity>>(0);
 	private static ClassPathConfig savedMapConfiguration = null;
@@ -649,7 +629,7 @@ public final class Reflections {
 			if ( configuration.enablePersistenceOfData() ) {
 				// Copy package / class-path inclusions/exclusions and
 				// disable persistence of data storage. A Singleton is a 
-				if ( ArgumentsHelper.traceLow )
+				if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceReflectionsLevel )
 					LoggerHelper.logTrace("Reflections::getSigletonInstance", "Correcting a persistence enable ClassPath Configuration to non persisnt!!");
 				final ClassPathConfigBuilder builder = ClassPathConfigBuilder.start();
 				builder.disablePersistenceOfData();
@@ -677,7 +657,7 @@ public final class Reflections {
 	public static final void resetPersistenceStorage() {
 		SAVED_MAP_ENTRIES.clear();
 		savedMapConfiguration = null;
-		if ( ArgumentsHelper.traceLow )
+		if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceReflectionsLevel )
 			LoggerHelper.logTrace("Reflections::resetPersistenceStorage", "Persistent Reflections data just clean!!");
 	}
 
@@ -691,7 +671,7 @@ public final class Reflections {
 	 */
 	public static final Reflections resetPersistenceStorageAndReload(ClassPathConfig config) {
 		if ( ! config.enablePersistenceOfData() ) {
-			if ( ArgumentsHelper.traceLow )
+			if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceReflectionsLevel )
 				LoggerHelper.logTrace("Reflections::resetPersistenceStorageAndReload", "Correcting a no-persistence enable ClassPath Configuration to persisnt!!");
 			final ClassPathConfigBuilder builder = ClassPathConfigBuilder.start();
 			config.getClassPathExclusionList()
@@ -706,7 +686,7 @@ public final class Reflections {
 			
 		}
 		resetPersistenceStorage();
-		if ( ArgumentsHelper.traceLow )
+		if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceReflectionsLevel )
 			LoggerHelper.logTrace("Reflections::resetPersistenceStorageAndReload", "Persistent Reflections load in progress!!");
 		return new Reflections(config);
 	}

@@ -8,6 +8,7 @@ import static com.rcg.foundation.fondify.annotations.helpers.ScannerHelper.scanB
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,6 +26,7 @@ import com.rcg.foundation.fondify.core.domain.ApplicationType;
 import com.rcg.foundation.fondify.core.exceptions.InitializationException;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
 import com.rcg.foundation.fondify.core.typings.runtime.ProcessStateTracker;
+import com.rcg.foundation.fondify.reflections.Reflections;
 import com.rcg.foundation.fondify.utils.constants.ArgumentsConstants;
 import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
 import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
@@ -35,6 +37,35 @@ import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
  *
  */
 public final class AnnotationEngine {
+	static {
+		/*
+		 * Exclude some libraries from system Class-Path load
+		 */
+		Reflections.SYSTEM_LIBRARIES_EXCLUSIONS.addAll(
+				Arrays.asList("asm-tree", "j2objc-annotations", "aether-",
+						"jackson-", "maven-", "slf4j-", "log4j-", "plexus-", "hazelcast-", "commons-beanutils-", 
+						"guava-","common-codec-", "stax2-api-", "jakarta.", "commons-digester-", "woodstox-core-",
+						"jdom2", "asm-", "commons-collections-", "commons-logging-", "commons-lang3-",
+						"snakeyaml-", "sisu-", "commons-validator-", "rror_prone_annotations-",
+						"procyon-", "jdependency-", "jsr305-", "animal-sniffer-", "commons-io-", "commons-codec-",
+						"powermock-", "mockito-", "junit-")
+		);
+		/*
+		 * Force includes FONDIFY libraries prefix and ensure all 
+		 * libraries are ever loaded from the system Class-Path.
+		 */
+		Reflections.SYSTEM_LIBRARIES_FORCED_INCLUSIONS.addAll(
+				Arrays.asList("fondify-")
+		);
+		/*
+		 * Force includes FONDIFY base package prefix and ensure all 
+		 * packages are ever loaded from the system Class-Path.
+		 */
+		Reflections.SYSTEM_PACKAGES_FORCED_INCLUSIONS.addAll(
+				Arrays.asList("com.rcg.foundation.fondify")
+		);
+	}
+	
 	protected static ExecutorService executorService = null;
 	
 	private static boolean completed = false;

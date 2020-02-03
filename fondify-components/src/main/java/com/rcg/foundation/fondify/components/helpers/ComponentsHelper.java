@@ -296,7 +296,7 @@ public final class ComponentsHelper {
 						String.format("Some parameters in method %s are not injected, so not invocation is available!!", m.getName()), 
 						null);
 			}
-			if ( ArgumentsHelper.debug ) {
+			if ( ArgumentsHelper.debugApplication ) {
 				args.forEach(val -> LoggerHelper.logTrace("ComponentsHelper::executeMethodOfBean", String.format("Method named %s has parameter value : %s (type: %s)", m.getName(), val, val != null ? val.getClass().getName() : "<UNKNOWN>")));
 			}
 			m.setAccessible(true);

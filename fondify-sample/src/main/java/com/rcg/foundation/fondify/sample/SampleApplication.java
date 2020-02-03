@@ -53,7 +53,7 @@ public class SampleApplication {
 					manager.registerComponent("numericIncrement", new Integer(1));
 				}
 				
-				if ( ArgumentsHelper.debug ) {
+				if ( ArgumentsHelper.debugApplication ) {
 					ComponentsHelper.traceBeanDefinitions();
 				}
 			}

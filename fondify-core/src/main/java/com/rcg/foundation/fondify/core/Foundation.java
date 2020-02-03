@@ -20,7 +20,7 @@ public final class Foundation {
 	}
 	
 	public static final void credits() {
-		if ( ! ArgumentsHelper.useLogger ) {
+		if ( ! ArgumentsHelper.useLoggerInsteadConsole ) {
 			ColorConstants.initConsole();
 			System.out.print(ColorConstants.ANSI_YELLOW);
 		}
@@ -34,7 +34,7 @@ public final class Foundation {
 		System.out.println();
 		System.out.println("Disclaimer:");
 		System.out.println();
-		if ( ! ArgumentsHelper.useLogger ) {
+		if ( ! ArgumentsHelper.useLoggerInsteadConsole ) {
 			System.out.print(ColorConstants.ANSI_RESET);
 			System.out.print(ColorConstants.ANSI_YELLOW + ColorConstants.ANSI_UNDERLINE);
 		}
@@ -45,18 +45,18 @@ public final class Foundation {
 		System.out.println("damage for the free use of the product. For any ");
 		System.out.println("further information please contact the author");
 		System.out.print("at the following address: ");
-		if ( ! ArgumentsHelper.useLogger ) {
+		if ( ! ArgumentsHelper.useLoggerInsteadConsole ) {
 			System.out.print(ColorConstants.ANSI_RESET);
 			System.out.print(ColorConstants.ANSI_YELLOW);
 			System.out.print(ColorConstants.ANSI_HIGH_INTENSITY);
 		}
 		System.out.println("hellgate75@gmail.com");
-		if ( ! ArgumentsHelper.useLogger ) {
+		if ( ! ArgumentsHelper.useLoggerInsteadConsole ) {
 			System.out.print(ColorConstants.ANSI_RESET);
 			System.out.print(ColorConstants.ANSI_YELLOW);
 		}
 		System.out.println("-------------------------------------------------");
-		if ( ! ArgumentsHelper.useLogger ) {
+		if ( ! ArgumentsHelper.useLoggerInsteadConsole ) {
 			System.out.print(ColorConstants.ANSI_RESET);
 		}
 		System.out.println();

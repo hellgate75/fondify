@@ -24,13 +24,21 @@ public class ArgumentsHelper {
 	private static final Queue<Feature> features = new ConcurrentLinkedQueue<Feature>();
 	private static final Properties arguments = new Properties();
 
-	public static boolean traceLow = false;
+	public static boolean traceAllLevels = false;
+	public static boolean traceReflectionsLevel = false;
+	public static boolean traceComponentsLevel = false;
+	public static boolean traceAnnotationsLevel = false;
+	public static boolean traceCoreLevel = false;
+	public static boolean traceUtilsLevel = false;
+	public static boolean tracePropertiesLevel = false;
+	public static boolean traceContextLevel = false;
+	public static boolean traceCacheLevel = false;
 
-	public static boolean debug = false;
+	public static boolean debugApplication = false;
 
-	public static boolean useLogger = false;
+	public static boolean useLoggerInsteadConsole = false;
 
-	public static boolean debugArguments = false;
+	public static boolean debugArgumentsLoad = false;
 
 	/**
 	 * Denied access constructor
@@ -159,17 +167,17 @@ public class ArgumentsHelper {
 		if (debugStr == null || debugStr.trim().isEmpty()) {
 			debugStr = arguments.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_DEBUG_ARGUMENTS);
 		}
-		debugArguments = false;
+		debugArgumentsLoad = false;
 		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
-			debugArguments = true;
+			debugArgumentsLoad = true;
 		}
 		debugStr = System.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_DEBUG_APPLICATION);
 		if (debugStr == null || debugStr.trim().isEmpty()) {
 			debugStr = arguments.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_DEBUG_APPLICATION);
 		}
-		debug = false;
+		debugApplication = false;
 		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
-			debug = true;
+			debugApplication = true;
 		}
 
 		debugStr = System.getProperty(ArgumentsConstants.FORMAT_APPLICATION_OUTPUT_FOR_LOGGER);
@@ -178,38 +186,110 @@ public class ArgumentsHelper {
 			debugStr = arguments.getProperty(ArgumentsConstants.FORMAT_APPLICATION_OUTPUT_FOR_LOGGER);
 		}
 
-		useLogger = true;
+		useLoggerInsteadConsole = true;
 		if (debugStr != null && !debugStr.trim().isEmpty() && ! debugStr.equalsIgnoreCase("true")) {
-			useLogger = false;
+			useLoggerInsteadConsole = false;
 			LoggerHelper.logTrace("ArgumentsHelper::storeArguments", "Disable Application using logger!!!");
+		}
+		
+		debugStr = System.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_REFLECTION_LEVEL);
+		if (debugStr == null || debugStr.trim().isEmpty()) {
+			debugStr = arguments.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_REFLECTION_LEVEL);
+		}
+		traceReflectionsLevel = false;
+		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
+			traceReflectionsLevel = true;
+		}
+		
+		debugStr = System.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_COMPONENTS_LEVEL);
+		if (debugStr == null || debugStr.trim().isEmpty()) {
+			debugStr = arguments.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_COMPONENTS_LEVEL);
+		}
+		traceComponentsLevel = false;
+		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
+			traceComponentsLevel = true;
+		}
+		
+		debugStr = System.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_ANNOTATIONS_LEVEL);
+		if (debugStr == null || debugStr.trim().isEmpty()) {
+			debugStr = arguments.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_ANNOTATIONS_LEVEL);
+		}
+		traceAnnotationsLevel = false;
+		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
+			traceAnnotationsLevel = true;
+		}
+		
+		debugStr = System.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_CORE_LEVEL);
+		if (debugStr == null || debugStr.trim().isEmpty()) {
+			debugStr = arguments.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_CORE_LEVEL);
+		}
+		traceCoreLevel = false;
+		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
+			traceCoreLevel = true;
+		}
+		
+		debugStr = System.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_UTILS_LEVEL);
+		if (debugStr == null || debugStr.trim().isEmpty()) {
+			debugStr = arguments.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_UTILS_LEVEL);
+		}
+		traceUtilsLevel = false;
+		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
+			traceUtilsLevel = true;
+		}
+		
+		debugStr = System.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_PROPERTIES_LEVEL);
+		if (debugStr == null || debugStr.trim().isEmpty()) {
+			debugStr = arguments.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_PROPERTIES_LEVEL);
+		}
+		tracePropertiesLevel = false;
+		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
+			tracePropertiesLevel = true;
+		}
+		
+		debugStr = System.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_CONTEXT_LEVEL);
+		if (debugStr == null || debugStr.trim().isEmpty()) {
+			debugStr = arguments.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_CONTEXT_LEVEL);
+		}
+		traceContextLevel = false;
+		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
+			traceContextLevel = true;
+		}
+
+		debugStr = System.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_CACHE_LEVEL);
+		if (debugStr == null || debugStr.trim().isEmpty()) {
+			debugStr = arguments.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_CACHE_LEVEL);
+		}
+		traceCacheLevel = false;
+		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
+			traceCacheLevel = true;
 		}
 		
 		debugStr = System.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_LOW_LEVEL);
 		if (debugStr == null || debugStr.trim().isEmpty()) {
 			debugStr = arguments.getProperty(ArgumentsConstants.ARGUMENTS_HELPER_TRACE_LOW_LEVEL);
 		}
-		traceLow = false;
+		traceAllLevels = false;
 		if (debugStr != null && !debugStr.trim().isEmpty() && debugStr.equalsIgnoreCase("true")) {
-			traceLow = true;
-			debug = true;
-			debugArguments = true;
+			traceAllLevels = true;
+			debugApplication = true;
+			debugArgumentsLoad = true;
 		}
 
 
-		if ( debugArguments ) {
+		if ( debugArgumentsLoad ) {
 			LoggerHelper.logTrace("ArgumentsHelper::storeArguments", "Enabled Arguments Debug Mode!!!");
 		}
 
 		messages.forEach(message -> LoggerHelper.logWarn("AgumentsHelper::storeArguments", message, null) );
 
-		if (debug || debugArguments) {
+		if (debugApplication || debugArgumentsLoad) {
 			LoggerHelper.logTrace("ArgumentsHelper::storeArguments", "Enabled Application Debug Mode!!!");
 			checkFeatures();
 		}
 
 
 		
-		if (discarded.size() > 0 && (debugArguments || debug ) ) {
+		if (discarded.size() > 0 && (debugArgumentsLoad || debugApplication ) ) {
 			String message = String.format("Some arguments has been discarded : %s",
 					Arrays.toString(discarded.toArray()));
 			LoggerHelper.logWarn("StreamIOApplication::processArguments", message, null);

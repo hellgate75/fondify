@@ -110,7 +110,9 @@ public final class BeansHelper {
 					})
 					.collect(Collectors.toList());
 			globalTypesClasses.put( iface,  classList );
-			LoggerHelper.logTrace("BeansHelper::loadAllInterfacesImplementations", "Size for <" + iface.getName() + "> = " + classList.size());
+			if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceCoreLevel ) {
+				LoggerHelper.logTrace("BeansHelper::loadAllInterfacesImplementations", "Size for <" + iface.getName() + "> = " + classList.size());
+			}
 		});
 	}
 

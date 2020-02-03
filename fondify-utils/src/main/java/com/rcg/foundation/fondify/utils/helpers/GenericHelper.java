@@ -417,26 +417,26 @@ public class GenericHelper {
 			Pattern compiledPattern = Pattern.compile(pattern, Pattern.UNICODE_CASE + Pattern.CASE_INSENSITIVE);
 			Matcher matcher = compiledPattern.matcher(value);
 			while ( matcher.find() ) {
-				if ( ArgumentsHelper.traceLow )
+				if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceUtilsLevel )
 					LoggerHelper.logTrace("GenericHelper::replaceFouGroupsIn", "Found group ("+replacementsList.size()+") " + (replacements + 1));
 				if ( replacementsList.size() > replacements ) {
-					if ( ArgumentsHelper.traceLow )
+					if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceUtilsLevel )
 						LoggerHelper.logTrace("GenericHelper::replaceFouGroupsIn", "Try replace group " + (replacements + 1));
 					String newText = replacementsList.get(replacements);
 					if ( newText != null ) {
-						if ( ArgumentsHelper.traceLow )
+						if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceUtilsLevel )
 							LoggerHelper.logTrace("GenericHelper::replaceFouGroupsIn", "Replace group " + (replacements + 1) + " value: " + matcher.group(0) + " to value: " + newText);
 						matcher.appendReplacement(sb, newText);
 						
 					}
 					else {
-						if ( ArgumentsHelper.traceLow )
+						if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceUtilsLevel )
 							LoggerHelper.logTrace("GenericHelper::replaceFouGroupsIn", "Replace group " + (replacements + 1) + " NO CHANGES:  Missing data at the index");
 						matcher.appendReplacement(sb, matcher.group(0));
 					}
 				}
 				else {
-					if ( ArgumentsHelper.traceLow )
+					if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceUtilsLevel )
 						LoggerHelper.logTrace("GenericHelper::replaceFouGroupsIn", "Replace group " + (replacements + 1) + " NO CHANGES:  No more data");
 					matcher.appendReplacement(sb, matcher.group(0));
 				}
