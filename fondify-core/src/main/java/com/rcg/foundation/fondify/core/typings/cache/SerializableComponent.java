@@ -13,8 +13,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
-import com.rcg.foundation.fondify.core.helpers.GenericHelper;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
+import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * Base Cache Serializable component. It provides

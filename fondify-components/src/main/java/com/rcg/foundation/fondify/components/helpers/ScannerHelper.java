@@ -5,14 +5,14 @@ package com.rcg.foundation.fondify.components.helpers;
 
 import java.lang.annotation.Annotation;
 import java.util.Set;
-
-import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
+import java.util.stream.Collectors;
 
 import com.rcg.foundation.fondify.annotations.contants.AnnotationConstants;
 import com.rcg.foundation.fondify.core.exceptions.ScannerException;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
+import com.rcg.foundation.fondify.reflections.Reflections;
+import com.rcg.foundation.fondify.reflections.typings.ClassPathConfigBuilder;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * Utility class that provides features for helping with Java artifacts Scan and
@@ -42,8 +42,11 @@ public class ScannerHelper extends com.rcg.foundation.fondify.annotations.helper
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static final void addAnnotationExecutorsInPackage(String packageName) {
-		Reflections reflections = new Reflections(packageName, new SubTypesScanner());
-		Set<Class<? extends AnnotationExecutor>> classes = reflections.getSubTypesOf(AnnotationExecutor.class);
+		Reflections reflections = Reflections.newReflections(ClassPathConfigBuilder.start().includePackageByName(packageName).disablePersistenceOfData());
+		Set<Class<? extends AnnotationExecutor>> classes = reflections.getSubTypesOf(AnnotationExecutor.class)
+																.stream()
+																.map( jce -> (Class<? extends AnnotationExecutor>) jce.getMatchClass() )
+																.collect(Collectors.toSet());
 		classes.forEach(cls -> {
 			try {
 				AnnotationHelper.addExecutorInRegistry(cls.newInstance());

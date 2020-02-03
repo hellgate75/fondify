@@ -26,9 +26,9 @@ import com.rcg.foundation.fondify.core.functions.Matcher;
 import com.rcg.foundation.fondify.core.functions.Processor;
 import com.rcg.foundation.fondify.core.functions.SimpleEntryPredicate;
 import com.rcg.foundation.fondify.core.functions.SimplePredicate;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.fields.FieldValueActuatorProvider;
 import com.rcg.foundation.fondify.core.typings.parameters.ParameterValueActuatorProvider;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

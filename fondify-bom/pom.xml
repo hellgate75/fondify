@@ -21,6 +21,11 @@
 		  	</dependency>
 		  	<dependency>
 		  		<groupId>com.trcg.fondify</groupId>
+		  		<artifactId>fondify-utils</artifactId>
+		  		<version>${com.rcg.fondify.version}</version>
+		  	</dependency>
+		  	<dependency>
+		  		<groupId>com.trcg.fondify</groupId>
 		  		<artifactId>fondify-reflections</artifactId>
 		  		<version>${com.rcg.fondify.version}</version>
 		  	</dependency>
@@ -64,7 +69,12 @@
 			<version>${com.rcg.fondify.version}</version><!--$NO-MVN-MAN-VER$-->
 		  	<type>pom</type>
 		</dependency>
-		  	<dependency>
+	  	<dependency>
+	  		<groupId>com.trcg.fondify</groupId>
+	  		<artifactId>fondify-utils</artifactId>
+	  		<version>${com.rcg.fondify.version}</version>
+	  	</dependency>
+		<dependency>
 		  		<groupId>com.trcg.fondify</groupId>
 		  		<artifactId>fondify-reflections</artifactId>
 			<version>${com.rcg.fondify.version}</version><!--$NO-MVN-MAN-VER$-->

@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

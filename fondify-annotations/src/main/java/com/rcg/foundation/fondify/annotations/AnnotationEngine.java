@@ -21,14 +21,14 @@ import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationManager;
 import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationManagerProvider;
 import com.rcg.foundation.fondify.annotations.typings.ApplicationConsole;
 import com.rcg.foundation.fondify.core.Foundation;
-import com.rcg.foundation.fondify.core.constants.ArgumentsConstants;
 import com.rcg.foundation.fondify.core.domain.ApplicationType;
 import com.rcg.foundation.fondify.core.exceptions.InitializationException;
-import com.rcg.foundation.fondify.core.helpers.ArgumentsHelper;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
-import com.rcg.foundation.fondify.core.helpers.GenericHelper;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.runtime.ProcessStateTracker;
+import com.rcg.foundation.fondify.utils.constants.ArgumentsConstants;
+import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
+import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

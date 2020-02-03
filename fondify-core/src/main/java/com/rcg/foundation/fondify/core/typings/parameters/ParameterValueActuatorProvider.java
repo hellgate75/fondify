@@ -11,8 +11,8 @@ import java.util.stream.Collectors;
 
 import com.rcg.foundation.fondify.core.functions.Transformer;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
-import com.rcg.foundation.fondify.core.helpers.GenericHelper;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
+import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

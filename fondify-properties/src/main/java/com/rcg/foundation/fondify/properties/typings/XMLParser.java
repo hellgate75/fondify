@@ -11,7 +11,7 @@ import java.io.OutputStream;
 import com.fasterxml.jackson.dataformat.xml.XmlFactory;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.rcg.foundation.fondify.core.exceptions.IOException;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * XML Format Parser implementation

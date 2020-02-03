@@ -21,16 +21,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
-
-import com.rcg.foundation.fondify.core.constants.ArgumentsConstants;
 import com.rcg.foundation.fondify.core.exceptions.InitializationException;
 import com.rcg.foundation.fondify.core.typings.autorun.AutoFullScanTypesDescriptor;
 import com.rcg.foundation.fondify.core.typings.autorun.Autorun;
 import com.rcg.foundation.fondify.core.typings.autorun.AutorunPhasesActuatorProvider;
+import com.rcg.foundation.fondify.reflections.Reflections;
+import com.rcg.foundation.fondify.reflections.typings.ClassPathConfigBuilder;
+import com.rcg.foundation.fondify.utils.constants.ArgumentsConstants;
+import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
+import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
@@ -44,6 +44,10 @@ public final class BeansHelper {
 	
 	private static final Queue<Class<?>> globalTypesInterfaces = new ConcurrentLinkedQueue<>();
 
+	public static final List<String> LIST_OF_SYSTEM_PACKAGES = new ArrayList<>(0);
+	static {
+		LIST_OF_SYSTEM_PACKAGES.add("com.rcg.foundation.fondify");
+	}
 	/**
 	 * 
 	 */
@@ -160,7 +164,7 @@ public final class BeansHelper {
 	 * @param packages
 	 * @return
 	 */
-	public static final ConfigurationBuilder getRefletionsByPackages(String[] packages) {
+	public static final ClassPathConfigBuilder getRefletionsByPackages(String[] packages) {
 		List<String> list = new ArrayList<>(0);
 		list.addAll(Arrays.asList(packages));
 		return getRefletionsByPackages(list);
@@ -174,11 +178,21 @@ public final class BeansHelper {
 	 * @param superClass implemented class or interface
 	 * @return list if sub types of provided one
 	 */
-	protected static final <T> List<Class<? extends T>> collectSubTypesOf(ConfigurationBuilder builder,
+	@SuppressWarnings("unchecked")
+	public static final <T> List<Class<? extends T>> collectSubTypesOf(ClassPathConfigBuilder builder,
 			Class<T> superClass) {
 		List<Class<? extends T>> classes = new ArrayList<Class<? extends T>>(0);
-		Reflections r = new Reflections(builder.addScanners(new SubTypesScanner()));
-		classes.addAll(r.getSubTypesOf(superClass));
+		try {
+			Reflections r = Reflections.getSigletonInstance(builder.build());
+			classes.addAll(r.getSubTypesOf(superClass)
+							.stream()
+							.map( jce -> (Class<? extends T>) jce.getMatchClass() )
+							.distinct()
+							.collect(Collectors.toList())
+							);
+		} catch (Exception e) {
+			LoggerHelper.logError("BeansHelper::collectSubTypesOf(Class<?>)", "Unable to complete sub typrs scan due to errors", e);
+		}
 		return classes;
 	}
 
@@ -190,14 +204,21 @@ public final class BeansHelper {
 	 * @param superClass implemented class or interface
 	 * @return list if sub types of provided one
 	 */
-	protected static final List<Class<?>> collectSubTypesOf(ConfigurationBuilder builder, Collection<Class<?>> superClassList) {
+	public static final List<Class<?>> collectSubTypesOf(ClassPathConfigBuilder builder, Collection<Class<?>> superClassList) {
 		List<Class<?>> classes = new ArrayList<>(0);
-		Reflections r = new Reflections(builder.addScanners(new SubTypesScanner()));
-		superClassList
-		.parallelStream()
-		.forEach(superClass -> {
-			classes.addAll(r.getSubTypesOf(superClass));
-		});
+		Reflections r;
+		try {
+			r = Reflections.getSigletonInstance(builder.build());
+			classes.addAll(
+			r.getSubTypesOf(superClassList)
+			.stream()
+			.map( jce -> jce.getMatchClass() )
+			.distinct()
+			.collect(Collectors.toList())
+			);
+		} catch (Exception e) {
+			LoggerHelper.logError("BeansHelper::collectSubTypesOf(Collection<Class<?>>)", "Unable to complete sub typrs scan due to errors", e);
+		}
 		return classes;
 	}
 
@@ -207,44 +228,28 @@ public final class BeansHelper {
 	 * @param packages
 	 * @return
 	 */
-	public static final ConfigurationBuilder getRefletionsByPackages(Collection<String> packages) {
-		ConfigurationBuilder config = new ConfigurationBuilder();
+	public static final ClassPathConfigBuilder getRefletionsByPackages(Collection<String> packages) {
+		final ClassPathConfigBuilder builder = ClassPathConfigBuilder.start();
 		if (packages != null && packages.size() > 0) {
-			List<java.net.URL> listOfClassPathRefs = new ArrayList<java.net.URL>(0);
-			listOfClassPathRefs.addAll(
-					packages
-					.stream()
-					.filter(pkg -> pkg != null && !pkg.isEmpty())
-					.map(pkg -> {
-						ArrayList<java.net.URL> classpathUrls = new ArrayList<java.net.URL>(0);
-						try {
-							classpathUrls.addAll( 
-									ClasspathHelper.forPackage(pkg)
-							);
-						} catch (Exception e) {
-							
-						}
-						return classpathUrls;
-					})
-					.flatMap(List::stream)
-					.distinct()
-					.collect(Collectors.toList())
-			);
-			if ( listOfClassPathRefs.size() > 0 ) {
-				config.addUrls(
-						listOfClassPathRefs
-				);
+			packages
+			.stream()
+			.filter(pkg -> pkg != null && !pkg.isEmpty())
+			.forEach(pkg -> builder.includePackageByName(pkg));
+			if ( packages.size() > 0 ) {
+				LIST_OF_SYSTEM_PACKAGES
+					.forEach(pkg -> builder.includePackageByName(pkg));
 			} else {
 				LoggerHelper.logWarn("ScannerHelper::getRefletionsByPackages", 
 						String.format("Unable to discover classpath packages: %s, then loading full classpath urls", Arrays.toString(packages.toArray())), 
 						null);
-				config.addUrls(ClasspathHelper.forJavaClassPath());
 			}
 	
-		} else {
-			config.addUrls(ClasspathHelper.forJavaClassPath());
+		}  else {
+			LoggerHelper.logWarn("ScannerHelper::getRefletionsByPackages", 
+					"No packages reuired: so loading full classpath urls", 
+					null);
 		}
-		return config;
+		return builder;
 	}
 	
 	public static synchronized final void executeAutorunComponents(String threadName) {

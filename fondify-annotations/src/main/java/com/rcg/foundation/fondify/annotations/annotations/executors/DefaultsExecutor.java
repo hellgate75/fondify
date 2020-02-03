@@ -11,10 +11,10 @@ import java.util.List;
 
 import com.rcg.foundation.fondify.annotations.annotations.Defaults;
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
 import com.rcg.foundation.fondify.core.typings.ExecutionAnswer;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

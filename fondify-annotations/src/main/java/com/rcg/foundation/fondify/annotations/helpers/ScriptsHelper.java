@@ -8,8 +8,8 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import com.rcg.foundation.fondify.annotations.typings.ConfigFileLoader;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

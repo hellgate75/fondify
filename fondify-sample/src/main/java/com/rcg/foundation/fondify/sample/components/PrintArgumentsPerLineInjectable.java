@@ -13,9 +13,9 @@ import com.rcg.foundation.fondify.components.annotations.Inject;
 import com.rcg.foundation.fondify.components.annotations.Injectable;
 import com.rcg.foundation.fondify.components.injecables.Service;
 import com.rcg.foundation.fondify.core.domain.KeyCase;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.listeners.AsyncExecutionListener;
 import com.rcg.foundation.fondify.core.listeners.typings.InjectableExecutionResponse;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

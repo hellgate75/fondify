@@ -25,16 +25,16 @@ import com.rcg.foundation.fondify.components.annotations.Inject;
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.exceptions.InitializationException;
 import com.rcg.foundation.fondify.core.functions.Transformer;
-import com.rcg.foundation.fondify.core.helpers.ArgumentsHelper;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
-import com.rcg.foundation.fondify.core.helpers.GenericHelper;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.properties.PropertyArchive;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclarationType;
 import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentManagerProvider;
 import com.rcg.foundation.fondify.properties.annotations.Value;
+import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
+import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
@@ -281,7 +281,6 @@ public final class ComponentsHelper {
 	public static final Object executeMethodOfBean(Class<?> cls, Object instance, Method m) {
 		Object response = null;
 		String threadName = Thread.currentThread().getName();
-		m.setAccessible(true);
 		List<Object> args = Arrays.asList(m.getParameters())
 			.stream()
 			.map( parameter -> {
@@ -297,7 +296,10 @@ public final class ComponentsHelper {
 						String.format("Some parameters in method %s are not injected, so not invocation is available!!", m.getName()), 
 						null);
 			}
-			args.forEach(val -> LoggerHelper.logTrace("ComponentsHelper::executeMethodOfBean", String.format("Method named %s has parameter value : %s", m.getName(), val)));
+			if ( ArgumentsHelper.debug ) {
+				args.forEach(val -> LoggerHelper.logTrace("ComponentsHelper::executeMethodOfBean", String.format("Method named %s has parameter value : %s (type: %s)", m.getName(), val, val != null ? val.getClass().getName() : "<UNKNOWN>")));
+			}
+			m.setAccessible(true);
 			if ( args.size() == 0  )
 				response = m.invoke(instance);
 			else

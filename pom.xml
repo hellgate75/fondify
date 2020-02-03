@@ -16,5 +16,6 @@
   	<module>fondify-cache</module>
   	<module>fondify-bom</module>
   	<module>fondify-sample</module>
+  	<module>fondify-utils</module>
   </modules>
 </project>

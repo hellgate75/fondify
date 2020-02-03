@@ -17,10 +17,10 @@ import com.rcg.foundation.fondify.annotations.annotations.methods.Initialization
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.functions.Transformer;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
-import com.rcg.foundation.fondify.core.helpers.GenericHelper;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.methods.ParameterRef;
+import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

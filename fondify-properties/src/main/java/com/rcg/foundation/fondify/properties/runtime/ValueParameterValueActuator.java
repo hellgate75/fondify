@@ -6,11 +6,11 @@ package com.rcg.foundation.fondify.properties.runtime;
 import java.lang.reflect.Parameter;
 
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.properties.PropertyArchive;
 import com.rcg.foundation.fondify.core.typings.parameters.ParameterValueActuator;
 import com.rcg.foundation.fondify.properties.annotations.Value;
 import com.rcg.foundation.fondify.properties.helpers.AnnotationHelper;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

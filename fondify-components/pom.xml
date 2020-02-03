@@ -19,6 +19,11 @@
   <dependencies>
   	<dependency>
   		<groupId>com.trcg.fondify</groupId>
+  		<artifactId>fondify-utils</artifactId>
+  		<version>${com.rcg.fondify.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.trcg.fondify</groupId>
   		<artifactId>fondify-reflections</artifactId>
   		<version>${com.rcg.fondify.version}</version>
   	</dependency>

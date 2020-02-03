@@ -7,8 +7,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.rcg.foundation.fondify.reflections.helpers.ClassPathHelper;
 
 
 /**
@@ -22,19 +25,18 @@ public class JavaClassEntity {
 	/**
 	 * 
 	 */
-	public JavaClassEntity(JavaEntry entry) {
+	public JavaClassEntity(JavaEntry entry, ClassLoader... classLoaders) {
 		try {
 			this.origin = entry.getOrigin();
-			this.baseClass = Class.forName(entry.getClassName());
+			this.baseClass = ClassPathHelper.loadClassFromName(entry.getClassName(), Arrays.asList(classLoaders));
 			this.packageName = baseClass.getPackage().getName();
-			this.evaluateInterfaces();
 		} catch (Exception e) {
-			throw new RuntimeException("Errors initializing ");
+//			LoggerHelper.logError("", String.format("Exception occurred during JavaClassEntity intialization: error for class: %s, described as follow:", entry != null ? entry.getClassName() : "<NULL>"), e);
+			throw new RuntimeException(String.format("Exception occurred during initializing class : %s", entry != null ? entry.getClassName() : "<NULL>)"), e);
+		} catch (Error e) {
+//			LoggerHelper.logError("", String.format("Error occurred during JavaClassEntity intialization: error for class: %s, described as follow:", entry != null ? entry.getClassName() : "<NULL>"), e);
+			throw new RuntimeException(String.format("MAIN ERROR occurred during initializing class : %s", entry != null ? entry.getClassName() : "<NULL>)"), e);
 		}
-	}
-	
-	private void evaluateInterfaces() {
-		this.baseClass.getInterfaces();
 	}
 	
 	/**
@@ -60,20 +62,28 @@ public class JavaClassEntity {
 	/**
 	 * @return the baseClass
 	 */
-	public List<Class<?>> getImplementingTypes() {
+	public Collection<Class<?>> getImplementingTypes() {
 		List<Class<?>> implementingTypes = new ArrayList<>();
-		Type superType = this.baseClass.getGenericSuperclass();
-		if ( superType != null ) {
-			implementingTypes.add(
-			com.google.common.reflect.TypeToken.of(superType).getRawType()
-			);
+		try {
+			Type superType = this.baseClass.getGenericSuperclass();
+			if ( superType != null ) {
+				implementingTypes.add(
+				com.google.common.reflect.TypeToken.of(superType).getRawType()
+				);
+			}
+		} catch (Exception ex) {
+		} catch (Error er) {
 		}
-		implementingTypes.addAll(
-			Arrays.asList(this.baseClass.getGenericInterfaces())
-				.stream()
-				.map(type -> com.google.common.reflect.TypeToken.of(type).getRawType() )
-				.collect(Collectors.toList())
-		);
+		try {
+			implementingTypes.addAll(
+				Arrays.asList(this.baseClass.getGenericInterfaces())
+					.stream()
+					.map(type -> com.google.common.reflect.TypeToken.of(type).getRawType() )
+					.collect(Collectors.toList())
+			);
+		} catch (Exception ex) {
+		} catch (Error er) {
+		}
 		return implementingTypes;
 	}
 	
@@ -81,7 +91,7 @@ public class JavaClassEntity {
 	/**
 	 * @return the classAnnotations
 	 */
-	public List<Class<? extends Annotation>> seekClassAnnotationsClasses() {
+	public Collection<Class<? extends Annotation>> seekClassAnnotationsClasses() {
 		List<Class<? extends Annotation>> annotations = new ArrayList<>(0);
 		annotations.addAll(
 			Arrays.asList(this.baseClass.getDeclaredAnnotations())
@@ -94,7 +104,7 @@ public class JavaClassEntity {
 		return annotations;
 	}
 
-	public List<Class<? extends Annotation>> seekMethodsAnnotationClasses() {
+	public Collection<Class<? extends Annotation>> seekMethodsAnnotationClasses() {
 		List<Class<? extends Annotation>> annotations = new ArrayList<>(0);
 		annotations.addAll(
 			Arrays.asList(this.baseClass.getDeclaredMethods())
@@ -109,7 +119,7 @@ public class JavaClassEntity {
 	}
 
 
-	public List<Class<? extends Annotation>> seekMethodParametersAnnotationClasses() {
+	public Collection<Class<? extends Annotation>> seekMethodParametersAnnotationClasses() {
 		List<Class<? extends Annotation>> annotations = new ArrayList<>(0);
 		annotations.addAll(
 			Arrays.asList(this.baseClass.getDeclaredMethods())
@@ -125,7 +135,7 @@ public class JavaClassEntity {
 		return annotations;
 	}
 	
-	public List<Class<? extends Annotation>> seekFieldsAnnotationClasses() {
+	public Collection<Class<? extends Annotation>> seekFieldsAnnotationClasses() {
 		List<Class<? extends Annotation>> annotations = new ArrayList<>(0);
 		annotations.addAll(
 			Arrays.asList(this.baseClass.getDeclaredFields())
@@ -143,7 +153,11 @@ public class JavaClassEntity {
 		return new MatchDescriptor(this.baseClass, null, null, null, annotationClass);
 	}
 
-	public List<MatchDescriptor> getClassDescriptForAnnotations(List<Class<? extends Annotation>> annotationClassList) {
+	public Collection<MatchDescriptor> getClassDescriptForAnnotations(List<Class<? extends Annotation>> annotationClassList) {
+		return getClassDescriptForAnnotations(annotationClassList);
+	}
+	
+	public Collection<MatchDescriptor> getClassDescriptForAnnotations(Collection<Class<? extends Annotation>> annotationClassList) {
 		List<MatchDescriptor> descriptorsList = new ArrayList<>(0);
 		descriptorsList.addAll(
 			annotationClassList
@@ -156,7 +170,7 @@ public class JavaClassEntity {
 		return descriptorsList;
 	}
 
-	public List<MatchDescriptor> getMethodsAnnotatedWith(Class<? extends Annotation> annotationClass) {
+	public Collection<MatchDescriptor> getMethodsAnnotatedWith(Class<? extends Annotation> annotationClass) {
 		List<MatchDescriptor> methodsList = new ArrayList<>(0);
 
 		methodsList.addAll(
@@ -169,7 +183,7 @@ public class JavaClassEntity {
 		return methodsList;
 	}
 	
-	public List<MatchDescriptor> getFieldsAnnotatedWith(Class<? extends Annotation> annotationClass) {
+	public Collection<MatchDescriptor> getFieldsAnnotatedWith(Class<? extends Annotation> annotationClass) {
 		List<MatchDescriptor> fieldsList = new ArrayList<>(0);
 		fieldsList.addAll(
 				Arrays.asList(this.baseClass.getDeclaredFields())
@@ -182,7 +196,7 @@ public class JavaClassEntity {
 	}
 
 	
-	public List<MatchDescriptor> getMethodParametersAnnotatedWith(Class<? extends Annotation> annotationClass) {
+	public Collection<MatchDescriptor> getMethodParametersAnnotatedWith(Class<? extends Annotation> annotationClass) {
 		List<MatchDescriptor> parametersList = new ArrayList<>(0);
 		parametersList.addAll(
 				Arrays.asList(this.baseClass.getDeclaredMethods())
