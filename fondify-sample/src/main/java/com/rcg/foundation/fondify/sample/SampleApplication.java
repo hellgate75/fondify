@@ -15,13 +15,13 @@ import com.rcg.foundation.fondify.components.annotations.Injectable;
 import com.rcg.foundation.fondify.components.helpers.ComponentsHelper;
 import com.rcg.foundation.fondify.core.domain.ApplicationType;
 import com.rcg.foundation.fondify.core.domain.KeyCase;
-import com.rcg.foundation.fondify.core.helpers.ArgumentsHelper;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
-import com.rcg.foundation.fondify.core.helpers.GenericHelper;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentManagerProvider;
 import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentsManager;
 import com.rcg.foundation.fondify.sample.components.MyUnsignedInjectable;
+import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
+import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

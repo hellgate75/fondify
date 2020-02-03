@@ -4,9 +4,9 @@
 package com.rcg.foundation.fondify.context.runtime;
 
 import com.rcg.foundation.fondify.context.ApplicationManagerImpl;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.autorun.Autorun;
 import com.rcg.foundation.fondify.core.typings.autorun.AutorunInitializerActuator;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

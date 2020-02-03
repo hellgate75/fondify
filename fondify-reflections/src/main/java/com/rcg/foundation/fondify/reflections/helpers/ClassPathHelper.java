@@ -10,9 +10,13 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -23,6 +27,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
+import com.rcg.foundation.fondify.reflections.Reflections;
 import com.rcg.foundation.fondify.reflections.typings.ClassPathConfig;
 import com.rcg.foundation.fondify.reflections.typings.ClassPathExecutableConfig;
 import com.rcg.foundation.fondify.reflections.typings.JavaClassEntity;
@@ -30,6 +35,8 @@ import com.rcg.foundation.fondify.reflections.typings.JavaEntry;
 import com.rcg.foundation.fondify.reflections.typings.KeyValuePair;
 import com.rcg.foundation.fondify.reflections.typings.MatchDescriptor;
 import com.rcg.foundation.fondify.reflections.typings.MatchLevel;
+import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 import com.strobel.decompiler.Decompiler;
 import com.strobel.decompiler.PlainTextOutput;
 
@@ -64,12 +71,14 @@ public final class ClassPathHelper {
 			String className = filePathToClassName(name, basePath.length() + 1);
 			String content = null;
 			byte[] bytes = new byte[0];
-			try {
-				bytes = readStreamContent(new FileInputStream(file));
-			} catch (Exception e) {
-				throw new RuntimeException(String.format("Error reading data for file: %s, in class path entry: %s", name, basePath), e);
+			if ( decompileClasses ) {
+				try {
+					bytes = readStreamContent(new FileInputStream(file));
+				} catch (Exception e) {
+					throw new RuntimeException(String.format("Error reading data for file: %s, in class path entry: %s", name, basePath), e);
+				}
+					content = decompileByteCode(bytes);
 			}
-			content = decompileByteCode(bytes);
 			int readLen = content!= null ? content.length(): 0;
 			JavaEntry javaEntry = new JavaEntry(basePath, name, className, readLen);
 			javaEntry.setContent(content);
@@ -120,11 +129,16 @@ public final class ClassPathHelper {
 	}
 	
 	protected static final String filePathToClassName(String filePath, int jump) {
+		String separator = File.separator;
+		if ( separator.equals("/") )
+			separator = "\\"+separator;
+		else if ( separator.equals("\\") )
+			separator = "\\\\";
 		if ( jump > 0 ) {
 			String newPath = filePath.substring(jump);
-			return newPath.replaceAll("\\/", ".").substring(0, newPath.length() - 6);
+			return newPath.replaceAll("\\/", ".").replaceAll(separator, ".").substring(0, newPath.length() - 6);
 		}
-		return filePath.replaceAll("\\/", ".").substring(0, filePath.length() - 6);
+		return filePath.replaceAll("\\/", ".").replaceAll(separator, ".").substring(0, filePath.length() - 6);
 	}
 	
 	public static final List<JavaEntry> pathEntryJavaClasses(String pathEntry) {
@@ -149,12 +163,14 @@ public final class ClassPathHelper {
 								String className=filePathToClassName(name, 0);
 								String content = null;
 								byte[] bytes = new byte[0];
-								try {
-									bytes = readStreamContent(jarFile.getInputStream(entry));
-								} catch (Exception e) {
-									throw new RuntimeException(String.format("Error reading data for file: %s, in class path entry: %s", name, pathEntry), e);
+								if ( decompileClasses ) {
+									try {
+										bytes = readStreamContent(jarFile.getInputStream(entry));
+									} catch (Exception e) {
+										throw new RuntimeException(String.format("Error reading data for file: %s, in class path entry: %s", name, pathEntry), e);
+									}
+									content = decompileByteCode(bytes);
 								}
-								content = decompileByteCode(bytes);
 								int readLen = content!= null ? content.length(): 0;
 								JavaEntry javaEntry = new JavaEntry(pathEntry, name, className, readLen);
 								javaEntry.setContent(content);
@@ -189,6 +205,7 @@ public final class ClassPathHelper {
 										.stream()
 										.filter(cpNameFilter -> entry.contains(cpNameFilter))
 										.count() > 0)
+					.filter( entry -> entry != null && ! entry.isEmpty() )
 					.collect(Collectors.toList());
 		}
 		if ( exclusions.size() > 0 ) {
@@ -198,9 +215,10 @@ public final class ClassPathHelper {
 										.stream()
 										.filter(cpNameFilter -> entry.contains(cpNameFilter))
 										.count() == 0)
+					.filter( entry -> entry != null && ! entry.isEmpty() )
 					.collect(Collectors.toList());
 		}
-		return entries;
+		return entries.stream().filter( entry -> entry != null && ! entry.isEmpty() ).collect(Collectors.toList());
 		
 	}
 
@@ -212,6 +230,7 @@ public final class ClassPathHelper {
 										.stream()
 										.filter(pkgFilter -> entry.startsWith(pkgFilter))
 										.count() > 0)
+					.filter( entry -> entry != null && ! entry.isEmpty() )
 					.collect(Collectors.toList());
 		}
 		if ( exclusions.size() > 0 ) {
@@ -221,6 +240,7 @@ public final class ClassPathHelper {
 										.stream()
 										.filter(pkgFilter -> entry.startsWith(pkgFilter))
 										.count() == 0)
+					.filter( entry -> entry != null && ! entry.isEmpty() )
 					.collect(Collectors.toList());
 		}
 		return entries;
@@ -230,13 +250,21 @@ public final class ClassPathHelper {
 	public static final ClassPathExecutableConfig createExecutableConfig(ClassPathConfig config) {
 		List<String> jvmClassPathEntries = listJvmEntries();
 		if ( config == null ) {
-			return new ClassPathExecutableConfig(jvmClassPathEntries, null, null, false);
+			return new ClassPathExecutableConfig(jvmClassPathEntries, config.getPackageInclusionList(), config.getPackageExclusionList(), false);
 		}
 		List<String> filteredClassPathEntries = new ArrayList<>(0);
 		filteredClassPathEntries.addAll(
 				filterClassPathEntries(jvmClassPathEntries, config.getClassPathInclusionList(), config.getClassPathExclusionList())
 		);
-		return new ClassPathExecutableConfig(filteredClassPathEntries, config.getPackageInclusionList(), config.getPackageExclusionList(), config.enableSessionData());
+		if ( Reflections.SYSTEM_LIBRARIES_EXCLUSIONS.size() > 0 ) {
+			List<String> systemFilteredClassPathEntries = new ArrayList<>(0);
+			systemFilteredClassPathEntries.addAll(
+					filterClassPathEntries(filteredClassPathEntries, new ArrayList<String>(0), Reflections.SYSTEM_LIBRARIES_EXCLUSIONS)
+			);
+			filteredClassPathEntries.clear();
+			filteredClassPathEntries.addAll(systemFilteredClassPathEntries);
+		}
+		return new ClassPathExecutableConfig(filteredClassPathEntries, config.getPackageInclusionList(), config.getPackageExclusionList(), config.enablePersistenceOfData());
 	}
 
 	public static final Map<String, List<JavaEntry>> loadClassPathEntries(ClassPathExecutableConfig config) {
@@ -249,6 +277,7 @@ public final class ClassPathHelper {
         	pathEntries.addAll(
         			config.getJvmClassPathEntitiesList()
         	);
+        	pathEntries.forEach(entry -> LoggerHelper.logTrace("ClassPAthHelper::loadClassPathEntries", String.format("Using Class-Path Entry: %s", entry)));
         	classPathEntriesMap.putAll(
 	        	pathEntries
 	        	.stream()
@@ -260,6 +289,7 @@ public final class ClassPathHelper {
 	        				.stream()
 	        				.map(javaEntry -> javaEntry.getPackageName())
 	        				.distinct()
+	        				.filter(pkgName -> pkgName != null && !pkgName.isEmpty())
 	        				.collect(Collectors.toList());
 	        		List<String> selectedPackages = filterPackagesEntries(packages, config.getPackageInclusionList(), config.getPackageExclusionList());
 
@@ -281,17 +311,42 @@ public final class ClassPathHelper {
         return classPathEntriesMap;
 	}
 	
-	public static final Map<String, List<JavaClassEntity>> compileClassPathEntries(Map<String, List<JavaEntry>> entries) {
+	public static final Map<String, List<JavaClassEntity>> compileClassPathEntries(Map<String, List<JavaEntry>> entries, ClassPathConfig config) {
 		Map<String, List<JavaClassEntity>> compiledEntriesMap = new HashMap<>(0);
+		List<ClassLoader> requiredClassLoaders = new ArrayList<>(0);
+		if ( config.getClassLoadersList().size() == 0 ) {
+			LoggerHelper.logTrace("ClassPathHelper::compileClassPathEntries", "Used default ClassLoaders");
+			requiredClassLoaders.addAll(getDefaultClassLoadersList(config));
+		} else {
+			requiredClassLoaders.addAll(config.getClassLoadersList());
+			LoggerHelper.logTrace("ClassPathHelper::compileClassPathEntries", "Used custom / required ClassLoaders : " + requiredClassLoaders.size());
+		}
+		ClassLoader[] classLoaders = new ClassLoader[requiredClassLoaders.size()];
+		classLoaders = requiredClassLoaders.toArray(classLoaders);
+		final ClassLoader[] currentClassLoders = classLoaders;
 		compiledEntriesMap.putAll(
 		entries.entrySet()
 				.stream()
 				.map(entry -> new KeyValuePair<String, List<JavaClassEntity>>(entry.getKey(), entry.getValue()
 															.stream()
-															.map( JavaEntry::getClassEntity )
+															.map( javaEntity -> {
+																try {
+																	return javaEntity.getClassEntity(currentClassLoders);
+																} catch (Exception e) {
+//																	LoggerHelper.logError("", String.format("Error during initialization of java entity class: %s as follow:", javaEntity != null ? javaEntity.getClassName() : "<NULL>"), e);
+																}
+																return null;
+															} )
+															.filter( jce -> jce != null )
 															.collect(Collectors.toList())))
 	        	.collect(Collectors.toMap( entry -> entry.getKey(), entry->entry.getValue() ))
 	    );
+		if ( ArgumentsHelper.debug ) {
+			LoggerHelper.logTrace("ClassPathHelper::compileClassPathEntries", "Filtered JVM Class-Path Entries : " + compiledEntriesMap.size());
+			compiledEntriesMap.keySet().forEach(classPathEntry -> LoggerHelper.logTrace("ClassPathHelper::compileClassPathEntries", String.format("Loaded JVM Class-Path Entry at : %s", classPathEntry)) );
+			LoggerHelper.logTrace("ClassPathHelper::compileClassPathEntries", "Total Compiled Java Data Entities : " + compiledEntriesMap.values().stream().flatMap(List::stream).count());
+			compiledEntriesMap.values().stream().flatMap(List::stream).forEach(entity -> LoggerHelper.logTrace("ClassPathHelper::compileClassPathEntries", String.format("Compiled Java Entity: %s -> super types: %s ", entity.getBaseClass().getName(), Arrays.toString(entity.getImplementingTypes().toArray()))));
+		}
 		return compiledEntriesMap;
 	}
 
@@ -332,6 +387,101 @@ public final class ClassPathHelper {
 			);
 		}
 		return annotations;
+	}
+	
+	protected static final Collection<ClassLoader> getDefaultClassLoadersList(ClassPathConfig config) {
+		List<ClassLoader> defaultClassLoaders = new ArrayList<>(0);
+		List<URL> classPathEntriesList = listCurrentClassPathUrls(config);
+		URL[] urls = new URL[classPathEntriesList.size()];
+		defaultClassLoaders.add(URLClassLoader.newInstance(urls));
+		defaultClassLoaders.add(ClassLoader.getSystemClassLoader());
+		return defaultClassLoaders;
+	}
+	
+	protected static final List<URL> listCurrentClassPathUrls(ClassPathConfig config) {
+		List<URL> filteredClassPathEntries = new ArrayList<>(0);
+		filteredClassPathEntries.addAll(
+				filterClassPathEntries(listJvmEntries(), config.getClassPathInclusionList(), config.getClassPathExclusionList())
+				.stream()
+				.map( classPathEntry -> {
+					try {
+						if ( classPathEntry.startsWith("http://") || classPathEntry.startsWith("https://") || classPathEntry.startsWith("ftp://") || 
+								classPathEntry.startsWith("tcp://") || classPathEntry.startsWith("udp://")) {
+							return new URL(classPathEntry);
+							
+						} else {
+							return new URL("file://" + classPathEntry);
+						}
+					} catch (Exception e) {
+						LoggerHelper.logError("ClassPathHelper::listCurrentClassPathUrls", String.format("Error during initialization of URL from path: %s", classPathEntry), e);
+					}
+					return null; 
+				} )
+				.collect(Collectors.toList())
+		);
+		return filteredClassPathEntries;
+	}
+	
+	private static final Throwable reduceThrowables(List<Throwable> throwbles) {
+		if ( throwbles == null || throwbles.size() == 0 ) {
+			return null;
+		}
+		Throwable t = null;
+		Throwable p = null;
+		Iterator<Throwable> throwblesIter = throwbles.iterator();
+		while ( throwblesIter.hasNext() ) {
+			if ( t == null ) {
+				t = throwblesIter.next();
+				p = t;
+			} else {
+				if ( Exception.class.isAssignableFrom(t.getClass()) ) {
+					((Exception)p).initCause(throwblesIter.next());
+					p = p.getCause();
+				} else if ( Exception.class.isAssignableFrom(t.getClass()) ) {
+					((Error)p).initCause(throwblesIter.next());
+					p = p.getCause();
+				} else {
+					throwblesIter.next();
+				}
+			}
+		}
+		return t;
+	}
+	
+	@SuppressWarnings({ "static-access", "unchecked" })
+	public static final <T> Class<T> loadClassFromName(String className, List<ClassLoader> classLoaders) throws Exception, Error {
+		if ( className == null || className.isEmpty() ) {
+			return null;
+		}
+		
+		Iterator<ClassLoader> loadersIterator = classLoaders.listIterator();
+		Class<T> retCls = null;
+		List<String> errorsMessagesList = new ArrayList<>(0);
+		List<Throwable> errorsList = new ArrayList<>(0);
+		while ( retCls == null && loadersIterator.hasNext() ) {
+			try {
+				retCls = (Class<T>) loadersIterator.next().loadClass(className);
+			} catch (Exception e) {
+//				e.printStackTrace();
+				errorsList.add(e);
+				errorsMessagesList.add(e.getClass().getName() + " -> " + e.getMessage());
+			} catch (Error e) {
+//				e.printStackTrace();
+				errorsList.add(e);
+				errorsMessagesList.add(e.getClass().getName() + " -> " + e.getMessage());
+			}
+		}
+		
+		if( retCls == null ) {
+			throw new IllegalStateException(errorsMessagesList
+												.stream()
+												.reduce("", 
+														(p, n) -> p += (p.isEmpty() ? "" : "\n") + n ),
+												reduceThrowables(errorsList));
+		}
+		
+		return retCls;
+		
 	}
 	
 }

@@ -1,12 +1,12 @@
 /**
  * 
  */
-package com.rcg.foundation.fondify.core.helpers;
+package com.rcg.foundation.fondify.utils.helpers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rcg.foundation.fondify.core.constants.ColorConstants;
+import com.rcg.foundation.fondify.utils.constants.ColorConstants;
 
 /**
  * @author Fabrizio Torelli (fabrizio.torelli@ie.verizon.com)
@@ -56,7 +56,7 @@ public final class LoggerHelper {
 		}
 	}
 
-	public static synchronized void logWarn(String place, String message, Exception ex) {
+	public static synchronized void logWarn(String place, String message, Throwable throwable) {
 		if ( message != null && ! message.isEmpty() ) {
 			if ( ! ArgumentsHelper.useLogger ) {
 				System.out.print(ColorConstants.ANSI_YELLOW + ColorConstants.ANSI_HIGH_INTENSITY);
@@ -66,18 +66,18 @@ public final class LoggerHelper {
 				System.out.print(ColorConstants.ANSI_RESET);
 			}
 		}
-		if ( ex != null ) {
+		if ( throwable != null ) {
 			if ( ! ArgumentsHelper.useLogger ) {
 				System.out.print(ColorConstants.ANSI_RED);
 			}
-			LOGGER.error(String.format("%s::warn >> %s <%s> -> %s", place, ex.getClass().getName(), ex.getMessage(), GenericHelper.convertStackTrace(ex.getStackTrace())));
+			LOGGER.error(String.format("%s::warn >> %s <%s> -> %s", place, throwable.getClass().getName(), throwable.getMessage(), GenericHelper.convertStackTrace(throwable.getStackTrace())));
 			if ( ! ArgumentsHelper.useLogger ) {
 				System.out.print(ColorConstants.ANSI_RESET);
 			}
 		}
 	}
 
-	public static synchronized void logError(String place, String message, Exception ex) {
+	public static synchronized void logError(String place, String message, Throwable throwable) {
 		if ( message != null && ! message.isEmpty() ) {
 			if ( ! ArgumentsHelper.useLogger ) {
 				System.out.print(ColorConstants.ANSI_RED + ColorConstants.ANSI_HIGH_INTENSITY);
@@ -87,11 +87,11 @@ public final class LoggerHelper {
 				System.out.print(ColorConstants.ANSI_RESET);
 			}
 		}
-		if ( ex != null ) {
+		if ( throwable != null ) {
 			if ( ! ArgumentsHelper.useLogger ) {
 				System.out.print(ColorConstants.ANSI_RED);
 			}
-			LOGGER.error(String.format("%s::error >> %s <%s> -> %s", place, ex.getClass().getName(), ex.getMessage(), GenericHelper.convertStackTrace(ex.getStackTrace())));
+			LOGGER.error(String.format("%s::error >> %s <%s> -> %s", place, throwable.getClass().getName(), throwable.getMessage(), GenericHelper.convertStackTrace(throwable.getStackTrace())));
 			if ( ! ArgumentsHelper.useLogger ) {
 				System.out.print(ColorConstants.ANSI_RESET);
 			}

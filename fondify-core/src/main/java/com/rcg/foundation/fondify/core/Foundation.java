@@ -3,8 +3,8 @@
  */
 package com.rcg.foundation.fondify.core;
 
-import com.rcg.foundation.fondify.core.constants.ColorConstants;
-import com.rcg.foundation.fondify.core.helpers.ArgumentsHelper;
+import com.rcg.foundation.fondify.utils.constants.ColorConstants;
+import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

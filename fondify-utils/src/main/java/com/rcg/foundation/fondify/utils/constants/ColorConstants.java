@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.rcg.foundation.fondify.core.constants;
+package com.rcg.foundation.fondify.utils.constants;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

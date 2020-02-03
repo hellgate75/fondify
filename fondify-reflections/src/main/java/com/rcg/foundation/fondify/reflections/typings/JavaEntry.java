@@ -25,15 +25,11 @@ public final class JavaEntry {
 		this.origin = origin;
 		this.fileName = fileName;
 		this.className = className;
-		String[] packageTkns = className.split(".");
-		
-		for(int i = 0; i < packageTkns.length; i++) {
-			if ( i < packageTkns.length - 2 ) {
-				String token = packageTkns[i];
-				if ( token != null && ! token.isEmpty() && token.equals(token.toLowerCase()) ) {
-					packageName += (packageName.length()>0 ? "." : "") + token;
-				}
-			}
+		this.packageName = className;
+		while (this.packageName!= null && ! this.packageName.isEmpty() &&
+				! this.packageName.equals(this.packageName.toLowerCase()) &&
+				this.packageName.contains(".")) {
+			this.packageName = this.packageName.substring(0, this.packageName.lastIndexOf("."));
 		}
 		this.fileSize = fileSize;
 	}
@@ -139,8 +135,8 @@ public final class JavaEntry {
 				", content=" + content + "]";
 	}
 
-	public JavaClassEntity getClassEntity() {
-		return new JavaClassEntity(this);
+	public JavaClassEntity getClassEntity(ClassLoader... classLoaders) {
+		return new JavaClassEntity(this, classLoaders);
 	}
 
 }

@@ -9,9 +9,9 @@ import com.rcg.foundation.fondify.components.ComponentsManagerImpl;
 import com.rcg.foundation.fondify.components.annotations.Inject;
 import com.rcg.foundation.fondify.components.helpers.AnnotationHelper;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.fields.FieldValueActuator;
 import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentsManager;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

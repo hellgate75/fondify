@@ -15,9 +15,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.yaml.snakeyaml.Yaml;
 
 import com.rcg.foundation.fondify.core.exceptions.IOException;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.properties.PropertyArchive;
 import com.rcg.foundation.fondify.core.properties.PropertyManager;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

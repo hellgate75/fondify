@@ -5,10 +5,10 @@ package com.rcg.foundation.fondify.components.annotations.initializers;
 
 import com.rcg.foundation.fondify.annotations.annotations.executors.ConfigurationExecutor;
 import com.rcg.foundation.fondify.components.helpers.AnnotationHelper;
-import com.rcg.foundation.fondify.core.helpers.GenericHelper;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.AnnotationEngineInitializer;
 import com.rcg.foundation.fondify.core.typings.parameters.ParameterValueActuatorProvider;
+import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

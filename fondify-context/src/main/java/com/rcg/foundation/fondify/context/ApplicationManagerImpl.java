@@ -14,9 +14,9 @@ import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationManager;
 import com.rcg.foundation.fondify.annotations.lifecycle.SessionContext;
 import com.rcg.foundation.fondify.context.lifecycle.impl.ApplicationContextImpl;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.lifecycle.Session;
 import com.rcg.foundation.fondify.core.typings.lifecycle.SessionSetter;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

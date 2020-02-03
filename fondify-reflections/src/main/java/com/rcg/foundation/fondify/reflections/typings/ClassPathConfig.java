@@ -17,24 +17,28 @@ public final class ClassPathConfig {
 	private List<String> packageExclusionList = new ArrayList<String>();
 	private List<String> classPathInclusionList = new ArrayList<String>();
 	private List<String> classPathExclusionList = new ArrayList<String>();
-	private boolean enableSessionData = true;
+	private List<ClassLoader> classLoadersList = new ArrayList<ClassLoader>();
+	private boolean enablePersistenceOfData = true;
 
 	/**
-	 * Default Constructor
+	 * Default protected Constructor (For full JVM Class-Path scanning purposes)
 	 */
 	protected ClassPathConfig() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
 	/**
-	 * @param packageInclusionList
-	 * @param packageExclusionList
-	 * @param classPathInclusionList
-	 * @param classPathExclusionList
-	 * @param enableSessionData
+	 * Full parameters protected constructor
+	 * @param packageInclusionList List of packages included in the Class-Path scanning
+	 * @param packageExclusionList List of packages excluded in the Class-Path scanning
+	 * @param classPathInclusionList List of java libraries/folders included in the Class-Path scanning
+	 * @param classPathExclusionList List of java libraries/folders excluded in the Class-Path scanning
+	 * @param classLoadersList List of provided ClassLoaders
+	 * @param enablePersistenceOfData Keep in-memory the loaded and compiled Java Entries from the Class-Path
 	 */
 	protected ClassPathConfig(List<String> packageInclusionList, List<String> packageExclusionList,
-			List<String> classPathInclusionList, List<String> classPathExclusionList, boolean enableSessionData) {
+			List<String> classPathInclusionList, List<String> classPathExclusionList, 
+			boolean enablePersistenceOfData, List<ClassLoader> classLoadersList) {
 		super();
 		if ( packageInclusionList != null )
 			this.packageInclusionList.addAll( packageInclusionList );
@@ -44,38 +48,59 @@ public final class ClassPathConfig {
 			this.classPathInclusionList.addAll( classPathInclusionList );
 		if ( classPathExclusionList != null )
 			this.classPathExclusionList.addAll( classPathExclusionList );
-		this.enableSessionData = enableSessionData;
+		this.enablePersistenceOfData = enablePersistenceOfData;
+		this.classLoadersList = classLoadersList;
 	}
 	/**
-	 * @return the packageInclusionList
+	 * Returns the list of packages or packages root included in the
+	 * JVM Class-Path Scanning
+	 * @return the packageInclusionList is the list of included packages
 	 */
 	public List<String> getPackageInclusionList() {
 		return packageInclusionList;
 	}
 	/**
-	 * @return the packageExclusionList
+	 * Returns the list of packages or packages root excluded in the
+	 * JVM Class-Path Scanning
+	 * @return the packageExclusionList is the list of excluded packages
 	 */
 	public List<String> getPackageExclusionList() {
 		return packageExclusionList;
 	}
 	/**
-	 * @return the classPathInclusionList
+	 * Returns the list of partial or exact names of java libraries or 
+	 * folders included in the JVM Class-Path Scanning
+	 * @return the classPathInclusionList is the list of partial/exact Class-Path entries
 	 */
 	public List<String> getClassPathInclusionList() {
 		return classPathInclusionList;
 	}
 	/**
-	 * @return the classPathExclusionList
+	 * Returns the list of partial or exact names of java libraries or 
+	 * folders excluded in the JVM Class-Path Scanning
+	 * @return the classPathExclusion is the list of partial/exact Class-Path entries
 	 */
 	public List<String> getClassPathExclusionList() {
 		return classPathExclusionList;
 	}
 	
 	/**
-	 * @return the enableSessionData
+	 * Return custom list of {@link ClassLoader}s required for the
+	 * system scanning
+	 * @return the classLoadersList List of required {@link ClassLoader} 
 	 */
-	public boolean enableSessionData() {
-		return enableSessionData;
+	public List<ClassLoader> getClassLoadersList() {
+		return classLoadersList;
+	}
+	/**
+	 * Returns the state of persistence of JVM Java Entries
+	 * discovered during the Class-Path Scan or recovery of
+	 * previous scan. By default value is true, giving the
+	 * application huge performances in case of multiple scans.  
+	 * @return the enablePersistenceOfData is the state of the persistence of scanning results data
+	 */
+	public boolean enablePersistenceOfData() {
+		return enablePersistenceOfData;
 	}
 	@Override
 	public int hashCode() {
@@ -83,7 +108,7 @@ public final class ClassPathConfig {
 		int result = 1;
 		result = prime * result + ((classPathExclusionList == null) ? 0 : classPathExclusionList.hashCode());
 		result = prime * result + ((classPathInclusionList == null) ? 0 : classPathInclusionList.hashCode());
-		result = prime * result + (enableSessionData ? 1231 : 1237);
+		result = prime * result + (enablePersistenceOfData ? 1231 : 1237);
 		result = prime * result + ((packageExclusionList == null) ? 0 : packageExclusionList.hashCode());
 		result = prime * result + ((packageInclusionList == null) ? 0 : packageInclusionList.hashCode());
 		return result;
@@ -107,7 +132,7 @@ public final class ClassPathConfig {
 				return false;
 		} else if (!classPathInclusionList.equals(other.classPathInclusionList))
 			return false;
-		if (enableSessionData != other.enableSessionData)
+		if (enablePersistenceOfData != other.enablePersistenceOfData)
 			return false;
 		if (packageExclusionList == null) {
 			if (other.packageExclusionList != null)
@@ -125,7 +150,7 @@ public final class ClassPathConfig {
 	public String toString() {
 		return "ClassPathConfig [packageInclusionList=" + packageInclusionList + ", packageExclusionList="
 				+ packageExclusionList + ", classPathInclusionList=" + classPathInclusionList
-				+ ", classPathExclusionList=" + classPathExclusionList + ", enableSessionData=" + enableSessionData
+				+ ", classPathExclusionList=" + classPathExclusionList + ", enableSessionData=" + enablePersistenceOfData
 				+ "]";
 	}
 

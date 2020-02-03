@@ -14,10 +14,10 @@ import org.apache.commons.validator.routines.UrlValidator;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rcg.foundation.fondify.core.exceptions.IOException;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.properties.PropertyArchive;
 import com.rcg.foundation.fondify.core.properties.PropertyManager;
 import com.rcg.foundation.fondify.properties.properties.SCSResponse.PropertyDetails;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

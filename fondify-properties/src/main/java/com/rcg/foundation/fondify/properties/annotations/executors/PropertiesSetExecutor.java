@@ -6,7 +6,6 @@ package com.rcg.foundation.fondify.properties.annotations.executors;
 import com.rcg.foundation.fondify.core.domain.PropertiesFormat;
 import com.rcg.foundation.fondify.core.exceptions.IOException;
 import com.rcg.foundation.fondify.core.exceptions.ProcessException;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.properties.BasePropertyManager;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
@@ -14,6 +13,7 @@ import com.rcg.foundation.fondify.core.typings.ExecutionAnswer;
 import com.rcg.foundation.fondify.properties.annotations.PropertiesSet;
 import com.rcg.foundation.fondify.properties.properties.SpringConfigServerPropertyManager;
 import com.rcg.foundation.fondify.properties.properties.YamlPropertyManager;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)

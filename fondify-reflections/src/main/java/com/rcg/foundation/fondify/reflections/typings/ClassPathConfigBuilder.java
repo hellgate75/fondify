@@ -20,7 +20,8 @@ public final class ClassPathConfigBuilder {
 	private List<String> packageExclusionList = new ArrayList<String>();
 	private List<String> classPathInclusionList = new ArrayList<String>();
 	private List<String> classPathExclusionList = new ArrayList<String>();
-	private boolean enableSessionData = true;
+	private List<ClassLoader> classLoadersList = new ArrayList<ClassLoader>(0);
+	private boolean enablePersistenceOfData = true;
 
 	/**
 	 * Default protected constructor for only internal use.
@@ -133,14 +134,27 @@ public final class ClassPathConfigBuilder {
 	}
 	
 	/**
-	 * Disable in-memory save of scanned entities for future scanning operations,
-	 * so any further scanning operation will require a full java entries scan.
+	 * Disable in-memory persistence of scanned and compiles entities for future scanning 
+	 * operations, so any further scanning operation will require a full java entries scan.
 	 * @return ({@link ClassPathConfigBuilder}) Builder for fluent interface
 	 */
-	public ClassPathConfigBuilder disableSessionData() {
-		this.enableSessionData = false;
+	public ClassPathConfigBuilder disablePersistenceOfData() {
+		this.enablePersistenceOfData = false;
 		return this;
 	}
+	
+	/**
+	 * Add Custom or Required {@link ClassLoader} for the JVM class scanning operations,
+	 * by default it will be used a mix of static and dynamic class loaders.
+	 * @return the classLoader Required or Custom {@link ClassLoader} 
+	 */
+	public ClassPathConfigBuilder useClassLoader(ClassLoader classLoader) {
+		if ( classLoader != null && ! classLoadersList.contains(classLoader) ) {
+			classLoadersList.add(classLoader);
+		}
+		return this;
+	}
+
 	
 	/**
 	 * Build passed parameters and return {@link ClassPathConfig} element.
@@ -152,7 +166,7 @@ public final class ClassPathConfigBuilder {
 	public ClassPathConfig build() {
 		return new ClassPathConfig(packageInclusionList, packageExclusionList, 
 									classPathInclusionList, classPathExclusionList, 
-									enableSessionData);
+									enablePersistenceOfData, classLoadersList);
 	}
 
 	@Override
@@ -161,6 +175,7 @@ public final class ClassPathConfigBuilder {
 		int result = 1;
 		result = prime * result + ((classPathExclusionList == null) ? 0 : classPathExclusionList.hashCode());
 		result = prime * result + ((classPathInclusionList == null) ? 0 : classPathInclusionList.hashCode());
+		result = prime * result + (enablePersistenceOfData ? 1231 : 1237);
 		result = prime * result + ((packageExclusionList == null) ? 0 : packageExclusionList.hashCode());
 		result = prime * result + ((packageInclusionList == null) ? 0 : packageInclusionList.hashCode());
 		return result;
@@ -185,6 +200,8 @@ public final class ClassPathConfigBuilder {
 				return false;
 		} else if (!classPathInclusionList.equals(other.classPathInclusionList))
 			return false;
+		if (enablePersistenceOfData != other.enablePersistenceOfData)
+			return false;
 		if (packageExclusionList == null) {
 			if (other.packageExclusionList != null)
 				return false;
@@ -202,8 +219,10 @@ public final class ClassPathConfigBuilder {
 	public String toString() {
 		return "ClassPathConfigBuilder [packageInclusionList=" + packageInclusionList + ", packageExclusionList="
 				+ packageExclusionList + ", classPathInclusionList=" + classPathInclusionList
-				+ ", classPathExclusionList=" + classPathExclusionList + "]";
+				+ ", classPathExclusionList=" + classPathExclusionList + ", enablePersistenceOfData="
+				+ enablePersistenceOfData + "]";
 	}
+
 	
 	
 

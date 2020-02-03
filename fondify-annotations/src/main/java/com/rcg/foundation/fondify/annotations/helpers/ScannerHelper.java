@@ -4,10 +4,8 @@
 package com.rcg.foundation.fondify.annotations.helpers;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,14 +20,6 @@ import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.reflections.Reflections;
-import org.reflections.scanners.FieldAnnotationsScanner;
-import org.reflections.scanners.MethodAnnotationsScanner;
-import org.reflections.scanners.MethodParameterScanner;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
-
 import com.rcg.foundation.fondify.annotations.annotations.Application;
 import com.rcg.foundation.fondify.annotations.annotations.ComponentsScan;
 import com.rcg.foundation.fondify.annotations.annotations.Configuration;
@@ -43,10 +33,7 @@ import com.rcg.foundation.fondify.core.exceptions.ProcessException;
 import com.rcg.foundation.fondify.core.exceptions.ScannerException;
 import com.rcg.foundation.fondify.core.functions.Matcher;
 import com.rcg.foundation.fondify.core.functions.Processor;
-import com.rcg.foundation.fondify.core.helpers.ArgumentsHelper;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
-import com.rcg.foundation.fondify.core.helpers.GenericHelper;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
 import com.rcg.foundation.fondify.core.registry.typings.ComponentRegistryItem;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
@@ -57,6 +44,11 @@ import com.rcg.foundation.fondify.core.typings.ExecutionAnswer;
 import com.rcg.foundation.fondify.core.typings.ModuleMain;
 import com.rcg.foundation.fondify.core.typings.ModuleScanner;
 import com.rcg.foundation.fondify.core.typings.registry.AnnotationBeanActuatorProvider;
+import com.rcg.foundation.fondify.reflections.Reflections;
+import com.rcg.foundation.fondify.reflections.typings.ClassPathConfigBuilder;
+import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
+import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * Utility class that provides features for helping with Java artifacts Scan and
@@ -103,7 +95,7 @@ public class ScannerHelper {
 	 * @param packages
 	 * @return
 	 */
-	public static final ConfigurationBuilder getRefletionsByPackages(String[] packages) {
+	public static final ClassPathConfigBuilder getRefletionsByPackages(String[] packages) {
 		return BeansHelper.getRefletionsByPackages(packages);
 	}
 
@@ -126,18 +118,6 @@ public class ScannerHelper {
 	protected static final boolean isRunningFromJar() {
 		return (""+ScannerHelper.class.getResource("ScannerHelper.class")).toLowerCase().startsWith("jar");
 	}
-	
-	private static URLClassLoader classLoader = null;
-	
-	protected static final ClassLoader getLocalClassLoader() {
-		if (classLoader != null)
-			return classLoader;
-		Collection<java.net.URL> coll = ClasspathHelper.forJavaClassPath();
-		java.net.URL[] urls = new java.net.URL[coll.size()]; 
-		urls = coll.toArray(urls);
-		classLoader =  URLClassLoader.newInstance(urls);
-		return classLoader;
-	}
 
 	/**
 	 * Create a Reflections bases on input packages
@@ -145,7 +125,7 @@ public class ScannerHelper {
 	 * @param packages
 	 * @return
 	 */
-	public static final ConfigurationBuilder getRefletionsByPackages(Collection<String> packages) {
+	public static final ClassPathConfigBuilder getRefletionsByPackages(Collection<String> packages) {
 		return BeansHelper.getRefletionsByPackages(packages);
 	}
 
@@ -267,9 +247,8 @@ public class ScannerHelper {
 				LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
 			}
 		});
-		ConfigurationBuilder config = new ConfigurationBuilder().addUrls(ClasspathHelper.forJavaClassPath())
-				.addScanners(new SubTypesScanner());
-		List<Class<? extends ModuleScanner>> moduleScannerTypes = collectSubTypesOf(config, ModuleScanner.class);
+		
+		List<Class<? extends ModuleScanner>> moduleScannerTypes = BeansHelper.collectSubTypesOf(ClassPathConfigBuilder.start().disablePersistenceOfData(), ModuleScanner.class);
 		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners", "Collecting for Module Scanner classes ...");
 		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners",
 				String.format("Collecting %s modules ...", "" + moduleScannerTypes.size()));
@@ -368,40 +347,6 @@ public class ScannerHelper {
 
 	}
 
-	/**
-	 * Collect all subTypes of provided interface or class one.
-	 * It very slows down performances of any implementation
-	 * 
-	 * @param <T>
-	 * @param builder    Base package scanner builder
-	 * @param superClass implemented class or interface
-	 * @return list if sub types of provided one
-	 */
-	protected static final <T> List<Class<? extends T>> collectSubTypesOf(ConfigurationBuilder builder,
-			Class<T> superClass) {
-		List<Class<? extends T>> classes = new ArrayList<Class<? extends T>>(0);
-		Reflections r = new Reflections(builder.addScanners(new SubTypesScanner()));
-		classes.addAll(r.getSubTypesOf(superClass));
-		return classes;
-	}
-
-	/**
-	 * Collect all subTypes of provided interface or class one.
-	 * It very slows down performances of any implementation
-	 * 
-	 * @param <T>
-	 * @param builder    Base package scanner builder
-	 * @param superClass implemented class or interface
-	 * @return list if sub types of provided one
-	 */
-	protected static final List<Class<?>> collectSubTypesOf(ConfigurationBuilder builder, Collection<Class<?>> superClassList) {
-		List<Class<?>> classes = new ArrayList<>(0);
-		Reflections r = new Reflections(builder.addScanners(new SubTypesScanner()));
-		superClassList.forEach(superClass -> {
-			classes.addAll(r.getSubTypesOf(superClass));
-		});
-		return classes;
-	}
 
 	/**
 	 * Collect {@link Annotation}s in some or all JVM packages, based on a list of
@@ -412,46 +357,63 @@ public class ScannerHelper {
 	 * @return
 	 */
 	public static final Map<Class<Annotation>, List<AnnotationDeclaration>> collectAnnotations(
-			ConfigurationBuilder builder, List<Class<Annotation>> annotations) {
+			ClassPathConfigBuilder builder, List<Class<Annotation>> annotations) {
 		Map<Class<Annotation>, List<AnnotationDeclaration>> map = new HashMap<>(0);
+
+		Reflections refl = null; 
+		
+		try {
+			refl = Reflections.getSigletonInstance(builder.build());
+		} catch (NullPointerException e) {
+			String message = "Error during recovery of Reflections singleton instance!!";
+			LoggerHelper.logError("ScannerHelper::collectAnnotations", message, e);
+			throw new ProcessException(message, e);
+		}
+
+		final Reflections r = refl; 
+
 		annotations.forEach(annotation -> {
 			// try in types
-			Reflections r = new Reflections(builder.addScanners(new SubTypesScanner()));
 			List<AnnotationDeclaration> annotationsDeclarationsList = new ArrayList<>(0);
-			Set<Class<?>> annElemTypes = r.getTypesAnnotatedWith(annotation);
-			annElemTypes.forEach(clz -> {
-				AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, clz, null, null, null);
-				if (validateAnnotationDeclaration(declaration))
-					annotationsDeclarationsList.add(declaration);
-			});
-			r = new Reflections(builder.addScanners(new FieldAnnotationsScanner()));
-			Set<Field> annElemFields = r.getFieldsAnnotatedWith(annotation);
-			annElemFields.forEach(fld -> {
-				AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, fld.getDeclaringClass(), fld,
-						null, null);
-				if (validateAnnotationDeclaration(declaration))
-					annotationsDeclarationsList.add(declaration);
-			});
-			r = new Reflections(builder.addScanners(new MethodAnnotationsScanner()));
-			Set<Method> annElemMethods = r.getMethodsAnnotatedWith(annotation);
-			annElemMethods.forEach(m -> {
-				AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, m.getDeclaringClass(), null,
-						m, null);
-				if (validateAnnotationDeclaration(declaration))
-					annotationsDeclarationsList.add(declaration);
-			});
-			r = new Reflections(builder.addScanners(new MethodParameterScanner()));
-			Set<Method> annElemMethodsOfParams = r.getMethodsWithAnyParamAnnotated(annotation);
-			annElemMethodsOfParams.forEach(m -> {
-				List<Parameter> params = Arrays.asList(m.getParameters()).stream()
-						.filter(p -> p.getAnnotationsByType(annotation).length > 0).collect(Collectors.toList());
-				params.forEach(p -> {
-					AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, m.getDeclaringClass(),
-							null, m, p);
+			
+			r.getTypesAnnotatedWith(annotation)
+				.stream()
+				.map( jce -> jce.getMatchClass() )
+				.forEach(clz -> {
+					AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, clz, null, null, null);
 					if (validateAnnotationDeclaration(declaration))
 						annotationsDeclarationsList.add(declaration);
 				});
-			});
+			r.getFieldsAnnotatedWith(annotation)
+				.stream()
+				.map( jce -> jce.getMatchField() )
+				.forEach(fld -> {
+					AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, fld.getDeclaringClass(), fld,
+							null, null);
+					if (validateAnnotationDeclaration(declaration))
+						annotationsDeclarationsList.add(declaration);
+				});
+			r.getMethodsAnnotatedWith(annotation)
+				.stream()
+				.map( jce -> jce.getMatchMethod() )
+				.forEach(m -> {
+					AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, m.getDeclaringClass(), null,
+							m, null);
+					if (validateAnnotationDeclaration(declaration))
+						annotationsDeclarationsList.add(declaration);
+				});
+			r.getMethodParametersAnnotatedWith(annotation)
+				.forEach(md -> {
+					Parameter p = md.getMatchParameter();
+					Method m = md.getMatchMethod();
+					if ( p.getAnnotationsByType(annotation) != null ) {
+						AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, m.getDeclaringClass(),
+								null, m, p);
+						if (validateAnnotationDeclaration(declaration))
+							annotationsDeclarationsList.add(declaration);
+						
+					}
+				});
 			map.put(annotation, annotationsDeclarationsList);
 		});
 		return map;
@@ -495,7 +457,7 @@ public class ScannerHelper {
 	}
 
 	public static final List<String> collectScanningPackagesFilter(String basePackage) {
-		ConfigurationBuilder builder = getRefletionsByPackages(new String[] {});
+		ClassPathConfigBuilder builder = getRefletionsByPackages(new String[] {});
 		List<Class<? extends Annotation>> annotations = new ArrayList<>(0);
 		annotations.add(ComponentsScan.class);
 		annotations.add(Configuration.class);
@@ -525,7 +487,7 @@ public class ScannerHelper {
 	public static final List<String> collectScanningPackages() {
 		if (scanningPackagesComplete)
 			return scanningPackages;
-		ConfigurationBuilder builder = getRefletionsByPackages(new String[] {});
+		ClassPathConfigBuilder builder = getRefletionsByPackages(new String[] {});
 		List<Class<? extends Annotation>> annotations = new ArrayList<>(0);
 		annotations.add(ComponentsScan.class);
 		annotations.add(Configuration.class);
@@ -558,8 +520,11 @@ public class ScannerHelper {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static final void addAnnotationExecutorsInPackage(String packageName,
 			Processor<AnnotationExecutor<? extends Annotation>> executorStoreProcessor) {
-		Reflections reflections = new Reflections(packageName, new SubTypesScanner());
-		Set<Class<? extends AnnotationExecutor>> classes = reflections.getSubTypesOf(AnnotationExecutor.class);
+		Reflections reflections = Reflections.newReflections(ClassPathConfigBuilder.start().includePackageByName(packageName).disablePersistenceOfData());
+		Set<Class<? extends AnnotationExecutor>> classes = reflections.getSubTypesOf(AnnotationExecutor.class)
+																		.stream()
+																		.map(jce -> (Class<? extends AnnotationExecutor>)jce.getMatchClass())
+																		.collect(Collectors.toSet());
 		classes.forEach(cls -> {
 			try {
 				executorStoreProcessor.process(cls.newInstance());
@@ -571,23 +536,19 @@ public class ScannerHelper {
 		});
 	}
 
-	private static final Pattern textPattern = Pattern.compile("^(.*)(?=.*[A-Z])(?=.*).+$");
+	protected static final Pattern textPattern = Pattern.compile("^(.*)(?=.*[A-Z])(?=.*).+$");
 
 	/**
 	 * @param clazz
 	 * @return
 	 */
 	public final static String getPackageName(Class<?> clazz) {
-		String tmp = clazz.getCanonicalName();
-		while (tmp.contains(".") && textPattern.matcher(tmp).matches()) {
-			tmp = tmp.substring(0, tmp.lastIndexOf("."));
-		}
-		return tmp;
+		return clazz == null ? null : clazz.getPackage().getName();
 
 	}
 
 	/**
-	 * Execute the Scanner Annota
+	 * Execute the Modules using Main Classes
 	 * 
 	 * @param classes
 	 */
@@ -716,10 +677,7 @@ public class ScannerHelper {
 				LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
 			}
 		});
-		ConfigurationBuilder config = new ConfigurationBuilder().addUrls(ClasspathHelper.forJavaClassPath())
-				.addScanners(new SubTypesScanner());
-		Reflections r = new Reflections(config);
-		List<Class<? extends ModuleScanner>> moduleScannerTypes = collectSubTypesOf(config, ModuleScanner.class);
+		List<Class<? extends ModuleScanner>> moduleScannerTypes = BeansHelper.collectSubTypesOf(ClassPathConfigBuilder.start().disablePersistenceOfData(), ModuleScanner.class);
 		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners", "Collecting for Module Scanner classes ...");
 		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners",
 				String.format("Collecting %s modules ...", "" + moduleScannerTypes.size()));
@@ -764,8 +722,21 @@ public class ScannerHelper {
 		});
 		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners", "Scanning for Module Scanner classes complete!!");
 		LoggerHelper.logTrace("ScannerHelper::collectModuleScanners", "Scanning for Module Scan classes ...");
+		Reflections r = null;
+		
+		try {
+			r = Reflections.getSigletonInstance(ClassPathConfigBuilder.start().disablePersistenceOfData().build());
+		} catch (Exception e1) {
+			String message = "Errors revocering Reflections singleton instance!!";
+			LoggerHelper.logError("ScannerHelper::collectModuleScanner", message, e1);;
+			throw new ProcessException(message, e1);
+		}
+		
 		Set<Class<?>> annScanTypes = r
-				.getTypesAnnotatedWith(com.rcg.foundation.fondify.annotations.annotations.ModulesScan.class);
+				.getTypesAnnotatedWith(com.rcg.foundation.fondify.annotations.annotations.ModulesScan.class)
+				.stream()
+				.map(jce -> jce.getMatchClass())
+				.collect(Collectors.toSet());
 		annScanTypes.forEach(cls -> {
 			try {
 				com.rcg.foundation.fondify.annotations.annotations.ModulesScan ann = (com.rcg.foundation.fondify.annotations.annotations.ModulesScan) 
@@ -844,8 +815,8 @@ public class ScannerHelper {
 
 	@SuppressWarnings("unchecked")
 	public static final void scanBaseElementsAndStoreData(String threadName) {
-		ScannerHelper
-				.collectSubTypesOf(ScannerHelper.getRefletionsByPackages(new String[0]), Arrays.asList(new Class<?>[] {
+		BeansHelper
+				.collectSubTypesOf(getRefletionsByPackages(new String[0]), Arrays.asList(new Class<?>[] {
 						AnnotationEngineInitializer.class, AnnotationExecutor.class, AnnotationTypesCollector.class }))
 				.forEach(elementClass -> {
 					GenericHelper.fixCurrentThreadStandardName(threadName);
@@ -973,7 +944,7 @@ public class ScannerHelper {
 
 	@SuppressWarnings("unchecked")
 	public static final void executeProvidedBaseAnnotationExecutors(String threadName) {
-		ConfigurationBuilder builder = ScannerHelper.getRefletionsByPackages(ScannerHelper.collectScanningPackages());
+		ClassPathConfigBuilder builder = ScannerHelper.getRefletionsByPackages(ScannerHelper.collectScanningPackages());
 		annotationsDeclarationMaps.putAll(ScannerHelper.collectAnnotations(builder, baseAnnotationTypes
 																						.stream()
 																						.map( baseCls -> (Class<Annotation>) baseCls )

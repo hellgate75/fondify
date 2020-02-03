@@ -1,4 +1,4 @@
-package com.rcg.foundation.fondify.core.helpers;
+package com.rcg.foundation.fondify.utils.helpers;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

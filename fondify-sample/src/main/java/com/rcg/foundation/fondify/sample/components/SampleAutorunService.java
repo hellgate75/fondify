@@ -11,8 +11,8 @@ import java.util.stream.Collectors;
 import com.rcg.foundation.fondify.annotations.lifecycle.ApplicationContext;
 import com.rcg.foundation.fondify.annotations.lifecycle.SessionContext;
 import com.rcg.foundation.fondify.context.runtime.AutorunWithContext;
-import com.rcg.foundation.fondify.core.helpers.LoggerHelper;
 import com.rcg.foundation.fondify.core.typings.lifecycle.Session;
+import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
 /**
  * Sample Autorun service, to run this sample please execute the application
