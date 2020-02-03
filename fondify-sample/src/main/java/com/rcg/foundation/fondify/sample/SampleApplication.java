@@ -57,7 +57,15 @@ public class SampleApplication {
 					ComponentsHelper.traceBeanDefinitions();
 				}
 			}
-		}, arguments);
+		}, 
+		new Runnable() {
+			
+			@Override
+			public void run() {
+				//NOTHING TO DO!!!
+			}
+		},
+		arguments);
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			
 			@Override

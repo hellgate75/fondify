@@ -9,11 +9,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.rcg.foundation.fondify.core.arguments.ArgumentDescriptor;
 import com.rcg.foundation.fondify.core.arguments.Feature;
 import com.rcg.foundation.fondify.utils.constants.ArgumentsConstants;
+import com.rcg.foundation.fondify.utils.process.GlobalProcessTracker;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
@@ -124,15 +126,35 @@ public class ArgumentsHelper {
 	 * 
 	 */
 	protected static final void executeFeatures() {
-		features.forEach(feature -> {
-			if (feature.getMatchFunction().match(argumentDescriptors, arguments)) {
-				LoggerHelper.logInfo("ArgumentsHelper::executeFeatures",
-						String.format("Applying feature %s ...", feature.getName()));
-				feature.getApplyFunction().apply(arguments);
-				LoggerHelper.logInfo("ArgumentsHelper::executeFeatures",
-						String.format("Feature %s applied!!", feature.getName()));
-			}
-		});
+		String threadName = Thread.currentThread().getName();
+		UUID uuid = GlobalProcessTracker.getInstance().lockProcess();
+		try {
+			features
+			.parallelStream()
+			.forEach(feature -> {
+				if (feature.getMatchFunction().match(argumentDescriptors, arguments)) {
+					GenericHelper.fixCurrentThreadStandardName(threadName);
+					LoggerHelper.logInfo("ArgumentsHelper::executeFeatures",
+							String.format("Applying feature %s ...", feature.getName()));
+					UUID uuidInternal = GlobalProcessTracker.getInstance().lockProcess();
+					try {
+						feature.getApplyFunction().apply(arguments);
+						LoggerHelper.logInfo("ArgumentsHelper::executeFeatures",
+								String.format("Feature %s applied!!", feature.getName()));
+					} catch (Exception | Error e) {
+						LoggerHelper.logError("ArgumentsHelper::executeFeatures",
+								String.format("Errors occured suring execution of feature %s!!", feature.getName()),
+								e);
+					}
+					GlobalProcessTracker.getInstance().releaseProcess(uuidInternal);
+				}
+			});
+		} catch (Exception | Error e) {
+			LoggerHelper.logError("ArgumentsHelper::executeFeatures",
+					String.format("Errors occured during execution of any of the required features: %s!!", Arrays.toString(features.toArray())),
+					e);
+		}
+		GlobalProcessTracker.getInstance().releaseProcess(uuid);
 	}
 
 	/**

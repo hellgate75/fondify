@@ -5,6 +5,12 @@ package com.rcg.foundation.fondify.annotations;
 
 import static com.rcg.foundation.fondify.annotations.helpers.ScannerHelper.executeProvidedBaseAnnotationExecutors;
 import static com.rcg.foundation.fondify.annotations.helpers.ScannerHelper.scanBaseElementsAndStoreData;
+import static com.rcg.foundation.fondify.annotations.helpers.ScannerHelper.collectModuleScanners;
+import static com.rcg.foundation.fondify.annotations.helpers.ScannerHelper.executeScannerMainClasses;
+import static com.rcg.foundation.fondify.annotations.helpers.ScannerHelper.getApplicationClassAnnotations;
+import static com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper.processArguments;
+import static com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper.hasArgument;
+import static com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper.getArgument;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -31,6 +37,7 @@ import com.rcg.foundation.fondify.utils.constants.ArgumentsConstants;
 import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
 import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
 import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
+import com.rcg.foundation.fondify.utils.process.GlobalProcessTracker;
 
 /**
  * @author Fabrizio Torelli (hellgate75@gmail.com)
@@ -94,7 +101,7 @@ public final class AnnotationEngine {
 	 * @param mainClass Main Class
 	 */
 	@SuppressWarnings("unchecked")
-	public static void run(Class<?> mainClass, Runnable disclaimerTask, Runnable tasks, String[] arguments) throws Exception {
+	public static void run(Class<?> mainClass, Runnable disclaimerTask, Runnable preExecutionTasks, Runnable postExecutionTasks, String[] arguments) throws Exception {
 		ArgumentsHelper.storeArguments(arguments);
 		ScannerHelper.initializeScanningPackagesFilter(mainClass);
 		BeansHelper.loadAllInterfacesImplementations();
@@ -119,6 +126,7 @@ public final class AnnotationEngine {
 
 		defaultSessionThreadName = GenericHelper.fixCurrentThreadStandardName(null);
 		defaultSessionUUID = applicationManager.createNewSession();
+
 		if ( defaultSessionUUID == null ) {
 			String message = "Unable to create new session with current version of ApplicationManagerProvider, please load a more specific modules, such as Fondify Context or similar";
 			LoggerHelper.logError("AnnatationEngine::run", message, null);
@@ -138,30 +146,42 @@ public final class AnnotationEngine {
 		
 		executeProvidedBaseAnnotationExecutors(defaultSessionThreadName);
 
-		ScannerHelper.collectModuleScanners();
-
-		ScannerHelper.executeScannerMainClasses(defaultSessionThreadName);
+		collectModuleScanners();
 		
-		if ( tasks != null ) {
+		executeScannerMainClasses(defaultSessionThreadName);
+
+		List<? extends Annotation> annotations = getApplicationClassAnnotations(mainClass);
+
+		//Executing Feature(s)
+		processArguments();
+		
+		if ( preExecutionTasks != null ) {
+			if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceAnnotationsLevel  ) {
+				LoggerHelper.logTrace("AnnotationEngine::run", "Executing provided pre-execution tasks code ...");
+			}
 			//Running extra annotation seek tasks
+			UUID uuid = GlobalProcessTracker.getInstance().lockProcess();
 			try {
-				tasks.run();
-			} catch (Exception e) {
-				String message = "Errors during execution of provided runnable code!!";
+				preExecutionTasks.run();
+			} catch (Exception | Error e) {
+				String message = "Errors during execution of provided pre-execution tasks code!!";
 				LoggerHelper.logError("AnnotationEngine::run", message,
 						e);
 				throw new InitializationException(message, e);
 			} 
+			if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceAnnotationsLevel  ) {
+				LoggerHelper.logTrace("AnnotationEngine::run", "Execution of provided pre-execution tasks code finished!!");
+			}
+			GlobalProcessTracker.getInstance().releaseProcess(uuid);
 		}
 
-		List<? extends Annotation> annotations = ScannerHelper.getApplicationClassAnnotations(mainClass);
-
-		//Executing Feature(s)
-		ArgumentsHelper.processArguments();
-
+		while( GlobalProcessTracker.getInstance().numberOfActiveLocks() > 0 ) {
+			GenericHelper.sleepThread(500);
+		}
+		
 		//Execute available autorun components and relative extension when not declared
-		if ( ArgumentsHelper.hasArgument(ArgumentsConstants.ENABLE_AUTORUN_EXECUTION) &&
-			  ArgumentsHelper.getArgument(ArgumentsConstants.ENABLE_AUTORUN_EXECUTION).equalsIgnoreCase("true")) {
+		if ( hasArgument(ArgumentsConstants.ENABLE_AUTORUN_EXECUTION) &&
+			  getArgument(ArgumentsConstants.ENABLE_AUTORUN_EXECUTION).equalsIgnoreCase("true")) {
 			LoggerHelper.logInfo("AnnotationEngine::run", "Enabled Autorun feature!!");
 			BeansHelper.executeAutorunComponents(defaultSessionThreadName);
 			ProcessStateTracker.getInstance().registerNewProcessStateReference(() -> BeansHelper.executorService != null 
@@ -171,7 +191,7 @@ public final class AnnotationEngine {
 		//Recovering Application Console(s)
 		List<Class<? extends ApplicationConsole>> applicationConsoles = new ArrayList<>(0);
 		applicationConsoles.addAll(
-				annotations
+			annotations
 				.stream()
 				.filter( ann -> ann != null && Application.class.isAssignableFrom(ann.getClass()) )
 				.map(ann -> {
@@ -194,27 +214,30 @@ public final class AnnotationEngine {
 		);
 
 		if ( applicationConsoles.size() > 0 &&
-				ArgumentsHelper.hasArgument(ArgumentsConstants.ENABLE_CONSOLE_EXECUTION) &&
-				ArgumentsHelper.getArgument(ArgumentsConstants.ENABLE_CONSOLE_EXECUTION).equalsIgnoreCase("true") ) {
+				hasArgument(ArgumentsConstants.ENABLE_CONSOLE_EXECUTION) &&
+				getArgument(ArgumentsConstants.ENABLE_CONSOLE_EXECUTION).equalsIgnoreCase("true") ) {
 			LoggerHelper.logInfo("AnnotationEngine::run", "Found Application Console features!!");
 			
 			AnnotationEngine.executorService = Executors.newFixedThreadPool(applicationConsoles.size());
 			
-			applicationConsoles
+		applicationConsoles
+			.parallelStream()
 				.forEach(consoleClass -> {
 					AnnotationEngine.executorService.execute(new Runnable() {
 		
 						@Override
 						public void run() {
+							UUID uuid = GlobalProcessTracker.getInstance().lockProcess();
 							try {
 								GenericHelper.fixCurrentThreadStandardName(defaultSessionThreadName);
 								ApplicationConsole console = consoleClass.newInstance();
 								LoggerHelper.logInfo("AnnotationEngine::run", String.format("Executing Application Console feature: %s", consoleClass.getName()));
 								console.run(arguments);
-							} catch (Exception ex) {
+							} catch (Exception | Error ex) {
 								LoggerHelper.logError("AnnotationEngine::run [console thread run]",
 										String.format("Unable to execute console: %s", consoleClass), ex);
 							}
+							GlobalProcessTracker.getInstance().releaseProcess(uuid);
 						}
 					});
 				});
@@ -245,6 +268,31 @@ public final class AnnotationEngine {
 			GenericHelper.sleepThread(2500L);
 		}
 		waiting = false;
+		
+		if ( postExecutionTasks != null ) {
+			if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceAnnotationsLevel  ) {
+				LoggerHelper.logTrace("AnnotationEngine::run", "Executing provided post-execution tasks code ...");
+			}
+			//Running extra annotation seek tasks
+			UUID uuid = GlobalProcessTracker.getInstance().lockProcess();
+			try {
+				postExecutionTasks.run();
+			} catch (Exception | Error e) {
+				String message = "Errors during execution of provided post-execution tasks code!!";
+				LoggerHelper.logError("AnnotationEngine::run", message,
+						e);
+				throw new InitializationException(message, e);
+			} 
+			if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceAnnotationsLevel  ) {
+				LoggerHelper.logTrace("AnnotationEngine::run", "Execution of provided post-execution tasks code finished!!");
+			}
+			GlobalProcessTracker.getInstance().releaseProcess(uuid);
+		}
+		
+		while( GlobalProcessTracker.getInstance().numberOfActiveLocks() > 0 ) {
+			GenericHelper.sleepThread(500);
+		}
+		
 		elapsedTimeSeconds = Math.ceil((System.nanoTime() - startTime) / 1000000000);
 	}
 	

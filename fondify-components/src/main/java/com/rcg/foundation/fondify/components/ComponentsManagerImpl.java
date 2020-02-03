@@ -40,14 +40,31 @@ public class ComponentsManagerImpl implements ComponentsManager, ComponentsDisco
 
 	@Override
 	public <T> T getInjectableOrComponentByName(String name, Object baseInstance, Scope... scope) throws Exception {
-		T t = getInjectableByName(true, name, baseInstance, scope);
-		if ( t == null ) {
-			t = getComponentByName(true, name, baseInstance, scope);
+		Optional<T> lookupResponse = Arrays.asList(1, 2)
+			.parallelStream()
+			.map( index -> {
+				T t = null;
+				try {
+					if ( index % 2 == 1 ) {
+						t =  getInjectableByName(true, name, baseInstance, scope);
+					} else {
+						t =  getComponentByName(true, name, baseInstance, scope);
+					}
+				} catch (Exception | Error e) {
+					LoggerHelper.logError("ComponentsManagerImpl::getInjectableOrComponentByName", String.format("Errors occured during request of %s, lookng up into the registry", (index % 2 == 1 ? "Injectable" : "Component")) , e);
+				}
+				return t;
+			})
+			.filter( t -> t != null )
+			.findFirst();
+		if ( lookupResponse.isPresent() ) {
+			if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceComponentsLevel ) {
+				LoggerHelper.logTrace("ComponentsManagerImpl::getInjectableOrComponentByName", String.format("Successfully collected Bean or Injectable with this name: %s and scope(s): %s", name, Arrays.toString(scope)));
+			}
+			return lookupResponse.get(); 
 		}
-		if ( t == null ) {
-			LoggerHelper.logWarn("ComponentsManagerImpl::getComponentByName", String.format("Unable to discover required component / injectable bean named: %s", name), null);
-		}
-		return t;
+		LoggerHelper.logWarn("ComponentsManagerImpl::getInjectableOrComponentByName", String.format("Unable to collect any Bean or Injectable with this name: %s and scope(s): %s", name, Arrays.toString(scope)) , null);
+		return null;
 	}
 	
 	@Override
