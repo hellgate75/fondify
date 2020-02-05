@@ -11,6 +11,8 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import com.strobel.decompiler.languages.java.ast.Annotation;
+
 @Documented
 @Retention(RUNTIME)
 @Target({ ANNOTATION_TYPE, TYPE})

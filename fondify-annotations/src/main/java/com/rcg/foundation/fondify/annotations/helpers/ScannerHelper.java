@@ -356,82 +356,83 @@ public class ScannerHelper {
 
 		final Reflections r = refl; 
 
-		annotations.forEach(annotation -> {
+		annotations
+		.forEach(annotation -> {
 			// try in types
 			List<AnnotationDeclaration> annotationsDeclarationsList = new ArrayList<>(0);
 			
 			r.getTypesAnnotatedWith(annotation)
 				.stream()
 				.map( jce -> jce.getMatchClass() )
+				.filter( clz -> {
+					Annotation ann = clz.getDeclaredAnnotation(annotation);
+					if ( ann != null )
+						return AnnotationHelper.validateAnnotation(clz, ann);
+					else
+						return false;
+							
+				})
 				.forEach(clz -> {
 					AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, clz, null, null, null);
-					if (validateAnnotationDeclaration(declaration))
-						annotationsDeclarationsList.add(declaration);
+					annotationsDeclarationsList.add(declaration);
 				});
 			r.getFieldsAnnotatedWith(annotation)
 				.stream()
 				.map( jce -> jce.getMatchField() )
+				.filter( fld -> {
+					Annotation ann = fld.getDeclaredAnnotation(annotation);
+					if ( ann != null )
+						return AnnotationHelper.validateAnnotation(fld, ann);
+					else
+						return false;
+							
+				})
 				.forEach(fld -> {
 					AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, fld.getDeclaringClass(), fld,
 							null, null);
-					if (validateAnnotationDeclaration(declaration))
-						annotationsDeclarationsList.add(declaration);
+					annotationsDeclarationsList.add(declaration);
 				});
 			r.getMethodsAnnotatedWith(annotation)
 				.stream()
 				.map( jce -> jce.getMatchMethod() )
+				.filter( m -> {
+					Annotation ann = m.getDeclaredAnnotation(annotation);
+					if ( ann != null )
+						return AnnotationHelper.validateAnnotation(m, ann);
+					else
+						return false;
+							
+				})
 				.forEach(m -> {
 					AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, m.getDeclaringClass(), null,
 							m, null);
-					if (validateAnnotationDeclaration(declaration))
-						annotationsDeclarationsList.add(declaration);
+					annotationsDeclarationsList.add(declaration);
 				});
 			r.getMethodParametersAnnotatedWith(annotation)
+				.stream()
+				.filter( md -> {
+					Parameter p = md.getMatchParameter();
+					Annotation ann = p.getDeclaredAnnotation(annotation);
+					if ( ann != null )
+						return AnnotationHelper.validateAnnotation(p, ann);
+					else
+						return false;
+							
+				})
 				.forEach(md -> {
 					Parameter p = md.getMatchParameter();
 					Method m = md.getMatchMethod();
-					if ( p.getAnnotationsByType(annotation) != null ) {
+					Annotation[] annotationsArray = p.getAnnotationsByType(annotation);
+					if ( annotationsArray != null && annotationsArray.length > 0 ) {
 						AnnotationDeclaration declaration = new AnnotationDeclaration(annotation, m.getDeclaringClass(),
 								null, m, p);
-						if (validateAnnotationDeclaration(declaration))
-							annotationsDeclarationsList.add(declaration);
+						annotationsDeclarationsList.add(declaration);
 						
 					}
 				});
 			map.put(annotation, annotationsDeclarationsList);
 		});
 		return map;
-	}
-
-	/**
-	 * @param declaration
-	 * @return
-	 */
-	@SuppressWarnings("unchecked")
-	protected static final boolean validateAnnotationDeclaration(AnnotationDeclaration declaration) {
-		if (declaration == null || declaration.getAnnotation() == null) {
-			return false;
-		}
-		Annotation annotation = declaration.getAnnotation();
-		if (annotation.annotationType().isAnnotationPresent(DependsOn.class)) {
-			// Annotation has dependencies!!
-			DependsOn dependsOn = BeansHelper.getClassAnnotation(annotation.annotationType(), DependsOn.class);
-			Class<?>[] annotationClasses = dependsOn.value();
-			List<Class<? extends Annotation>> requiredAnnotations = new ArrayList<>(0);
-			for (Class<?> clz : annotationClasses) {
-				if (Annotation.class.isAssignableFrom(clz)) {
-					requiredAnnotations.add((Class<Annotation>) clz);
-				}
-			}
-			List<Class<? extends Annotation>> presentAnnotations = Arrays
-					.asList(annotation.annotationType().getDeclaredAnnotations()).stream().map(a -> a.annotationType())
-					.collect(Collectors.toList());
-			long missingAnnotations = requiredAnnotations.stream().filter(ra -> !presentAnnotations.contains(ra))
-					.count();
-			return missingAnnotations == 0;
-		}
-
-		return true;
 	}
 
 	public static final Optional<ModuleScanner> getModuleByPackage(String basePackage) {

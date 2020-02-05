@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.rcg.foundation.fondify.annotations.annotations.DependsOn;
 import com.rcg.foundation.fondify.annotations.annotations.TransformCase;
 import com.rcg.foundation.fondify.annotations.typings.BeanDefinition;
 import com.rcg.foundation.fondify.core.domain.KeyCase;
@@ -43,10 +44,125 @@ public class AnnotationHelper {
 	protected AnnotationHelper() {
 		throw new IllegalStateException("Unable to instatiatio helper class");
 	}
+	
+	@SuppressWarnings("unchecked")
+	public static final boolean validateAnnotation(Class<?> owner, Annotation ann) {
+		if ( owner != null && ann.getClass().getDeclaredAnnotation(DependsOn.class) != null ) {
+			DependsOn dependsOn = ann.getClass().getDeclaredAnnotation(DependsOn.class);
+			Class<?>[] superAnnotations = dependsOn.value(); 
+			if ( superAnnotations != null && superAnnotations.length > 0 ) {
+				boolean match = Arrays.asList(superAnnotations)
+					.stream()
+					.map(annCls -> (Class<Annotation>)annCls)
+					.filter(annCls -> {
+						return owner.getDeclaredAnnotation(annCls) != null;
+					})
+					.count() > 0;
+				if ( ! match ) {
+					LoggerHelper.logWarn("AnnotationHelper::validateAnnotation", 
+										String.format("Validation failed for annotation type: %s (value: %s), owned by Class type: %s, it doesn't contain one of required annotations: %s",
+												ann.getClass().getName(), 
+												ann.toString(),
+												owner.getName(), 
+												Arrays.toString(superAnnotations)), 
+										null);
+				}
+				return match;
+			}
+			return true;
+		}
+		return true;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static final boolean validateAnnotation(Method owner, Annotation ann) {
+		if ( owner != null && ann.getClass().getDeclaredAnnotation(DependsOn.class) != null ) {
+			DependsOn dependsOn = ann.getClass().getDeclaredAnnotation(DependsOn.class);
+			Class<?>[] superAnnotations = dependsOn.value(); 
+			if ( superAnnotations != null && superAnnotations.length > 0 ) {
+				boolean match = Arrays.asList(superAnnotations)
+					.stream()
+					.map(annCls -> (Class<Annotation>)annCls)
+					.filter(annCls -> {
+						return owner.getDeclaredAnnotation(annCls) != null;
+					})
+					.count() > 0;
+				if ( ! match ) {
+					LoggerHelper.logWarn("AnnotationHelper::validateAnnotation", 
+										String.format("Validation failed for Method named: %s (value: %s), owned by Class type: %s, it doesn't contain one of required annotations: %s",
+												ann.getClass().getName(), 
+												ann.toString(),
+												owner.getName(), 
+												Arrays.toString(superAnnotations)), 
+										null);
+				}
+				return match;
+			}
+			return true;
+		}
+		return true;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static final boolean validateAnnotation(Field owner, Annotation ann) {
+		if ( owner != null && ann.getClass().getDeclaredAnnotation(DependsOn.class) != null ) {
+			DependsOn dependsOn = ann.getClass().getDeclaredAnnotation(DependsOn.class);
+			Class<?>[] superAnnotations = dependsOn.value(); 
+			if ( superAnnotations != null && superAnnotations.length > 0 ) {
+				boolean match = Arrays.asList(superAnnotations)
+					.stream()
+					.map(annCls -> (Class<Annotation>)annCls)
+					.filter(annCls -> {
+						return owner.getDeclaredAnnotation(annCls) != null;
+					})
+					.count() > 0;
+				if ( ! match ) {
+					LoggerHelper.logWarn("AnnotationHelper::validateAnnotation", 
+										String.format("Validation failed for Field named: %s (value: %s), owned by Class type: %s, it doesn't contain one of required annotations: %s",
+												ann.getClass().getName(), 
+												ann.toString(),
+												owner.getName(), 
+												Arrays.toString(superAnnotations)), 
+										null);
+				}
+				return match;
+			}
+			return true;
+		}
+		return true;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static final boolean validateAnnotation(Parameter owner, Annotation ann) {
+		if ( owner != null && ann.getClass().getDeclaredAnnotation(DependsOn.class) != null ) {
+			DependsOn dependsOn = ann.getClass().getDeclaredAnnotation(DependsOn.class);
+			Class<?>[] superAnnotations = dependsOn.value(); 
+			if ( superAnnotations != null && superAnnotations.length > 0 ) {
+				boolean match = Arrays.asList(superAnnotations)
+					.stream()
+					.map(annCls -> (Class<Annotation>)annCls)
+					.filter(annCls -> {
+						return owner.getDeclaredAnnotation(annCls) != null;
+					})
+					.count() > 0;
+				if ( ! match ) {
+					LoggerHelper.logWarn("AnnotationHelper::validateAnnotation", 
+										String.format("Validation failed for Parameter named: %s (value: %s), owned by Class type: %s, it doesn't contain one of required annotations: %s",
+												ann.getClass().getName(), 
+												ann.toString(),
+												owner.getName(), 
+												Arrays.toString(superAnnotations)), 
+										null);
+				}
+				return match;
+			}
+			return true;
+		}
+		return true;
+	}
 
 	public static Map<Field, List<Annotation>> selectFieldsAnnotations(Class<?> type,
 			SimplePredicate<Field, Map<Field, List<Annotation>>> predicate) {
-//	public static final Map<Field, List<Annotation>> selectFieldsAnnotations(Class<?> type, SimplePredicate<Field, Map<Field, List<Annotation>>> predicate) {
 		Map<Field, List<Annotation>> fields = new ConcurrentHashMap<>(0);
 		Arrays.asList(type.getDeclaredFields())
 			.stream()
