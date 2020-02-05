@@ -157,20 +157,6 @@ public class ComponentsManagerImpl implements ComponentsManager, ComponentsDisco
 															return null;
 														}
 														return AnnotationHelper.scanAndProcessEntity(in, in.getClass());
-//														beanNameStr = executor.getBeanName();
-//														BeanDefinition beanDefinition = new BeanDefinition(executor.getDescriptor());
-//														Class<?> elementClass = executor.getDescriptor().getAnnotatedClass();
-//														beanNameStr = AnnotationHelper.getClassBeanName(elementClass, beanNameStr);
-//														beanDefinition.setScope(executor.getScope());
-//							
-//														AnnotationHelper.processFieldsAnnotations(elementClass, definition, beanNameStr, InjectableExecutor::filterComponentFieldAnnotation);
-//							
-//														AnnotationHelper.processFieldsPropertyAnnotations(elementClass, definition, beanNameStr, InjectableExecutor::filterComponentFieldValueAnnotation);
-//														
-//														AnnotationHelper.processMethodInitializationFinalizationAnnotations(beanNameStr, elementClass, definition, InjectableExecutor::filterComponentMethodAnnotation);
-//														Object entity = beanDefinition.execute(in, (beanName, params) -> ComponentsHelper.tranformNameToBeanInstance(beanName, params));
-//														//AnnotationHelper.scanAndProcessEntity(entity, entity!=null ? entity.getClass(): null);
-//														return entity;
 													} catch (Exception e) {
 														LoggerHelper.logError("ComponentsManagerImpl::getInjectableByName", String.format("Unable to tranform method outcome bean named: %s!!", beanNameStr), e);
 													}

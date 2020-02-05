@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import com.rcg.foundation.fondify.annotations.annotations.methods.Finalization;
 import com.rcg.foundation.fondify.annotations.annotations.methods.Initialization;
+import com.rcg.foundation.fondify.annotations.helpers.AnnotationHelper;
 import com.rcg.foundation.fondify.core.domain.Scope;
 import com.rcg.foundation.fondify.core.functions.Transformer;
 import com.rcg.foundation.fondify.core.helpers.BeansHelper;
@@ -184,6 +185,11 @@ public class MethodExecutor implements Comparable<MethodExecutor> {
 				args[index] = list.get(0).execute(valueExtractor, autowiredTransformer, injectTransformer);
 				counter.incrementAndGet();
 			} );
+			if (methodReferenceObject != null) {
+				typeFunction.tranform(methodReferenceObject);
+			} else {
+				methodReferenceObject = AnnotationHelper.valueOfInjectedMethodReturnObject(getMethod());
+			}
 			Object answer = null;
 			if ( initializationAnnotation != null ||
 				 finalizationAnnotation != null || 

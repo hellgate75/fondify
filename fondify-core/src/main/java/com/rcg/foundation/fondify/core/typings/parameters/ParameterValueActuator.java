@@ -11,7 +11,7 @@ import java.lang.reflect.Parameter;
  */
 public interface ParameterValueActuator {
 	/**
-	 * Retrive value of a parameter in presence of a specific Annotation type
+	 * Collects value of a parameter in presence of a specific Annotation type
 	 * @param parameter
 	 * @return
 	 */

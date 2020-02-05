@@ -465,6 +465,9 @@ public class ScannerHelper {
 				if ( importPaths == null || importPaths.length == 0 ) {
 					LoggerHelper.logWarn("ScannerHelper::loadBaseAnnotations", "Found FastBoot in Main Class but IMPORT PATH is not present, no package declared. Fast Boot process will be skipped.", null);
 				} else {
+					if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceAnnotationsLevel ) {
+						LoggerHelper.logTrace("ScannerHelper::initializeScanningPackagesFilter", "FastBoot enabled!!");
+					}
 					List<Class<? extends Annotation>> annotations = new ArrayList<>(0);
 					annotations.add(ComponentsScan.class);
 					annotations.add(Configuration.class);
@@ -476,7 +479,8 @@ public class ScannerHelper {
 							.collect(Collectors.toList())
 					);
 					if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceAnnotationsLevel ) {
-						LoggerHelper.logTrace("ScannerHelper::initializeScanningPackagesFilter", "Found (from application definition) Configuration and ComponentsScan annotations: " + results.size());
+						LoggerHelper.logTrace("ScannerHelper::initializeScanningPackagesFilter", "FastBoot : Found (from application definition) Configuration and ComponentsScan annotations: " + results.size());
+						LoggerHelper.logTrace("ScannerHelper::initializeScanningPackagesFilter", "FastBoot : Found (from application definition) Configuration and ComponentsScan annotations: " + Arrays.toString(results.stream().collect(Collectors.groupingBy(Annotation::annotationType)).entrySet().stream().map(entry -> entry.getKey().getName() + " (count: " + entry.getValue().size()  +")").collect(Collectors.toList()).toArray()));
 					}
 					return results;
 				}

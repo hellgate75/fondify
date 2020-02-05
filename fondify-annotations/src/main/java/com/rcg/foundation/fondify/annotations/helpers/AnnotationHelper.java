@@ -27,6 +27,7 @@ import com.rcg.foundation.fondify.core.functions.Processor;
 import com.rcg.foundation.fondify.core.functions.SimpleEntryPredicate;
 import com.rcg.foundation.fondify.core.functions.SimplePredicate;
 import com.rcg.foundation.fondify.core.typings.fields.FieldValueActuatorProvider;
+import com.rcg.foundation.fondify.core.typings.methods.MethodReturnObjectValueActuatorProvider;
 import com.rcg.foundation.fondify.core.typings.parameters.ParameterValueActuatorProvider;
 import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
@@ -250,6 +251,22 @@ public class AnnotationHelper {
 			} catch (Exception e) {
 				LoggerHelper.logError("AnnotationHelper::valueOfInjectedParameter", 
 						String.format("Errors recovering injected value of %s parameter", parameter != null ? parameter.getName() : "<NULL>"), 
+						e);
+			}
+		}
+		return null;
+	}
+
+	public static final Object valueOfInjectedMethodReturnObject(Method method) {
+		if ( method != null ) {
+			try {
+				Optional<Object> valueOpt = MethodReturnObjectValueActuatorProvider.getInstance().tranlateMethodReturnObjectValue(method);
+				if ( valueOpt.isPresent() ) {
+					return valueOpt.get();
+				}
+			} catch (Exception e) {
+				LoggerHelper.logError("AnnotationHelper::valueOfInjectedMethodReturnObject", 
+						String.format("Errors recovering injected value of %s method return object", method != null ? method.getName() : "<NULL>"), 
 						e);
 			}
 		}

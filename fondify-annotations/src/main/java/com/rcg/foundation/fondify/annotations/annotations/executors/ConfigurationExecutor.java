@@ -68,6 +68,7 @@ public class ConfigurationExecutor implements AnnotationExecutor<Configuration> 
 		BeanDefinition definition = new BeanDefinition(t);
 		Class<?> elementClass = t.getAnnotatedClass();
 		beanName = GenericHelper.initCapBeanName(elementClass.getSimpleName());
+		
 		TransformCase caseTransformer = BeansHelper.getClassAnnotation(elementClass, TransformCase.class);
 		if ( caseTransformer != null ) {
 			beanName = AnnotationHelper.transformBeanName(beanName, caseTransformer);

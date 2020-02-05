@@ -21,9 +21,9 @@ import com.rcg.foundation.fondify.annotations.annotations.TransformCase;
 import com.rcg.foundation.fondify.annotations.annotations.methods.Finalization;
 import com.rcg.foundation.fondify.annotations.annotations.methods.Initialization;
 import com.rcg.foundation.fondify.annotations.contants.AnnotationConstants;
+import com.rcg.foundation.fondify.annotations.helpers.ScannerHelper;
 import com.rcg.foundation.fondify.annotations.typings.BeanDefinition;
 import com.rcg.foundation.fondify.annotations.typings.MethodExecutor;
-import com.rcg.foundation.fondify.components.ComponentsManagerImpl;
 import com.rcg.foundation.fondify.components.annotations.Autowired;
 import com.rcg.foundation.fondify.components.annotations.Component;
 import com.rcg.foundation.fondify.components.annotations.Inject;
@@ -38,12 +38,15 @@ import com.rcg.foundation.fondify.core.helpers.BeansHelper;
 import com.rcg.foundation.fondify.core.registry.ComponentsRegistry;
 import com.rcg.foundation.fondify.core.typings.AnnotationDeclaration;
 import com.rcg.foundation.fondify.core.typings.AnnotationExecutor;
+import com.rcg.foundation.fondify.core.typings.components.ComponentManagerProvider;
 import com.rcg.foundation.fondify.core.typings.fields.FieldValueActuatorProvider;
+import com.rcg.foundation.fondify.core.typings.lifecycle.ComponentsManager;
 import com.rcg.foundation.fondify.core.typings.methods.ParameterRef;
 import com.rcg.foundation.fondify.core.typings.methods.PropertyRef;
 import com.rcg.foundation.fondify.properties.annotations.PropertiesSet;
 import com.rcg.foundation.fondify.properties.annotations.Value;
 import com.rcg.foundation.fondify.properties.annotations.WithPropertiesRoot;
+import com.rcg.foundation.fondify.utils.helpers.ArgumentsHelper;
 import com.rcg.foundation.fondify.utils.helpers.GenericHelper;
 import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
 
@@ -53,6 +56,8 @@ import com.rcg.foundation.fondify.utils.helpers.LoggerHelper;
  */
 public final class AnnotationHelper extends com.rcg.foundation.fondify.annotations.helpers.AnnotationHelper {
 
+	private static List<ComponentManagerProvider> providers = null;
+	
 	/**
 	 * 
 	 */
@@ -297,6 +302,46 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 		return scanAndProcessEntity(entity, entityClass, null);
 	}
 	
+	public static final Object seekForComponentOrInjectable(String beanName) {
+		if ( providers == null ) {
+			providers = BeansHelper.collectSubTypesOf(ScannerHelper.collectDefaultClassPathConfigBuilder(), ComponentManagerProvider.class)
+									.stream()
+									.map( cls -> {
+										try {
+											return (ComponentManagerProvider) cls.newInstance();
+										} catch (Exception | Error ex) {
+											LoggerHelper.logError("AnnotationHelper::seekForComponentOrInjectable", 
+																	String.format("Unable to make instance of class %s, due to errors!!", cls != null ? cls.getName() : "<NULL>"), 
+																	ex);
+										}
+										return (ComponentManagerProvider)null;
+									})
+									.filter(provider -> provider != null)
+									.collect(Collectors.toList());
+		}
+		Optional<Object> retOpt = 
+		providers
+			.stream()
+			.map( provider -> {
+				ComponentsManager manager = provider.getComponentManager();
+				try {
+					return manager.getInjectableOrComponentByName(beanName, null);
+				} catch (Exception ex) {
+					LoggerHelper.logError("AnnotationHelper::seekForComponentOrInjectable", 
+							String.format("Unable to recover bean named %s from ComponentsManager of type %s, due to errors!!", beanName, manager != null ? manager.getClass().getName() : "<NULL>"), 
+							ex);
+				}
+				return null;
+			})
+			.filter( obj -> obj != null )
+			.findFirst();
+		if ( retOpt.isPresent() ) {
+			return retOpt.get();
+		}
+		return null;
+	}
+
+	
 	public static final Object scanAndProcessEntity(Object entity, Class<?> entityClass, String wantedBeanName) {
 		if ( entityClass == null && entity != null ) {
 			entityClass = entity.getClass();
@@ -306,12 +351,17 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 			if (entityClass != null)
 				beanName = entityClass == null ? null : AnnotationHelper.getClassBeanName(entityClass, GenericHelper.initCapBeanName(entityClass.getSimpleName()));
 		}
-		ComponentsManagerImpl componentsManager = new ComponentsManagerImpl();
 		if ( entity == null ) {
 			
 			if ( entity == null && beanName != null && ! beanName.isEmpty() ) {
 				try {
-					entity = componentsManager.getInjectableOrComponentByName(beanName, null);
+					entity = seekForComponentOrInjectable(beanName);
+					if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceComponentsLevel  ) {
+						LoggerHelper.logTrace("AnnotationHelper::scanAndProcessEntity", 
+								String.format("Collected entity named: %s, of type %s, with value: %s", beanName, 
+																	entity != null ? entity.getClass().getName() : "<NULL>", 
+																	entity != null ? "" + entity : "<NULL>"));
+					}
 					return entity;
 				} catch (Exception e) {
 					LoggerHelper.logError("AnnotationHelper::scanAndProcessEntity", 
