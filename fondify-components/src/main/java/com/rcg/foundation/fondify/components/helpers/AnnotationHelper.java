@@ -82,8 +82,7 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 		if (beanClass == null) {
 			return defaultName;
 		}
-		defaultName = beanClass.getSimpleName();
-		defaultName = "" + defaultName.toLowerCase().charAt(0) + defaultName.substring(1);
+		defaultName = GenericHelper.initCapBeanName(beanClass.getSimpleName());
 		String name = proposed != null && ! proposed.isEmpty() ? proposed :  defaultName;
 		Injectable injAnn = BeansHelper.getClassAnnotation(beanClass, Injectable.class); 
 		if ( injAnn != null && injAnn.component().value() != null && ! injAnn.component().value().isEmpty() ) {
@@ -398,27 +397,39 @@ public final class AnnotationHelper extends com.rcg.foundation.fondify.annotatio
 	}
 	
 	protected static final void processFieldsAnnotations(Class<?> elementClass, Object instance) {
-			Arrays.asList(elementClass.getDeclaredFields()).stream()
-					.collect(Collectors.toMap((field) -> field,
-							(field) -> Arrays.asList(field.getDeclaredAnnotations())))
-					.entrySet()
-					.stream()
-					.filter(entry -> entry.getValue().stream().filter(ann -> filterBeanField(ann.getClass())).count() > 0)
-					.forEach(entry -> {
-						Field field = entry.getKey();
-						LoggerHelper.logTrace("AnnotationHelper::processFieldsAnnotations(Class<?>, Object)", String.format("Processing Bean FIELD annotations for class: %s at field: %s", elementClass.getName(), field.getName()));
-						String name = getClassFieldBeanName(field, field.getName());
-						try {
-							Optional<Object> value = FieldValueActuatorProvider.getInstance().tranlateFieldValue(field);
-							if (value.isPresent())
-								field.set(instance, value.get());
-						} catch (Exception e) {
-							LoggerHelper.logError("AnnotationHelper::processFieldsAnnotations(Class<?>, Object)",
-									String.format("Unable to fill field %s (bean: %s), due to ERRORS!!",
-											field != null ? field.getName() : "<NULL>", name),
-									e);
-						}
-					});
+			try {
+				Arrays.asList(elementClass.getDeclaredFields()).stream()
+						.collect(Collectors.toMap((field) -> field,
+								(field) -> Arrays.asList(field.getDeclaredAnnotations())))
+						.entrySet()
+						.stream()
+						.filter(entry -> entry.getValue().stream().filter(ann -> filterBeanField(ann.getClass())).count() > 0)
+						.forEach(entry -> {
+							Field field = entry.getKey();
+							LoggerHelper.logTrace("AnnotationHelper::processFieldsAnnotations(Class<?>, Object)", String.format("Processing Bean FIELD annotations for class: %s at field: %s", elementClass.getName(), field.getName()));
+							String name = getClassFieldBeanName(field, field.getName());
+							try {
+								Optional<Object> value = FieldValueActuatorProvider.getInstance().tranlateFieldValue(field);
+								if (value.isPresent()) {
+									field.setAccessible(true);
+									field.set(instance, value.get());
+								} else {
+									LoggerHelper.logWarn("AnnotationHelper::processFieldsAnnotations(Class<?>, Object)", 
+											String.format("Unable to recover value for class: %s at field: %s", elementClass.getName(), field.getName()), null);
+								}
+							} catch (Exception | Error e) {
+								LoggerHelper.logError("AnnotationHelper::processFieldsAnnotations(Class<?>, Object)",
+										String.format("Unable to fill field %s (bean: %s), due to ERRORS!!",
+												field != null ? field.getName() : "<NULL>", name),
+										e);
+							}
+						});
+			} catch (SecurityException e) {
+				LoggerHelper.logError("AnnotationHelper::processFieldsAnnotations(Class<?>, Object)",
+						String.format("Unable to process annotations in class %, due to ERRORS!!",
+								elementClass != null ? elementClass.getName() : "<NULL>", instance != null ? instance.toString() : "<NULL>"),
+						e);
+			}
 	}
 	
 	public static final void processFieldsAnnotations(Class<?> elementClass, BeanDefinition currentDefinition, String typeRef, Predicate<Annotation> filter) {
