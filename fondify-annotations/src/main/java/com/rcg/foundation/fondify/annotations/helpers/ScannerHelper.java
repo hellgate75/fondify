@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 import com.rcg.foundation.fondify.annotations.annotations.Application;
 import com.rcg.foundation.fondify.annotations.annotations.ComponentsScan;
 import com.rcg.foundation.fondify.annotations.annotations.Configuration;
-import com.rcg.foundation.fondify.annotations.annotations.DependsOn;
 import com.rcg.foundation.fondify.annotations.annotations.FastBoot;
 import com.rcg.foundation.fondify.annotations.annotations.ModuleScannerConfig;
 import com.rcg.foundation.fondify.annotations.contants.AnnotationConstants;
@@ -702,7 +701,6 @@ public class ScannerHelper {
 		UUID uuid = GlobalProcessTracker.getInstance().lockProcess();
 		try {
 			final List<ModuleScanner> list = new ArrayList<>(0);
-			List<ModuleScanner> excludeList = new ArrayList<>(0);
 			DEFAULT_SCANNERS.forEach(scc -> {
 				try {
 					list.add((ModuleScanner) Class.forName(scc).newInstance());
@@ -756,78 +754,6 @@ public class ScannerHelper {
 			});
 			LoggerHelper.logTrace("ScannerHelper::collectModuleScanners", "Scanning for Module Scanner classes complete!!");
 			LoggerHelper.logTrace("ScannerHelper::collectModuleScanners", "Scanning for Module Scan classes ...");
-//			Reflections r = null;
-//			
-//			try {
-//				r = Reflections.getSigletonInstance(ClassPathConfigBuilder.start().disablePersistenceOfData().build());
-//			} catch (Exception e1) {
-//				String message = "Errors revocering Reflections singleton instance!!";
-//				LoggerHelper.logError("ScannerHelper::collectModuleScanner", message, e1);;
-//				throw new ProcessException(message, e1);
-//			}
-			
-//			Set<Class<?>> annScanTypes = r
-//					.getTypesAnnotatedWith(com.rcg.foundation.fondify.annotations.annotations.ModulesScan.class)
-//					.stream()
-//					.map(jce -> jce.getMatchClass())
-//					.collect(Collectors.toSet());
-//			annScanTypes.forEach(cls -> {
-//				try {
-//					com.rcg.foundation.fondify.annotations.annotations.ModulesScan ann = (com.rcg.foundation.fondify.annotations.annotations.ModulesScan) 
-//							BeansHelper.getClassAnnotation(cls, com.rcg.foundation.fondify.annotations.annotations.ModulesScan.class);
-//					if (ann.value()) {
-//						Arrays.asList(ann.includes()).stream().filter(clsX -> {
-//							String name = clsX.getCanonicalName();
-//							return !DEFAULT_SCANNERS.contains(name);
-//						}).forEach(mdlCls -> {
-//							try {
-//								if (!DEFAULT_SCANNERS.contains(mdlCls.getCanonicalName())
-//										&& list.stream().filter(mdl -> mdl.getClass() == mdlCls).count() == 0)
-//									list.add(mdlCls.newInstance());
-//							} catch (InstantiationException | IllegalAccessException e) {
-//								String message = String.format(
-//										"Class Instantiation Error :: Unable to instantiate ModulesScan (inclusion) object for class : %s",
-//										mdlCls.getCanonicalName());
-//								LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
-//								throw new ScannerException(message);
-//							} catch (Exception e) {
-//								String message = String.format(
-//										"Generic Error :: Unable to instantiate (inclusion) ModulesScan object for class : %s",
-//										mdlCls.getCanonicalName());
-//								LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
-//								throw new ScannerException(message, e);
-//							}
-//						});
-//						Arrays.asList(ann.excludes()).stream().filter(clsX -> {
-//							String name = clsX.getCanonicalName();
-//							return !DEFAULT_SCANNERS.contains(name);
-//						}).forEach(mdlCls -> {
-//							try {
-//								if (excludeList.stream().filter(mdl -> mdl.getClass() == mdlCls).count() == 0)
-//									excludeList.add(mdlCls.newInstance());
-//							} catch (InstantiationException | IllegalAccessException e) {
-//								String message = String.format(
-//										"Class Instantiation Error :: Unable to instantiate ModulesScan (exclusion) object for class : %s",
-//										mdlCls.getCanonicalName());
-//								LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
-//								throw new ScannerException(message);
-//							} catch (Exception e) {
-//								String message = String.format(
-//										"Generic Error :: Unable to instantiate ModulesScan (exclusion) object for class : %s",
-//										mdlCls.getCanonicalName());
-//								LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
-//								throw new ScannerException(message, e);
-//							}
-//						});
-//					}
-//				} catch (Exception e) {
-//					String message = String.format(
-//							"Generic Error :: Unable to instantiate ModulesScan object for class : %s",
-//							cls.getCanonicalName());
-//					LoggerHelper.logError("ScannerHelper::collectModuleScanners", message, e);
-//					throw new ScannerException(message, e);
-//				}
-//			});
 			list.parallelStream().forEach(ms -> { 
 				if ( ArgumentsHelper.traceAllLevels || ArgumentsHelper.traceAnnotationsLevel ) {
 					LoggerHelper.logTrace("ScannerHelper::collectModuleScanners",
@@ -841,14 +767,6 @@ public class ScannerHelper {
 			}
 			
 			LoggerHelper.logTrace("ScannerHelper::collectModuleScanners", "Scanning for Module Scan classes complete!!");
-//			LoggerHelper.logTrace("ScannerHelper::collectModuleScanners",
-//					"Collecting exclusion class list and filter allowed scanners...");
-//			List<Class<?>> exclusionClasses = excludeList.stream().map(excl -> excl.getClass())
-//					.collect(Collectors.toList());
-//			list.stream().filter(incl -> !exclusionClasses.contains(incl.getClass()))
-//					.forEach(ms -> moduleRegistry.registerEntity(ms.getClass().getName(), ms));
-//			LoggerHelper.logTrace("ScannerHelper::collectModuleScanners",
-//					"Collection of exclusion class list and filtering of allowed scanners complete!!");
 		} catch (Exception | Error ex) {
 			LoggerHelper.logError("ScannerHelper::collectModuleScanners", "Error occured during scanner collection", ex);
 		}

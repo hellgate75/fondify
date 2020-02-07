@@ -452,5 +452,66 @@ public class GenericHelper {
 			return outcome;
 		return value;
 	}
+	
+	public static final Class<?> getObjectAsClass(Object obj, Class<?> defaultValue) {
+		if ( obj != null ) {
+			if( Class.class.isAssignableFrom(obj.getClass()) ) {
+				return ((Class<?>)obj);
+			} else if ( String.class.isAssignableFrom(obj.getClass()) ) {
+				try {
+					return Class.forName(""+obj);
+				} catch (ClassNotFoundException e) {
+					LoggerHelper.logError("GenericHelper::getObjectAsClass(Object, Class<?>)", 
+												String.format("Unable to create new instances for instance type %s, value %s", obj.getClass().getName(), obj), 
+												e);
+				}
+			}
+		}
+		return defaultValue;
+	}
+	
+	public static final boolean getObjectAsBoolean(Object obj, boolean defaultValue) {
+		if ( obj != null ) {
+			if( Boolean.class.isAssignableFrom(obj.getClass()) ) {
+				return ((Boolean)obj).booleanValue();
+			} else if ( String.class.isAssignableFrom(obj.getClass()) ) {
+				return (""+obj).equalsIgnoreCase("true");
+			}
+		}
+		return defaultValue;
+	}
+	
+	public static final int getObjectAsInteger(Object obj, int defaultValue) {
+		if ( obj != null ) {
+			if( Boolean.class.isAssignableFrom(obj.getClass()) ) {
+				return ((Integer)obj).intValue();
+			} else if ( String.class.isAssignableFrom(obj.getClass()) ) {
+				return Integer.parseInt(""+obj);
+			}
+		}
+		return defaultValue;
+	}
+	
+	public static final long getObjectAsLong(Object obj, long defaultValue) {
+		if ( obj != null ) {
+			if( Boolean.class.isAssignableFrom(obj.getClass()) ) {
+				return ((Long)obj).longValue();
+			} else if ( String.class.isAssignableFrom(obj.getClass()) ) {
+				return Long.parseLong(""+obj);
+			}
+		}
+		return defaultValue;
+	}
+	
+	public static final double getObjectAsDouble(Object obj, double defaultValue) {
+		if ( obj != null ) {
+			if( Boolean.class.isAssignableFrom(obj.getClass()) ) {
+				return ((Double)obj).doubleValue();
+			} else if ( String.class.isAssignableFrom(obj.getClass()) ) {
+				return Double.parseDouble(""+obj);
+			}
+		}
+		return defaultValue;
+	}
 
 }

@@ -23,7 +23,7 @@ import com.rcg.foundation.fondify.core.typings.cache.CacheProvider;
 /**
  * Annotation that defines enabled the cache engine, behinf the
  * annotation engine. Any provider can be defined, and event persistence
- * and persistence uri can be defined by user.
+ * and persistence URI can be defined by user.
  * Configuration can even be in
  * * Application Arguments (-enable.cache=true, -cache.provider=...., -enable.cache.persitence=true, -cache.persistence.provider=....., -cache.persistence.uri=.....),
  * * Properties (enable.cache=true, cache.provider=...., enable.cache.persitence=true, cache.persistence.provider=....., cache.persistence.uri=.....).

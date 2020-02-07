@@ -24,7 +24,7 @@ public class EnableCacheAnnotationExecutor implements AnnotationExecutor<EnableC
 	 * Default constructor
 	 */
 	public EnableCacheAnnotationExecutor() {
-		// TODO Auto-generated constructor stub
+		super();
 	}
 
 	@Override
