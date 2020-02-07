@@ -1,6 +1,8 @@
-<p align="right"><img src="https://travis-ci.com/hellgate75/fondify.svg?branch=master" alt="trevis-ci" width="98" height="20" />&nbsp;<a href="https://travis-ci.org/hellgate75/fondify">Check last build on Travis-CI</a></p><br/>
 
 <p align="center"><image width="300" height="300" src="images/fondify-logo.gif"></image></p><br/>
+<br/>
+<p align="right"><img src="https://travis-ci.com/hellgate75/fondify.svg?branch=master" alt="trevis-ci" width="98" height="20" />&nbsp;<a href="https://travis-ci.org/hellgate75/fondify">Check last build on Travis-CI</a></p><br/>
+<br/>
 
 # Fondify® (Work In Progress...)
 
