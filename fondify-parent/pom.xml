@@ -38,7 +38,7 @@
 	<!-- Java Decompiler -->
 	<procyon.version>0.5.36</procyon.version>
 
-  	<tests.junit.version>4.13-rc-1</tests.junit.version>
+  	<tests.junit.version>4.13.1</tests.junit.version>
   	<tests.mockito.version>2.0.2-beta</tests.mockito.version>
   	<tests.powermock.version>2.0.4</tests.powermock.version>
   	<tests.powermock.mockito.version>1.6.6</tests.powermock.mockito.version>
