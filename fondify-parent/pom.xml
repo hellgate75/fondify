@@ -19,7 +19,7 @@
     <com.rcg.fondify.version>${project.parent.version}</com.rcg.fondify.version>
 
   	<commons.lang.version>3.9</commons.lang.version>
-  	<commons.io.version>2.6</commons.io.version>
+  	<commons.io.version>2.7</commons.io.version>
    	<logging.slf4j.version>2.0.0-alpha1</logging.slf4j.version>
    	<logging.log4j.version>1.2.17</logging.log4j.version>
   	<commons.commons-codec.version>1.13</commons.commons-codec.version>
