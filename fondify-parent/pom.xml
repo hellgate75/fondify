@@ -31,7 +31,7 @@
 	<!-- Data bind block -->
   	<tools.jackson.databind.version>2.10.1</tools.jackson.databind.version>
   	<parser.jackson-databind.version>2.10.1</parser.jackson-databind.version>
-  	<snakeyaml.version>1.25</snakeyaml.version>
+  	<snakeyaml.version>1.26</snakeyaml.version>
   	<tools.hezelcast.version>4.0-BETA-1</tools.hezelcast.version>
 	<lombok.version>1.18.10</lombok.version>
 	
